@@ -34,6 +34,17 @@ export const GET_USERS = gql`
       firstName
       lastName
       isActive
+      profile {
+        id
+        role
+        bio
+        avatarUrl
+        phone
+        dateOfBirth
+        isVerified
+        createdAt
+        updatedAt
+      }
     }
   }
 `;
@@ -287,32 +298,46 @@ export const GET_NEWS_ANALYTICS = gql`
     }
   }
 `;
+*/
 
-// Dashboard Queries - These would need to be implemented in the backend
+// Dashboard Queries
 export const GET_DASHBOARD_STATS = gql`
   query GetDashboardStats {
     dashboardStats {
-      totalNews
-      totalPublished
-      totalDrafts
-      totalPending
-      totalRejected
       totalUsers
       totalReaders
       totalWriters
       totalManagers
       totalAdmins
-      recentActivity {
+      newUsersThisMonth
+      totalNews
+      publishedNews
+      draftNews
+      pendingNews
+      rejectedNews
+      newsThisMonth
+      totalCategories
+      totalTags
+      totalViews
+      totalLikes
+      totalComments
+    }
+  }
+`;
+
+export const GET_RECENT_ACTIVITY = gql`
+  query GetRecentActivity($limit: Int) {
+    recentActivity(limit: $limit) {
+      id
+      action
+      description
+      timestamp
+      user {
         id
-        action
-        description
-        timestamp
-        user {
-          id
-          username
-        }
+        username
+        firstName
+        lastName
       }
     }
   }
 `;
-*/

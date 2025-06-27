@@ -16,9 +16,16 @@ export default function LoginPage() {
 
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
-      if (data.tokenAuth?.token) {
+      if (data.tokenAuth.token) {
         login(data.tokenAuth.user, data.tokenAuth.token, data.tokenAuth.refreshToken);
-        navigate('/dashboard');
+        
+        // Redirect based on user role
+        const userRole = data.tokenAuth.user?.profile?.role;
+        if (userRole === 'reader') {
+          navigate('/news');
+        } else {
+          navigate('/dashboard');
+        }
       }
     },
     onError: (error) => {
@@ -51,10 +58,11 @@ export default function LoginPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '80vh',
-        px: 2,
+        padding: 2,
       }}
     >
       <Card
+        variant="outlined"
         sx={{
           width: '100%',
           maxWidth: 400,
@@ -101,32 +109,31 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 loading={loading}
+                sx={{ mt: 2 }}
                 fullWidth
-                sx={{
-                  mt: 2,
-                  backgroundColor: 'var(--joy-palette-primary-700)',
-                  '&:hover': {
-                    backgroundColor: 'var(--joy-palette-primary-800)',
-                  }
-                }}
               >
                 Sign In
               </Button>
             </Stack>
           </form>
 
-          <Typography textAlign="center" sx={{ mt: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            Don't have an account?{' '}
-            <Link 
-              to="/register" 
-              style={{ 
-                color: 'var(--joy-palette-primary-700)', 
-                textDecoration: 'none' 
-              }}
-            >
-              Sign up
-            </Link>
-          </Typography>
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+              Don't have an account?{' '}
+              <Typography
+                component={Link}
+                to="/register"
+                level="body2"
+                sx={{
+                  color: 'var(--joy-palette-primary-500)',
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                Sign up
+              </Typography>
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
     </Box>

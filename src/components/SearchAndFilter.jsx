@@ -115,7 +115,7 @@ export default function SearchAndFilter({
               >
                 <Option value="">All Categories</Option>
                 {categories.map((category) => (
-                  <Option key={category.id} value={category.id}>
+                  <Option key={category.id} value={String(category.id)}>
                     {category.name}
                   </Option>
                 ))}
@@ -140,7 +140,7 @@ export default function SearchAndFilter({
               >
                 <Option value="">All Tags</Option>
                 {tags.map((tag) => (
-                  <Option key={tag.id} value={tag.id}>
+                  <Option key={tag.id} value={String(tag.id)}>
                     {tag.name}
                   </Option>
                 ))}

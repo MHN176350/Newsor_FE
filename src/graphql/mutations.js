@@ -375,3 +375,22 @@ export const DELETE_TAG = gql`
     }
   }
 `;
+
+// Admin Mutations
+export const CHANGE_USER_ROLE = gql`
+  mutation ChangeUserRole($userId: Int!, $newRole: String!) {
+    changeUserRole(userId: $userId, newRole: $newRole) {
+      success
+      errors
+      user {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          role
+        }
+      }
+    }
+  }
+`;

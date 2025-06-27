@@ -1,5 +1,5 @@
 import { Box, Typography, Card, CardContent, Button, Grid, Chip, Input, CircularProgress, Alert } from '@mui/joy';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link, useSearchParams } from 'react-router-dom';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
@@ -10,20 +10,34 @@ export default function NewsPage() {
   const [searchParams] = useSearchParams();
   const [searchFilters, setSearchFilters] = useState({
     search: null,
-    categoryId: searchParams.get('category') ? parseInt(searchParams.get('category')) : null,
+    categoryId: null,
     tagId: searchParams.get('tag') ? parseInt(searchParams.get('tag')) : null,
   });
+
+  // Fetch categories to find ID by slug
+  const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
+  const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
+  const categories = categoriesData?.categories || [];
+  const tags = tagsData?.tags || [];
+
+  // Update search filters when URL parameters change
+  useEffect(() => {
+    const categorySlug = searchParams.get('category');
+    if (categorySlug && categories.length > 0) {
+      const category = categories.find(cat => cat.slug === categorySlug);
+      if (category) {
+        setSearchFilters(prev => ({ ...prev, categoryId: parseInt(category.id) }));
+      }
+    } else {
+      setSearchFilters(prev => ({ ...prev, categoryId: null }));
+    }
+  }, [searchParams, categories]);
 
   const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_PUBLISHED_NEWS, {
     variables: searchFilters,
   });
 
-  const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
-  const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
-
   const publishedNews = newsData?.publishedNews || [];
-  const categories = categoriesData?.categories || [];
-  const tags = tagsData?.tags || [];
 
   const handleSearch = (searchTerm) => {
     setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));

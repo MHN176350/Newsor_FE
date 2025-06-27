@@ -1,9 +1,10 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid } from '@mui/joy';
-import { useState } from 'react';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid, IconButton } from '@mui/joy';
+import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useMutation } from '@apollo/client';
 import { UPDATE_USER_PROFILE } from '../graphql/mutations';
 import { Link } from 'react-router-dom';
+import { PhotoCamera } from '@mui/icons-material';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, updateUser } = useAuth();
@@ -12,8 +13,11 @@ export default function ProfilePage() {
     bio: user?.profile?.bio || '',
     phone: user?.profile?.phone || '',
     dateOfBirth: user?.profile?.dateOfBirth || '',
+    avatar: '',
   });
   const [message, setMessage] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [updateProfile, { loading }] = useMutation(UPDATE_USER_PROFILE, {
     onCompleted: (data) => {
@@ -26,7 +30,10 @@ export default function ProfilePage() {
           },
         });
         setMessage('Profile updated successfully!');
+        setAvatarPreview(null);
         setEditing(false);
+      } else {
+        setMessage(data.updateUserProfile?.errors?.join(', ') || 'Update failed');
       }
     },
     onError: (error) => {
@@ -57,11 +64,52 @@ export default function ProfilePage() {
     });
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setMessage('Please select an image smaller than 5MB');
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        setMessage('Please select a valid image file');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target.result;
+        setFormData({
+          ...formData,
+          avatar: base64String,
+        });
+        setAvatarPreview(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    if (editing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage('');
+    
+    // Prepare variables, converting empty strings to null for proper GraphQL handling
+    const variables = {
+      bio: formData.bio || null,
+      phone: formData.phone || null,
+      dateOfBirth: formData.dateOfBirth || null,
+      avatar: formData.avatar || null,
+    };
+    
     updateProfile({
-      variables: formData,
+      variables,
     });
   };
 
@@ -70,7 +118,9 @@ export default function ProfilePage() {
       bio: user?.profile?.bio || '',
       phone: user?.profile?.phone || '',
       dateOfBirth: user?.profile?.dateOfBirth || '',
+      avatar: '',
     });
+    setAvatarPreview(null);
     setEditing(false);
     setMessage('');
   };
@@ -92,13 +142,45 @@ export default function ProfilePage() {
         <Grid xs={12} md={4}>
           <Card variant="outlined">
             <CardContent sx={{ textAlign: 'center' }}>
-              <Avatar
-                size="lg"
-                src={user?.profile?.avatarUrl}
-                sx={{ mb: 2, mx: 'auto', width: 100, height: 100 }}
-              >
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </Avatar>
+              <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                <Avatar
+                  size="lg"
+                  src={avatarPreview || user?.profile?.avatarUrl}
+                  sx={{ 
+                    width: 100, 
+                    height: 100,
+                    cursor: editing ? 'pointer' : 'default',
+                    '&:hover': editing ? { opacity: 0.8 } : {}
+                  }}
+                  onClick={handleAvatarClick}
+                >
+                  {user?.firstName?.[0]}{user?.lastName?.[0]}
+                </Avatar>
+                {editing && (
+                  <IconButton
+                    size="sm"
+                    variant="solid"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      borderRadius: '50%',
+                      minHeight: 32,
+                      minWidth: 32,
+                    }}
+                    onClick={handleAvatarClick}
+                  >
+                    <PhotoCamera />
+                  </IconButton>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+              </Box>
               <Typography level="h4" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>
                 {user?.firstName} {user?.lastName}
               </Typography>
@@ -145,7 +227,8 @@ export default function ProfilePage() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={handleSubmit}
+                      type="submit"
+                      form="profile-form"
                       loading={loading}
                     >
                       Save
@@ -160,7 +243,13 @@ export default function ProfilePage() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit}>
+              {editing && (
+                <Alert color="primary" variant="soft" sx={{ mb: 3 }}>
+                  💡 Tip: Click on your avatar or the camera icon to change your profile picture
+                </Alert>
+              )}
+
+              <form id="profile-form" onSubmit={handleSubmit}>
                 <Stack spacing={3}>
                   <Grid container spacing={2}>
                     <Grid xs={12} sm={6}>

@@ -2,11 +2,17 @@ import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, Men
 import { useColorScheme } from '@mui/joy/styles';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useQuery } from '@apollo/client';
+import { GET_CATEGORIES } from '../graphql/queries';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+
+  // Fetch categories for dropdown
+  const { data: categoriesData } = useQuery(GET_CATEGORIES);
+  const categories = categoriesData?.categories || [];
 
   const toggleColorScheme = () => {
     setMode(mode === 'dark' ? 'light' : 'dark');
@@ -76,17 +82,44 @@ export default function Layout({ children }) {
           >
             Home
           </Button>
-          <Button
-            variant="plain"
-            component={Link}
-            to="/news"
-            sx={{ 
-              color: 'text.secondary',
-              '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
-            }}
-          >
-            News
-          </Button>
+          
+          {/* News Dropdown with Categories */}
+          <Dropdown>
+            <MenuButton
+              slots={{ root: Button }}
+              slotProps={{
+                root: {
+                  variant: 'plain',
+                  sx: { 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }
+                }
+              }}
+            >
+              News
+            </MenuButton>
+            <Menu placement="bottom-start" sx={{ zIndex: 1300 }}>
+              <MenuItem onClick={() => navigate('/news')}>
+                📰 All News
+              </MenuItem>
+              {categories.length > 0 && (
+                <>
+                  <MenuItem disabled sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+                    BY CATEGORY
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem 
+                      key={category.id}
+                      onClick={() => navigate(`/news?category=${category.slug}`)}
+                    >
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+            </Menu>
+          </Dropdown>
 
           {/* Authenticated user additional navigation */}
           {isAuthenticated && (
@@ -102,7 +135,7 @@ export default function Layout({ children }) {
               >
                 Profile
               </Button>
-              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
                 <Button
                   variant="plain"
                   component={Link}
@@ -113,6 +146,19 @@ export default function Layout({ children }) {
                   }}
                 >
                   Dashboard
+                </Button>
+              )}
+              {user?.profile?.role?.toLowerCase() === 'admin' && (
+                <Button
+                  variant="plain"
+                  component={Link}
+                  to="/admin"
+                  sx={{ 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }}
+                >
+                  Admin Dashboard
                 </Button>
               )}
             </>
@@ -140,12 +186,12 @@ export default function Layout({ children }) {
                   size="sm"
                   variant="soft"
                   color={
-                    user.profile.role === 'admin' ? 'danger' :
-                    user.profile.role === 'manager' ? 'warning' :
-                    user.profile.role === 'writer' ? 'success' : 'neutral'
+                    user.profile.role.toLowerCase() === 'admin' ? 'danger' :
+                    user.profile.role.toLowerCase() === 'manager' ? 'warning' :
+                    user.profile.role.toLowerCase() === 'writer' ? 'success' : 'neutral'
                   }
                 >
-                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1)}
+                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1).toLowerCase()}
                 </Chip>
               )}
               
@@ -185,9 +231,14 @@ export default function Layout({ children }) {
                   <MenuItem onClick={() => navigate('/profile')}>
                     👤 Profile
                   </MenuItem>
-                  {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+                  {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
                     <MenuItem onClick={() => navigate('/dashboard')}>
                       📊 Dashboard
+                    </MenuItem>
+                  )}
+                  {user?.profile?.role?.toLowerCase() === 'admin' && (
+                    <MenuItem onClick={() => navigate('/admin')}>
+                      ⚙️ Admin Dashboard
                     </MenuItem>
                   )}
                   <MenuItem onClick={handleLogout} sx={{ color: 'danger.500' }}>

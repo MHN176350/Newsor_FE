@@ -11,6 +11,7 @@ import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
  
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/news/:slug" element={<NewsDetailPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/admin" element={<AdminDashboardPage />} />
               </Routes>
             </Layout>
           </Router>
