@@ -2,34 +2,36 @@ import { Box, Typography, Card, CardContent, Button, Grid, Chip, Input, Circular
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link, useSearchParams } from 'react-router-dom';
-import { GET_PUBLISHED_NEWS, GET_CATEGORIES } from '../graphql/queries';
+import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
+import SearchAndFilter from '../components/SearchAndFilter';
 
 export default function NewsPage() {
   const [searchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const categoryId = searchParams.get('category');
-  const tagId = searchParams.get('tag');
+  const [searchFilters, setSearchFilters] = useState({
+    search: null,
+    categoryId: searchParams.get('category') ? parseInt(searchParams.get('category')) : null,
+    tagId: searchParams.get('tag') ? parseInt(searchParams.get('tag')) : null,
+  });
 
   const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_PUBLISHED_NEWS, {
-    variables: {
-      categoryId: categoryId ? parseInt(categoryId) : null,
-      tagId: tagId ? parseInt(tagId) : null,
-    },
+    variables: searchFilters,
   });
 
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
+  const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
 
   const publishedNews = newsData?.publishedNews || [];
   const categories = categoriesData?.categories || [];
+  const tags = tagsData?.tags || [];
 
-  const filteredNews = publishedNews.filter(news =>
-    news.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    news.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    news.author?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    news.author?.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearch = (searchTerm) => {
+    setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));
+  };
+
+  const handleFilter = (filters) => {
+    setSearchFilters(filters);
+  };
 
   return (
     <Box>
@@ -43,46 +45,15 @@ export default function NewsPage() {
         </Typography>
       </Box>
 
-      {/* Search and Filters */}
-      <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid xs={12} md={6}>
-            <Input
-              placeholder="Search news..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: '100%' }}
-            />
-          </Grid>
-          <Grid xs={12} md={6}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Button
-                component={Link}
-                to="/news"
-                variant={!categoryId && !tagId ? 'solid' : 'outlined'}
-                size="sm"
-              >
-                All
-              </Button>
-              {categoriesLoading ? (
-                <CircularProgress size="sm" />
-              ) : (
-                categories.slice(0, 5).map((category) => (
-                  <Button
-                    key={category.id}
-                    component={Link}
-                    to={`/news?category=${category.id}`}
-                    variant={categoryId === category.id.toString() ? 'solid' : 'outlined'}
-                    size="sm"
-                  >
-                    {category.name}
-                  </Button>
-                ))
-              )}
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
+      {/* Search and Filter Component */}
+      <SearchAndFilter
+        onSearch={handleSearch}
+        onFilter={handleFilter}
+        categories={categories}
+        tags={tags}
+        loading={newsLoading}
+        initialFilters={searchFilters}
+      />
 
       {/* News Grid */}
       {newsError && (
@@ -95,20 +66,20 @@ export default function NewsPage() {
         <Box display="flex" justifyContent="center" py={4}>
           <CircularProgress size="lg" />
         </Box>
-      ) : filteredNews.length === 0 ? (
+      ) : publishedNews.length === 0 ? (
         <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
             <Typography level="h4" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
               No News Found
             </Typography>
             <Typography level="body1" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              {searchTerm ? 'Try different search terms' : 'Check back later for updates'}
+              Try different search terms or filters
             </Typography>
           </CardContent>
         </Card>
       ) : (
         <Grid container spacing={3}>
-          {filteredNews.map((news) => (
+          {publishedNews.map((news) => (
             <Grid key={news.id} xs={12} sm={6} lg={4}>
               <Card
                 variant="outlined"
@@ -178,7 +149,7 @@ export default function NewsPage() {
                   )}
                   <Button
                     component={Link}
-                    to={`/news/${news.id}`}
+                    to={`/news/${news.slug}`}
                     variant="outlined"
                     size="sm"
                     fullWidth
@@ -202,10 +173,10 @@ export default function NewsPage() {
       )}
 
       {/* Load More */}
-      {filteredNews.length > 0 && (
+      {publishedNews.length > 0 && (
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-            Showing {filteredNews.length} articles
+            Showing {publishedNews.length} articles
           </Typography>
         </Box>
       )}

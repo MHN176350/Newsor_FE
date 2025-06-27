@@ -5,6 +5,7 @@ export const LOGIN_USER = gql`
   mutation LoginUser($username: String!, $password: String!) {
     tokenAuth(username: $username, password: $password) {
       token
+      refreshToken
       user {
         id
         username
@@ -30,8 +31,8 @@ export const VERIFY_TOKEN = gql`
 `;
 
 export const REFRESH_TOKEN = gql`
-  mutation RefreshToken($token: String!) {
-    refreshToken(token: $token) {
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refreshToken: $refreshToken) {
       token
       payload
     }

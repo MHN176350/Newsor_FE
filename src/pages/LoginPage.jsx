@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [loginUser, { loading }] = useMutation(LOGIN_USER, {
     onCompleted: (data) => {
       if (data.tokenAuth?.token) {
-        login(data.tokenAuth.user, data.tokenAuth.token);
+        login(data.tokenAuth.user, data.tokenAuth.token, data.tokenAuth.refreshToken);
         navigate('/dashboard');
       }
     },

@@ -1,15 +1,35 @@
 import { Box, Typography, Button, Card, CardContent, Chip, Grid, Stack, CircularProgress, Alert } from '@mui/joy';
+import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
-import { GET_PUBLISHED_NEWS, GET_CATEGORIES } from '../graphql/queries';
+import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
+import SearchAndFilter from '../components/SearchAndFilter';
 
 export default function HomePage() {
-  const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_PUBLISHED_NEWS);
+  const [searchFilters, setSearchFilters] = useState({
+    search: null,
+    categoryId: null,
+    tagId: null,
+  });
+
+  const { data: newsData, loading: newsLoading, error: newsError, refetch: refetchNews } = useQuery(GET_PUBLISHED_NEWS, {
+    variables: searchFilters,
+  });
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
+  const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
 
   const publishedNews = newsData?.publishedNews || [];
   const categories = categoriesData?.categories || [];
+  const tags = tagsData?.tags || [];
+
+  const handleSearch = (searchTerm) => {
+    setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));
+  };
+
+  const handleFilter = (filters) => {
+    setSearchFilters(filters);
+  };
 
   if (newsError) {
     console.error('GraphQL Error:', newsError);
@@ -145,6 +165,16 @@ export default function HomePage() {
         >
           Latest News
         </Typography>
+
+        {/* Search and Filter Component */}
+        <SearchAndFilter
+          onSearch={handleSearch}
+          onFilter={handleFilter}
+          categories={categories}
+          tags={tags}
+          loading={newsLoading}
+          initialFilters={searchFilters}
+        />
 
         {newsLoading && (
           <Card variant="outlined" sx={{ bgcolor: 'background.surface' }}>

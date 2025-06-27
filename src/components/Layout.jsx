@@ -1,13 +1,37 @@
-import { Box, Typography, Button, Sheet, IconButton } from '@mui/joy';
+import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, MenuButton, MenuItem, Chip } from '@mui/joy';
 import { useColorScheme } from '@mui/joy/styles';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const toggleColorScheme = () => {
     setMode(mode === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return `${firstName} ${lastName}`.trim() || user.username;
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return user.username?.charAt(0)?.toUpperCase() || 'U';
   };
 
   return (
@@ -64,6 +88,36 @@ export default function Layout({ children }) {
             News
           </Button>
 
+          {/* Authenticated user additional navigation */}
+          {isAuthenticated && (
+            <>
+              <Button
+                variant="plain"
+                component={Link}
+                to="/profile"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                Profile
+              </Button>
+              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+                <Button
+                  variant="plain"
+                  component={Link}
+                  to="/dashboard"
+                  sx={{ 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }}
+                >
+                  Dashboard
+                </Button>
+              )}
+            </>
+          )}
+
           {/* Theme Toggle */}
           <IconButton
             onClick={toggleColorScheme}
@@ -76,30 +130,100 @@ export default function Layout({ children }) {
             {mode === 'dark' ? '🌞' : '🌙'}
           </IconButton>
 
-          {/* Auth Buttons */}
-          <Button
-            variant="outlined"
-            size="sm"
-            onClick={() => navigate('/login')}
-            sx={{
-              borderColor: 'neutral.300',
-              color: 'text.primary',
-              '&:hover': { borderColor: 'primary.400', bgcolor: 'neutral.50' }
-            }}
-          >
-            Login
-          </Button>
-          <Button
-            variant="solid"
-            size="sm"
-            onClick={() => navigate('/register')}
-            sx={{
-              bgcolor: 'primary.600',
-              '&:hover': { bgcolor: 'primary.700' }
-            }}
-          >
-            Register
-          </Button>
+          {/* Auth Section */}
+          {isAuthenticated ? (
+            /* User Profile Dropdown */
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* User Role Badge */}
+              {user?.profile?.role && (
+                <Chip
+                  size="sm"
+                  variant="soft"
+                  color={
+                    user.profile.role === 'admin' ? 'danger' :
+                    user.profile.role === 'manager' ? 'warning' :
+                    user.profile.role === 'writer' ? 'success' : 'neutral'
+                  }
+                >
+                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1)}
+                </Chip>
+              )}
+              
+              <Dropdown>
+                <MenuButton
+                  slots={{ root: Box }}
+                  slotProps={{
+                    root: {
+                      sx: {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer',
+                        p: 1,
+                        borderRadius: 'sm',
+                        '&:hover': { bgcolor: 'neutral.100' }
+                      }
+                    }
+                  }}
+                >
+                  <Avatar
+                    size="sm"
+                    src={user?.profile?.avatarUrl}
+                    sx={{ 
+                      bgcolor: 'primary.500',
+                      color: 'white',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {getUserInitials()}
+                  </Avatar>
+                  <Typography level="body-sm" sx={{ fontWeight: 'md', color: 'text.primary' }}>
+                    {getUserDisplayName()}
+                  </Typography>
+                </MenuButton>
+                <Menu placement="bottom-end" sx={{ zIndex: 1300 }}>
+                  <MenuItem onClick={() => navigate('/profile')}>
+                    👤 Profile
+                  </MenuItem>
+                  {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+                    <MenuItem onClick={() => navigate('/dashboard')}>
+                      📊 Dashboard
+                    </MenuItem>
+                  )}
+                  <MenuItem onClick={handleLogout} sx={{ color: 'danger.500' }}>
+                    🚪 Logout
+                  </MenuItem>
+                </Menu>
+              </Dropdown>
+            </Box>
+          ) : (
+            /* Login/Register Buttons */
+            <>
+              <Button
+                variant="outlined"
+                size="sm"
+                onClick={() => navigate('/login')}
+                sx={{
+                  borderColor: 'neutral.300',
+                  color: 'text.primary',
+                  '&:hover': { borderColor: 'primary.400', bgcolor: 'neutral.50' }
+                }}
+              >
+                Login
+              </Button>
+              <Button
+                variant="solid"
+                size="sm"
+                onClick={() => navigate('/register')}
+                sx={{
+                  bgcolor: 'primary.600',
+                  '&:hover': { bgcolor: 'primary.700' }
+                }}
+              >
+                Register
+              </Button>
+            </>
+          )}
         </Box>
       </Sheet>
 

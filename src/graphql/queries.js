@@ -64,18 +64,18 @@ export const GET_USER = gql`
 
 // News Queries
 export const GET_NEWS_LIST = gql`
-  query GetNewsList($status: String, $categoryId: Int, $tagId: Int, $authorId: Int) {
-    newsList(status: $status, categoryId: $categoryId, tagId: $tagId, authorId: $authorId) {
+  query GetNewsList($status: String, $categoryId: Int, $tagId: Int, $authorId: Int, $search: String) {
+    newsList(status: $status, categoryId: $categoryId, tagId: $tagId, authorId: $authorId, search: $search) {
       id
       title
       content
       excerpt
-      featuredImage
+      featuredImageUrl
       status
-      isPublished
       publishedAt
       createdAt
       updatedAt
+      slug
       author {
         id
         username
@@ -92,23 +92,21 @@ export const GET_NEWS_LIST = gql`
         name
         slug
       }
-      likesCount
-      commentsCount
-      readCount
     }
   }
 `;
 
 export const GET_PUBLISHED_NEWS = gql`
-  query GetPublishedNews($categoryId: Int, $tagId: Int) {
-    publishedNews(categoryId: $categoryId, tagId: $tagId) {
+  query GetPublishedNews($search: String, $categoryId: Int, $tagId: Int) {
+    publishedNews(search: $search, categoryId: $categoryId, tagId: $tagId) {
       id
       title
       content
       excerpt
-      featuredImage
+      featuredImageUrl
       publishedAt
       createdAt
+      slug
       author {
         id
         username
@@ -125,26 +123,23 @@ export const GET_PUBLISHED_NEWS = gql`
         name
         slug
       }
-      likesCount
-      commentsCount
-      readCount
     }
   }
 `;
 
 export const GET_NEWS = gql`
-  query GetNews($id: Int!) {
-    news(id: $id) {
+  query GetNews($id: Int, $slug: String) {
+    newsArticle(id: $id, slug: $slug) {
       id
       title
       content
       excerpt
-      featuredImage
+      featuredImageUrl
       status
-      isPublished
       publishedAt
       createdAt
       updatedAt
+      slug
       author {
         id
         username
@@ -160,21 +155,6 @@ export const GET_NEWS = gql`
         id
         name
         slug
-      }
-      likesCount
-      commentsCount
-      readCount
-      isLikedByUser
-      comments {
-        id
-        content
-        createdAt
-        author {
-          id
-          username
-          firstName
-          lastName
-        }
       }
     }
   }
@@ -182,17 +162,17 @@ export const GET_NEWS = gql`
 
 export const GET_MY_NEWS = gql`
   query GetMyNews {
-    myNews {
+    newsList(authorId: null) {
       id
       title
       content
       excerpt
-      featuredImage
+      featuredImageUrl
       status
-      isPublished
       publishedAt
       createdAt
       updatedAt
+      slug
       category {
         id
         name
@@ -203,9 +183,6 @@ export const GET_MY_NEWS = gql`
         name
         slug
       }
-      likesCount
-      commentsCount
-      readCount
     }
   }
 `;
@@ -218,7 +195,6 @@ export const GET_CATEGORIES = gql`
       name
       slug
       description
-      newsCount
     }
   }
 `;
@@ -230,7 +206,6 @@ export const GET_CATEGORY = gql`
       name
       slug
       description
-      newsCount
     }
   }
 `;
@@ -242,7 +217,6 @@ export const GET_TAGS = gql`
       id
       name
       slug
-      newsCount
     }
   }
 `;
@@ -253,15 +227,14 @@ export const GET_TAG = gql`
       id
       name
       slug
-      newsCount
     }
   }
 `;
 
 // Comment Queries
 export const GET_COMMENTS = gql`
-  query GetComments($newsId: Int!) {
-    comments(newsId: $newsId) {
+  query GetComments($articleId: Int!) {
+    articleComments(articleId: $articleId) {
       id
       content
       createdAt
@@ -278,15 +251,15 @@ export const GET_COMMENTS = gql`
 
 // Analytics Queries
 export const GET_READING_HISTORY = gql`
-  query GetReadingHistory {
-    readingHistory {
+  query GetReadingHistory($userId: Int!) {
+    userReadingHistory(userId: $userId) {
       id
       readAt
       news {
         id
         title
         excerpt
-        featuredImage
+        featuredImageUrl
         author {
           id
           username
@@ -298,6 +271,8 @@ export const GET_READING_HISTORY = gql`
   }
 `;
 
+// Analytics Queries - These would need to be implemented in the backend
+/*
 export const GET_NEWS_ANALYTICS = gql`
   query GetNewsAnalytics($newsId: Int!) {
     newsAnalytics(newsId: $newsId) {
@@ -313,7 +288,7 @@ export const GET_NEWS_ANALYTICS = gql`
   }
 `;
 
-// Dashboard Queries
+// Dashboard Queries - These would need to be implemented in the backend
 export const GET_DASHBOARD_STATS = gql`
   query GetDashboardStats {
     dashboardStats {
@@ -340,3 +315,4 @@ export const GET_DASHBOARD_STATS = gql`
     }
   }
 `;
+*/

@@ -13,16 +13,16 @@ export default function NewsDetailPage() {
   const [comment, setComment] = useState('');
 
   const { data, loading, error } = useQuery(GET_NEWS, {
-    variables: { id: parseInt(slug) },
+    variables: { slug: slug },
     skip: !slug,
   });
 
   const [toggleLike] = useMutation(TOGGLE_LIKE);
   const [createComment] = useMutation(CREATE_COMMENT, {
-    refetchQueries: [{ query: GET_NEWS, variables: { id: parseInt(slug) } }],
+    refetchQueries: [{ query: GET_NEWS, variables: { slug: slug } }],
   });
 
-  const news = data?.news;
+  const news = data?.newsArticle;
 
   const handleLike = () => {
     if (!isAuthenticated) return;

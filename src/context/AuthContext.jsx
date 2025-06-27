@@ -1,12 +1,25 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { useLazyQuery } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { GET_CURRENT_USER } from '../graphql/queries';
-import { getToken, setToken, removeToken, getCurrentUser, setCurrentUser, removeCurrentUser } from '../utils/constants';
+import { REFRESH_TOKEN } from '../graphql/mutations';
+import { 
+  getToken, 
+  setToken, 
+  removeToken, 
+  getRefreshToken, 
+  setRefreshToken, 
+  removeRefreshToken, 
+  getCurrentUser, 
+  setCurrentUser, 
+  removeCurrentUser,
+  clearAuthData 
+} from '../utils/constants';
 
 // Initial state
 const initialState = {
   user: null,
   token: getToken(),
+  refreshToken: getRefreshToken(),
   isAuthenticated: false,
   isLoading: true,
 };
@@ -19,6 +32,7 @@ function authReducer(state, action) {
         ...state,
         user: action.payload.user,
         token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
         isAuthenticated: true,
         isLoading: false,
       };
@@ -27,7 +41,14 @@ function authReducer(state, action) {
         ...state,
         user: null,
         token: null,
+        refreshToken: null,
         isAuthenticated: false,
+        isLoading: false,
+      };
+    case 'REFRESH_TOKEN':
+      return {
+        ...state,
+        token: action.payload.token,
         isLoading: false,
       };
     case 'SET_LOADING':
@@ -53,6 +74,7 @@ const AuthContext = createContext(null);
 // Auth provider component
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  
   const [getCurrentUserQuery, { loading }] = useLazyQuery(GET_CURRENT_USER, {
     onCompleted: (data) => {
       if (data?.me) {
@@ -70,9 +92,28 @@ export function AuthProvider({ children }) {
     },
   });
 
+  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN, {
+    onCompleted: (data) => {
+      if (data?.refreshToken?.token) {
+        const newToken = data.refreshToken.token;
+        setToken(newToken);
+        dispatch({ type: 'REFRESH_TOKEN', payload: { token: newToken } });
+        console.log('Token refreshed successfully');
+      } else {
+        console.error('Failed to refresh token');
+        logout();
+      }
+    },
+    onError: (error) => {
+      console.error('Error refreshing token:', error);
+      logout();
+    },
+  });
+
   // Initialize auth state
   useEffect(() => {
     const token = getToken();
+    const refreshToken = getRefreshToken();
     const savedUser = getCurrentUser();
     
     if (token && savedUser) {
@@ -80,17 +121,25 @@ export function AuthProvider({ children }) {
     } else if (token) {
       // Token exists but no user data, fetch from server
       getCurrentUserQuery();
+    } else if (refreshToken) {
+      // No token but refresh token exists, try to refresh
+      refreshTokenMutation({
+        variables: { refreshToken }
+      });
     } else {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [getCurrentUserQuery]);
+  }, [getCurrentUserQuery, refreshTokenMutation]);
 
   // Login function
-  const login = async (user, token) => {
+  const login = async (user, token, refreshToken) => {
     try {
       setToken(token);
+      if (refreshToken) {
+        setRefreshToken(refreshToken);
+      }
       setCurrentUser(user);
-      dispatch({ type: 'LOGIN', payload: { user, token } });
+      dispatch({ type: 'LOGIN', payload: { user, token, refreshToken } });
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -100,10 +149,64 @@ export function AuthProvider({ children }) {
 
   // Logout function
   const logout = () => {
-    removeToken();
-    removeCurrentUser();
+    clearAuthData();
     dispatch({ type: 'LOGOUT' });
   };
+
+  // Refresh token function
+  const refreshAuthToken = async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      logout();
+      return false;
+    }
+
+    try {
+      await refreshTokenMutation({
+        variables: { refreshToken }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      logout();
+      return false;
+    }
+  };
+
+  // Check if token is expired (helper function)
+  const isTokenExpired = (token) => {
+    if (!token) return true;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp < currentTime;
+    } catch (error) {
+      console.error('Error parsing token:', error);
+      return true;
+    }
+  };
+
+  // Auto-refresh token when needed
+  useEffect(() => {
+    let refreshInterval;
+
+    if (state.token && state.refreshToken) {
+      // Check token expiration every minute
+      refreshInterval = setInterval(() => {
+        if (isTokenExpired(state.token)) {
+          console.log('Token expired, attempting refresh...');
+          refreshAuthToken();
+        }
+      }, 60000); // Check every minute
+    }
+
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [state.token, state.refreshToken]);
 
   // Update user function
   const updateUser = (updatedUser) => {
@@ -161,6 +264,8 @@ export function AuthProvider({ children }) {
     logout,
     updateUser,
     refreshUser,
+    refreshAuthToken,
+    isTokenExpired,
     hasRole,
     hasAnyRole,
     canPerformAction,
