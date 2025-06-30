@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getContainer } from '../../container.js';
 
 /**
@@ -9,16 +9,25 @@ export const useNews = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const container = getContainer();
-  const getPublishedNewsUseCase = container.getPublishedNewsUseCase;
-  const createNewsUseCase = container.createNewsUseCase;
-  const searchNewsUseCase = container.searchNewsUseCase;
+  // Use refs to store stable references to services
+  const containerRef = useRef(null);
+  const getPublishedNewsUseCaseRef = useRef(null);
+  const createNewsUseCaseRef = useRef(null);
+  const searchNewsUseCaseRef = useRef(null);
+
+  // Initialize services once
+  if (!containerRef.current) {
+    containerRef.current = getContainer();
+    getPublishedNewsUseCaseRef.current = containerRef.current.getPublishedNewsUseCase;
+    createNewsUseCaseRef.current = containerRef.current.createNewsUseCase;
+    searchNewsUseCaseRef.current = containerRef.current.searchNewsUseCase;
+  }
 
   const loadNews = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const news = await getPublishedNewsUseCase.execute(filters);
+      const news = await getPublishedNewsUseCaseRef.current.execute(filters);
       setNewsList(news);
     } catch (err) {
       setError(err.message);
@@ -26,13 +35,13 @@ export const useNews = () => {
     } finally {
       setLoading(false);
     }
-  }, [getPublishedNewsUseCase]);
+  }, []); // Empty dependency array since we're using refs
 
   const searchNews = useCallback(async (query, filters = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const news = await searchNewsUseCase.execute(query, filters);
+      const news = await searchNewsUseCaseRef.current.execute(query, filters);
       setNewsList(news);
     } catch (err) {
       setError(err.message);
@@ -40,13 +49,13 @@ export const useNews = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchNewsUseCase]);
+  }, []); // Empty dependency array since we're using refs
 
   const createNews = async (newsData) => {
     try {
       setLoading(true);
       setError(null);
-      const newArticle = await createNewsUseCase.execute(newsData);
+      const newArticle = await createNewsUseCaseRef.current.execute(newsData);
       
       // Add to news list if it matches current filters
       setNewsList(prevList => [newArticle, ...prevList]);

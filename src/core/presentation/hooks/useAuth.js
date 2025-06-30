@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getContainer } from '../../container.js';
 
 /**
@@ -9,26 +9,34 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const container = getContainer();
-  const authService = container.authService;
-  const getCurrentUserUseCase = container.getCurrentUserUseCase;
+  // Use refs to store stable references to services
+  const containerRef = useRef(null);
+  const authServiceRef = useRef(null);
+  const getCurrentUserUseCaseRef = useRef(null);
+
+  // Initialize services once
+  if (!containerRef.current) {
+    containerRef.current = getContainer();
+    authServiceRef.current = containerRef.current.authService;
+    getCurrentUserUseCaseRef.current = containerRef.current.getCurrentUserUseCase;
+  }
 
   useEffect(() => {
     loadCurrentUser();
 
     // Listen for auth state changes
-    const unsubscribe = authService.addAuthListener(() => {
+    const unsubscribe = authServiceRef.current.addAuthListener(() => {
       loadCurrentUser();
     });
 
     return unsubscribe;
-  }, [authService]);
+  }, []); // Empty dependency array since we're using refs
 
   const loadCurrentUser = async () => {
     try {
       setLoading(true);
       setError(null);
-      const currentUser = await getCurrentUserUseCase.execute();
+      const currentUser = await getCurrentUserUseCaseRef.current.execute();
       
       // Avatar URLs should already be optimized by the backend
       // No need to process them further on the frontend
@@ -46,7 +54,7 @@ export const useAuth = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await authService.login(credentials);
+      const result = await authServiceRef.current.login(credentials);
       
       if (result.success) {
         // Set user state immediately for UI responsiveness
@@ -69,7 +77,7 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await authService.logout();
+      await authServiceRef.current.logout();
       setUser(null);
       setError(null);
     } catch (err) {
@@ -81,7 +89,7 @@ export const useAuth = () => {
     try {
       setLoading(true);
       setError(null);
-      const registerUseCase = container.registerUserUseCase;
+      const registerUseCase = containerRef.current.registerUserUseCase;
       const newUser = await registerUseCase.execute(userData);
       return { success: true, user: newUser };
     } catch (err) {
@@ -98,14 +106,19 @@ export const useAuth = () => {
       setError(null);
       
       // Let the backend handle URL optimization
-      const updateProfileUseCase = container.updateUserProfileUseCase;
+      const updateProfileUseCase = containerRef.current.updateUserProfileUseCase;
       const updatedProfile = await updateProfileUseCase.execute(profileData);
       
       // Update user state with new profile
-      setUser(prevUser => ({
-        ...prevUser,
+      const updatedUser = {
+        ...user,
         profile: updatedProfile
-      }));
+      };
+      
+      setUser(updatedUser);
+      
+      // Update auth service and local storage
+      authServiceRef.current.updateCurrentUser(updatedUser);
       
       return { success: true, profile: updatedProfile };
     } catch (err) {
@@ -113,6 +126,26 @@ export const useAuth = () => {
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateAvatar = async (updatedProfile) => {
+    try {
+      // Update user state with new profile data
+      const updatedUser = {
+        ...user,
+        profile: updatedProfile
+      };
+      
+      setUser(updatedUser);
+      
+      // Update auth service and local storage
+      authServiceRef.current.updateCurrentUser(updatedUser);
+      
+      return { success: true, profile: updatedProfile };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -128,6 +161,7 @@ export const useAuth = () => {
     logout,
     register,
     updateProfile,
+    updateAvatar,
     refreshUser: loadCurrentUser
   };
 };

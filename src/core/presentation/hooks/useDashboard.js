@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getContainer } from '../../container.js';
 
 /**
@@ -10,13 +10,21 @@ export const useDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const container = getContainer();
-  const getDashboardStatsUseCase = container.getDashboardStatsUseCase;
-  const getRecentActivityUseCase = container.getRecentActivityUseCase;
+  // Use refs to store stable references to services
+  const containerRef = useRef(null);
+  const getDashboardStatsUseCaseRef = useRef(null);
+  const getRecentActivityUseCaseRef = useRef(null);
+
+  // Initialize services once
+  if (!containerRef.current) {
+    containerRef.current = getContainer();
+    getDashboardStatsUseCaseRef.current = containerRef.current.getDashboardStatsUseCase;
+    getRecentActivityUseCaseRef.current = containerRef.current.getRecentActivityUseCase;
+  }
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, []); // Empty dependency array
 
   const loadDashboardData = async () => {
     try {
@@ -25,8 +33,8 @@ export const useDashboard = () => {
 
       // Load stats and recent activity in parallel
       const [statsResult, activityResult] = await Promise.allSettled([
-        getDashboardStatsUseCase.execute(),
-        getRecentActivityUseCase.execute(10)
+        getDashboardStatsUseCaseRef.current.execute(),
+        getRecentActivityUseCaseRef.current.execute(10)
       ]);
 
       if (statsResult.status === 'fulfilled') {

@@ -67,11 +67,12 @@ export class AuthService {
   }
 
   async getCurrentUser() {
+    // Try to get from cache first
     if (this.currentUser) {
       return this.currentUser;
     }
 
-    // Try to get user from storage first
+    // Try to get from storage
     const storedUser = this.storageService.getItem('currentUser');
     if (storedUser) {
       this.currentUser = storedUser;
@@ -97,6 +98,38 @@ export class AuthService {
       this.tokenService.clearTokens();
       this.storageService.removeItem('currentUser');
       return null;
+    }
+  }
+
+  /**
+   * Update current user data and notify listeners
+   * This is useful when user data changes (e.g., profile update, avatar upload)
+   */
+  updateCurrentUser(updatedUser) {
+    this.currentUser = updatedUser;
+    this.storageService.setItem('currentUser', updatedUser);
+    this.notifyAuthChange();
+  }
+
+  /**
+   * Refresh current user data from the server
+   */
+  async refreshCurrentUser() {
+    const token = this.tokenService.getToken();
+    if (!token) {
+      return null;
+    }
+
+    try {
+      this.currentUser = await this.userRepository.getCurrentUser();
+      if (this.currentUser) {
+        this.storageService.setItem('currentUser', this.currentUser);
+        this.notifyAuthChange();
+      }
+      return this.currentUser;
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      return this.currentUser;
     }
   }
 

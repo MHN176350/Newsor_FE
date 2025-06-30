@@ -102,9 +102,56 @@ export class GraphQLUploadRepository {
     }
   }
 
-  async uploadImage(imageData) {
-    // TODO: Implement direct image upload to Cloudinary
-    throw new Error('Direct image upload not implemented yet');
+  async uploadImage(imageData, options = {}) {
+    try {
+      // Get upload signature first
+      const signatureData = await this.getCloudinarySignature();
+      
+      // Prepare form data for Cloudinary upload
+      const formData = new FormData();
+      formData.append('file', imageData);
+      formData.append('api_key', signatureData.apiKey);
+      formData.append('timestamp', signatureData.timestamp);
+      formData.append('signature', signatureData.signature);
+      formData.append('folder', signatureData.folder);
+      
+      // Add optional parameters
+      if (options.resourceType) {
+        formData.append('resource_type', options.resourceType);
+      }
+      if (options.transformation) {
+        formData.append('transformation', options.transformation);
+      }
+      
+      // Upload to Cloudinary
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`;
+      
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      
+      return {
+        success: true,
+        url: result.secure_url,
+        publicId: result.public_id,
+        format: result.format,
+        width: result.width,
+        height: result.height,
+        bytes: result.bytes
+      };
+      
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      throw new Error(error.message || 'Failed to upload image');
+    }
   }
 
   async deleteImage(imageId) {

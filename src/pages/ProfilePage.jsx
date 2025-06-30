@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, updateProfile, loading, error } = useAuth();
+  const { user, isAuthenticated, updateProfile, updateAvatar, loading, error } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     bio: '',
@@ -48,9 +48,15 @@ export default function ProfilePage() {
     });
   };
 
-  const handleAvatarUploaded = (imageUrl, profile) => {
-    setMessage('Avatar updated successfully!');
-    // The useAuth hook will automatically update the user data
+  const handleAvatarUploaded = async (imageUrl, profile) => {
+    try {
+      // Update the user data with the new avatar
+      await updateAvatar(profile);
+      setMessage('Avatar updated successfully!');
+    } catch (err) {
+      setMessage('Failed to update avatar. Please try again.');
+      console.error('Avatar update error:', err);
+    }
   };
 
   const handleSubmit = async (e) => {
