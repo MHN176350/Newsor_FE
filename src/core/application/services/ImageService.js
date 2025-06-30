@@ -1,0 +1,190 @@
+/**
+ * Service for handling image operations
+ */
+export class ImageService {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+  }
+
+  /**
+   * Convert file to base64
+   * @param {File} file - The file to convert
+   * @returns {Promise<string>} Base64 string
+   */
+  async fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Resize image to maximum dimensions
+   * @param {File} file - The image file
+   * @param {number} maxWidth - Maximum width
+   * @param {number} maxHeight - Maximum height
+   * @param {number} quality - JPEG quality (0-1)
+   * @returns {Promise<string>} Base64 string of resized image
+   */
+  async resizeImage(file, maxWidth = 800, maxHeight = 600, quality = 0.85) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+        
+        // Set canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64
+        const base64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(base64);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  /**
+   * Upload base64 image to server
+   * @param {string} base64Data - Base64 encoded image
+   * @param {Object} options - Upload options
+   * @returns {Promise<Object>} Upload result
+   */
+  async uploadBase64Image(base64Data, options = {}) {
+    const {
+      folder = 'newsor/uploads',
+      maxWidth = 800,
+      maxHeight = 600,
+      quality = 'auto',
+      format = 'auto'
+    } = options;
+
+    try {
+      const result = await this.userRepository.uploadBase64Image({
+        base64Data,
+        folder,
+        maxWidth,
+        maxHeight,
+        quality,
+        format
+      });
+
+      if (!result.success) {
+        throw new Error(result.errors?.join(', ') || 'Upload failed');
+      }
+
+      return {
+        url: result.url,
+        publicId: result.publicId,
+        success: true
+      };
+    } catch (error) {
+      console.error('Image upload error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Upload avatar image
+   * @param {string} base64Data - Base64 encoded avatar image
+   * @returns {Promise<Object>} Upload result with updated profile
+   */
+  async uploadAvatar(base64Data) {
+    try {
+      const result = await this.userRepository.uploadAvatar(base64Data);
+
+      if (!result.success) {
+        throw new Error(result.errors?.join(', ') || 'Avatar upload failed');
+      }
+
+      return {
+        profile: result.profile,
+        success: true
+      };
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process and upload image file
+   * @param {File} file - Image file
+   * @param {Object} options - Processing and upload options
+   * @returns {Promise<Object>} Upload result
+   */
+  async processAndUploadImage(file, options = {}) {
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select a valid image file');
+      }
+
+      // Validate file size (5MB limit)
+      const maxSize = options.maxSize || 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error('Image size must be less than 5MB');
+      }
+
+      // Resize image if needed
+      const base64Data = await this.resizeImage(
+        file,
+        options.maxWidth,
+        options.maxHeight,
+        options.quality
+      );
+
+      // Upload to server
+      return await this.uploadBase64Image(base64Data, options);
+    } catch (error) {
+      console.error('Image processing error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process and upload avatar
+   * @param {File} file - Avatar image file
+   * @returns {Promise<Object>} Upload result with updated profile
+   */
+  async processAndUploadAvatar(file) {
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select a valid image file');
+      }
+
+      // Validate file size (2MB limit for avatars)
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error('Avatar image size must be less than 2MB');
+      }
+
+      // Resize for avatar (square, 400x400)
+      const base64Data = await this.resizeImage(file, 400, 400, 0.9);
+
+      // Upload avatar
+      return await this.uploadAvatar(base64Data);
+    } catch (error) {
+      console.error('Avatar processing error:', error);
+      throw error;
+    }
+  }
+}
+
+// Note: Don't create singleton here - let the container handle it

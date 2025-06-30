@@ -1,5 +1,20 @@
 import { gql } from '@apollo/client';
 
+// Image Upload Mutations
+export const GET_CLOUDINARY_SIGNATURE = gql`
+  mutation GetCloudinarySignature {
+    getCloudinarySignature {
+      signature
+      timestamp
+      apiKey
+      cloudName
+      folder
+      success
+      errors
+    }
+  }
+`;
+
 // Authentication Mutations
 export const LOGIN_USER = gql`
   mutation LoginUser($username: String!, $password: String!) {
@@ -105,27 +120,29 @@ export const CREATE_NEWS = gql`
   mutation CreateNews(
     $title: String!
     $content: String!
-    $excerpt: String
-    $featuredImage: String
+    $excerpt: String!
     $categoryId: Int!
-    $tagIds: [Int!]
-    $status: String
+    $tagIds: [Int]
+    $featuredImage: String
+    $metaDescription: String
+    $metaKeywords: String
   ) {
     createNews(
       title: $title
       content: $content
       excerpt: $excerpt
-      featuredImage: $featuredImage
       categoryId: $categoryId
       tagIds: $tagIds
-      status: $status
+      featuredImage: $featuredImage
+      metaDescription: $metaDescription
+      metaKeywords: $metaKeywords
     ) {
       news {
         id
         title
         content
         excerpt
-        featuredImage
+        featuredImageUrl
         status
         createdAt
         category {

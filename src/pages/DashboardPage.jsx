@@ -1,7 +1,7 @@
 import { Box, Typography, Card, CardContent, Button, Grid, Stack, Chip, CircularProgress, Alert, Divider } from '@mui/joy';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { USER_ROLES, getRoleColor, formatDate } from '../utils/constants';
 import { GET_DASHBOARD_STATS, GET_RECENT_ACTIVITY } from '../graphql/queries';
@@ -9,7 +9,24 @@ import UserManagement from '../components/UserManagement';
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
+  // Always call hooks in the same order
+  const userRole = user?.profile?.role || USER_ROLES.READER;
+  const isAdminOrManager = userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.MANAGER;
+  const isAdmin = userRole === USER_ROLES.ADMIN;
+
+  // Fetch dashboard data for admin/manager users - always call hooks, but skip when not needed
+  const { data: statsData, loading: statsLoading, error: statsError } = useQuery(GET_DASHBOARD_STATS, {
+    skip: !isAuthenticated || !isAdminOrManager,
+  });
+
+  const { data: activityData, loading: activityLoading } = useQuery(GET_RECENT_ACTIVITY, {
+    variables: { limit: 5 },
+    skip: !isAuthenticated || !isAdminOrManager,
+  });
+
+  // Early return after all hooks are called
   if (!isAuthenticated) {
     return (
       <Box textAlign="center" py={6}>
@@ -25,21 +42,6 @@ export default function DashboardPage() {
       </Box>
     );
   }
-
-  const userRole = user?.profile?.role || USER_ROLES.READER;
-  const isAdminOrManager = userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.MANAGER;
-  const isAdmin = userRole === USER_ROLES.ADMIN;
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // Fetch dashboard data for admin/manager users
-  const { data: statsData, loading: statsLoading, error: statsError } = useQuery(GET_DASHBOARD_STATS, {
-    skip: !isAdminOrManager,
-  });
-
-  const { data: activityData, loading: activityLoading } = useQuery(GET_RECENT_ACTIVITY, {
-    variables: { limit: 5 },
-    skip: !isAdminOrManager,
-  });
 
   const stats = statsData?.dashboardStats;
   const recentActivity = activityData?.recentActivity || [];
@@ -66,10 +68,14 @@ export default function DashboardPage() {
         {(userRole === USER_ROLES.WRITER || userRole === USER_ROLES.MANAGER || userRole === USER_ROLES.ADMIN) && (
           <Grid xs={12} sm={6} md={3}>
             <Card
+              component={Link}
+              to="/news/create"
               variant="outlined"
               sx={{
                 p: 3,
                 textAlign: 'center',
+                textDecoration: 'none',
+                color: 'inherit',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 '&:hover': {

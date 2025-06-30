@@ -1,9 +1,9 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Grid, Avatar, IconButton } from '@mui/joy';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Grid } from '@mui/joy';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { CREATE_USER } from '../graphql/mutations';
-import { uploadImageToBackend, validateImageFile, createImagePreview } from '../utils/imageUtils';
+import ImageUpload from '../components/ImageUpload';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -16,9 +16,7 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const navigate = useNavigate();
 
   const [createUser, { loading }] = useMutation(CREATE_USER, {
@@ -44,25 +42,13 @@ export default function RegisterPage() {
     });
   };
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const validation = validateImageFile(file);
-    if (!validation.isValid) {
-      setError(validation.error);
-      return;
-    }
-
-    setAvatarFile(file);
-    const preview = await createImagePreview(file);
-    setAvatarPreview(preview);
+  const handleImageUploaded = (imageUrl) => {
+    setAvatarUrl(imageUrl);
     setError(''); // Clear any previous errors
   };
 
-  const removeImage = () => {
-    setAvatarFile(null);
-    setAvatarPreview(null);
+  const handleImageRemoved = () => {
+    setAvatarUrl('');
   };
 
   const handleSubmit = async (e) => {
@@ -74,35 +60,17 @@ export default function RegisterPage() {
       return;
     }
 
-    setUploading(true);
-    let avatarUrl = '';
-
-    try {
-      // Upload image first if selected
-      if (avatarFile) {
-        const uploadResult = await uploadImageToBackend(avatarFile);
-        if (uploadResult.success) {
-          avatarUrl = uploadResult.url;
-        } else {
-          throw new Error(uploadResult.error);
-        }
-      }
-
-      // Then create user with avatar URL
-      createUser({
-        variables: {
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          avatar: avatarUrl,
-        },
-      });
-    } catch (error) {
-      setError(`Registration failed: ${error.message}`);
-      setUploading(false);
-    }
+    // Create user with avatar URL
+    createUser({
+      variables: {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        avatar: avatarUrl,
+      },
+    });
   };
 
   if (success) {
@@ -165,44 +133,16 @@ export default function RegisterPage() {
               {/* Profile Image Upload */}
               <FormControl>
                 <FormLabel>Profile Picture (Optional)</FormLabel>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    size="lg"
-                    src={avatarPreview}
-                    sx={{ width: 80, height: 80 }}
-                  >
-                    {!avatarPreview && '📷'}
-                  </Avatar>
-                  <Stack spacing={1}>
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      size="sm"
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      Choose Image
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        style={{ display: 'none' }}
-                      />
-                    </Button>
-                    {avatarPreview && (
-                      <Button
-                        variant="soft"
-                        color="danger"
-                        size="sm"
-                        onClick={removeImage}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                    <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-                      Max 5MB • JPEG, PNG, WebP, GIF
-                    </Typography>
-                  </Stack>
-                </Box>
+                <ImageUpload
+                  variant="avatar"
+                  currentImageUrl={avatarUrl}
+                  onImageUploaded={handleImageUploaded}
+                  onImageRemoved={handleImageRemoved}
+                  maxSizeInMB={5}
+                  uploadButtonText="Choose Profile Picture"
+                  removeButtonText="Remove Picture"
+                  showPreview={true}
+                />
               </FormControl>
 
               <Grid container spacing={2}>
@@ -279,7 +219,7 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                loading={loading || uploading}
+                loading={loading}
                 fullWidth
                 sx={{
                   mt: 2,
@@ -289,7 +229,7 @@ export default function RegisterPage() {
                   }
                 }}
               >
-                {uploading ? 'Uploading Image...' : loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </Stack>
           </form>

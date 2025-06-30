@@ -1,7 +1,7 @@
 import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, MenuButton, MenuItem, Chip } from '@mui/joy';
 import { useColorScheme } from '@mui/joy/styles';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useQuery } from '@apollo/client';
 import { GET_CATEGORIES } from '../graphql/queries';
 

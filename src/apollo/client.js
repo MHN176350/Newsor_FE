@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { getToken, getRefreshToken, setToken, clearAuthData } from '../utils/constants';
+import { getContainer } from '../core/container.js';
 
 // Variable to track if we're currently refreshing
 let isRefreshing = false;
@@ -22,7 +22,9 @@ const processQueue = (error, token = null) => {
 
 // Function to refresh token
 const refreshToken = async () => {
-  const refreshTokenValue = getRefreshToken();
+  const container = getContainer();
+  const tokenService = container.tokenService;
+  const refreshTokenValue = tokenService.getRefreshToken();
   
   if (!refreshTokenValue) {
     throw new Error('No refresh token available');
@@ -50,13 +52,16 @@ const refreshToken = async () => {
     
     if (result.data?.refreshToken?.token) {
       const newToken = result.data.refreshToken.token;
-      setToken(newToken);
+      tokenService.setToken(newToken);
       return newToken;
     } else {
       throw new Error('Failed to refresh token');
     }
   } catch (error) {
-    clearAuthData();
+    // Clear all auth data through the token service
+    tokenService.clearTokens();
+    const storageService = container.storageService;
+    storageService.removeItem('currentUser');
     throw error;
   }
 };
@@ -68,8 +73,10 @@ const httpLink = createHttpLink({
 
 // Authentication link to add JWT token to requests
 const authLink = setContext((_, { headers }) => {
-  // Get the authentication token from local storage if it exists
-  const token = getToken();
+  
+  const container = getContainer();
+  const tokenService = container.tokenService;
+  const token = tokenService.getToken();
   
   return {
     headers: {
@@ -103,7 +110,12 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
               })
               .catch((error) => {
                 processQueue(error, null);
-                clearAuthData();
+                // Clear auth data through the container
+                const container = getContainer();
+                const tokenService = container.tokenService;
+                const storageService = container.storageService;
+                tokenService.clearTokens();
+                storageService.removeItem('currentUser');
                 window.location.href = '/login';
                 reject(error);
               })
@@ -131,7 +143,12 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
           })
           .catch((error) => {
             isRefreshing = false;
-            clearAuthData();
+            // Clear auth data through the container
+            const container = getContainer();
+            const tokenService = container.tokenService;
+            const storageService = container.storageService;
+            tokenService.clearTokens();
+            storageService.removeItem('currentUser');
             window.location.href = '/login';
             return Promise.reject(error);
           });

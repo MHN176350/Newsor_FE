@@ -5,7 +5,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { GET_NEWS } from '../graphql/queries';
 import { TOGGLE_LIKE, CREATE_COMMENT } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 
 export default function NewsDetailPage() {
   const { slug } = useParams();
@@ -128,16 +128,41 @@ export default function NewsDetailPage() {
       {/* Article Content */}
       <Card variant="outlined" sx={{ mb: 4 }}>
         <CardContent>
-          <Typography
-            level="body1"
+          <Box
             sx={{
               lineHeight: 1.7,
               color: 'var(--joy-palette-text-primary)',
-              whiteSpace: 'pre-wrap',
+              '& p': { margin: '0 0 1em 0' },
+              '& h1, & h2, & h3': { 
+                margin: '1.5em 0 0.5em 0', 
+                fontWeight: 'bold',
+                color: 'var(--joy-palette-text-primary)'
+              },
+              '& h1': { fontSize: '2em' },
+              '& h2': { fontSize: '1.5em' },
+              '& h3': { fontSize: '1.2em' },
+              '& ul, & ol': { paddingLeft: '2em', margin: '1em 0' },
+              '& blockquote': {
+                borderLeft: '4px solid var(--joy-palette-primary-500)',
+                paddingLeft: '1em',
+                margin: '1em 0',
+                fontStyle: 'italic',
+                color: 'var(--joy-palette-text-secondary)',
+              },
+              '& img': {
+                maxWidth: '100%',
+                height: 'auto',
+                margin: '1em 0',
+                borderRadius: '8px',
+                display: 'block',
+              },
+              '& a': {
+                color: 'var(--joy-palette-primary-500)',
+                textDecoration: 'underline',
+              },
             }}
-          >
-            {news.content}
-          </Typography>
+            dangerouslySetInnerHTML={{ __html: news.content }}
+          />
         </CardContent>
       </Card>
 

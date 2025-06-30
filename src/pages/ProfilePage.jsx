@@ -1,45 +1,29 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid, IconButton } from '@mui/joy';
-import { useState, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useMutation } from '@apollo/client';
-import { UPDATE_USER_PROFILE } from '../graphql/mutations';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid } from '@mui/joy';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { PhotoCamera } from '@mui/icons-material';
+import ImageUpload from '../components/ImageUpload';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, updateUser } = useAuth();
+  const { user, isAuthenticated, updateProfile, loading, error } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    bio: user?.profile?.bio || '',
-    phone: user?.profile?.phone || '',
-    dateOfBirth: user?.profile?.dateOfBirth || '',
-    avatar: '',
+    bio: '',
+    phone: '',
+    dateOfBirth: '',
   });
   const [message, setMessage] = useState('');
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const fileInputRef = useRef(null);
 
-  const [updateProfile, { loading }] = useMutation(UPDATE_USER_PROFILE, {
-    onCompleted: (data) => {
-      if (data.updateUserProfile?.success) {
-        updateUser({
-          ...user,
-          profile: {
-            ...user.profile,
-            ...data.updateUserProfile.profile,
-          },
-        });
-        setMessage('Profile updated successfully!');
-        setAvatarPreview(null);
-        setEditing(false);
-      } else {
-        setMessage(data.updateUserProfile?.errors?.join(', ') || 'Update failed');
-      }
-    },
-    onError: (error) => {
-      setMessage('Failed to update profile. Please try again.');
-    },
-  });
+  // Initialize form data when user data is available
+  useEffect(() => {
+    if (user?.profile) {
+      setFormData({
+        bio: user.profile.bio || '',
+        phone: user.profile.phone || '',
+        dateOfBirth: user.profile.dateOfBirth || '',
+      });
+    }
+  }, [user]);
 
   if (!isAuthenticated) {
     return (
@@ -64,53 +48,32 @@ export default function ProfilePage() {
     });
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setMessage('Please select an image smaller than 5MB');
-        return;
-      }
-      
-      if (!file.type.startsWith('image/')) {
-        setMessage('Please select a valid image file');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64String = event.target.result;
-        setFormData({
-          ...formData,
-          avatar: base64String,
-        });
-        setAvatarPreview(base64String);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAvatarUploaded = (imageUrl, profile) => {
+    setMessage('Avatar updated successfully!');
+    // The useAuth hook will automatically update the user data
   };
 
-  const handleAvatarClick = () => {
-    if (editing && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     
-    // Prepare variables, converting empty strings to null for proper GraphQL handling
-    const variables = {
-      bio: formData.bio || null,
-      phone: formData.phone || null,
-      dateOfBirth: formData.dateOfBirth || null,
-      avatar: formData.avatar || null,
-    };
-    
-    updateProfile({
-      variables,
-    });
+    try {
+      const result = await updateProfile({
+        bio: formData.bio || null,
+        phone: formData.phone || null,
+        dateOfBirth: formData.dateOfBirth || null,
+      });
+
+      if (result.success) {
+        setMessage('Profile updated successfully!');
+        setEditing(false);
+      } else {
+        setMessage(result.errors?.join(', ') || 'Update failed');
+      }
+    } catch (err) {
+      setMessage('Failed to update profile. Please try again.');
+      console.error('Profile update error:', err);
+    }
   };
 
   const handleCancel = () => {
@@ -118,9 +81,7 @@ export default function ProfilePage() {
       bio: user?.profile?.bio || '',
       phone: user?.profile?.phone || '',
       dateOfBirth: user?.profile?.dateOfBirth || '',
-      avatar: '',
     });
-    setAvatarPreview(null);
     setEditing(false);
     setMessage('');
   };
@@ -142,44 +103,31 @@ export default function ProfilePage() {
         <Grid xs={12} md={4}>
           <Card variant="outlined">
             <CardContent sx={{ textAlign: 'center' }}>
-              <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
-                <Avatar
-                  size="lg"
-                  src={avatarPreview || user?.profile?.avatarUrl}
-                  sx={{ 
-                    width: 100, 
-                    height: 100,
-                    cursor: editing ? 'pointer' : 'default',
-                    '&:hover': editing ? { opacity: 0.8 } : {}
-                  }}
-                  onClick={handleAvatarClick}
-                >
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
-                </Avatar>
-                {editing && (
-                  <IconButton
-                    size="sm"
-                    variant="solid"
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      borderRadius: '50%',
-                      minHeight: 32,
-                      minWidth: 32,
+              {/* Avatar Upload Section */}
+              <Box sx={{ mb: 3 }}>
+                {editing ? (
+                  <ImageUpload
+                    variant="avatar"
+                    currentImageUrl={user?.profile?.avatarUrl}
+                    onImageUploaded={handleAvatarUploaded}
+                    maxSizeInMB={2}
+                    uploadButtonText="Update Avatar"
+                    removeButtonText="Remove Avatar"
+                  />
+                ) : (
+                  <Avatar
+                    size="lg"
+                    src={user?.profile?.avatarUrl}
+                    sx={{ 
+                      width: 120, 
+                      height: 120,
+                      mx: 'auto',
+                      mb: 2
                     }}
-                    onClick={handleAvatarClick}
                   >
-                    <PhotoCamera />
-                  </IconButton>
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </Avatar>
                 )}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                />
               </Box>
               <Typography level="h4" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>
                 {user?.firstName} {user?.lastName}
@@ -245,7 +193,7 @@ export default function ProfilePage() {
 
               {editing && (
                 <Alert color="primary" variant="soft" sx={{ mb: 3 }}>
-                  💡 Tip: Click on your avatar or the camera icon to change your profile picture
+                  💡 Tip: Click "Edit Profile" to update your profile picture and information
                 </Alert>
               )}
 
@@ -290,7 +238,7 @@ export default function ProfilePage() {
                       value={formData.phone}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder="Enter your phone number"
+                      placeholder={editing ? "Enter your phone number" : (formData.phone ? "" : "Not provided")}
                     />
                   </FormControl>
 
@@ -302,6 +250,7 @@ export default function ProfilePage() {
                       value={formData.dateOfBirth}
                       onChange={handleChange}
                       disabled={!editing}
+                      placeholder={editing ? "" : (formData.dateOfBirth ? "" : "Not provided")}
                     />
                   </FormControl>
 
@@ -312,7 +261,7 @@ export default function ProfilePage() {
                       value={formData.bio}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder="Tell us about yourself..."
+                      placeholder={editing ? "Tell us about yourself..." : (formData.bio ? "" : "No bio provided")}
                       rows={4}
                       style={{
                         width: '100%',

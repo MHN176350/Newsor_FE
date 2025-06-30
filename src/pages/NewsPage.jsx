@@ -1,12 +1,14 @@
-import { Box, Typography, Card, CardContent, Button, Grid, Chip, Input, CircularProgress, Alert } from '@mui/joy';
+import { Box, Typography, Card, CardContent, Button, Grid, Chip, Input, CircularProgress, Alert, Stack } from '@mui/joy';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
 import SearchAndFilter from '../components/SearchAndFilter';
 
 export default function NewsPage() {
+  const { user, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const [searchFilters, setSearchFilters] = useState({
     search: null,
@@ -39,6 +41,10 @@ export default function NewsPage() {
 
   const publishedNews = newsData?.publishedNews || [];
 
+  // Check if user can create articles
+  const userRole = user?.profile?.role?.toLowerCase();
+  const canCreateArticles = isAuthenticated && ['writer', 'manager', 'admin'].includes(userRole);
+
   const handleSearch = (searchTerm) => {
     setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));
   };
@@ -51,12 +57,26 @@ export default function NewsPage() {
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography level="h1" sx={{ mb: 2, color: 'var(--joy-palette-text-primary)' }}>
-          Latest News
-        </Typography>
-        <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          Stay updated with the latest stories and insights
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+          <Box>
+            <Typography level="h1" sx={{ mb: 2, color: 'var(--joy-palette-text-primary)' }}>
+              Latest News
+            </Typography>
+            <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+              Stay updated with the latest stories and insights
+            </Typography>
+          </Box>
+          {canCreateArticles && (
+            <Button
+              component={Link}
+              to="/news/create"
+              variant="solid"
+              sx={{ mt: 1 }}
+            >
+              ✍️ Create Article
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       {/* Search and Filter Component */}

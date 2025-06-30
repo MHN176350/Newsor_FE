@@ -1,7 +1,7 @@
 import { Box, Typography, Card, CardContent, Button, Grid, Stack, Chip, CircularProgress, Alert, Divider, Tabs, TabList, Tab, TabPanel } from '@mui/joy';
 import { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { USER_ROLES, getRoleColor, formatDate } from '../utils/constants';
 import { GET_DASHBOARD_STATS, GET_RECENT_ACTIVITY } from '../graphql/queries';
