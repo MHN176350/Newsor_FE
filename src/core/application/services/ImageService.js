@@ -21,24 +21,27 @@ export class ImageService {
   }
 
   /**
-   * Resize image to maximum dimensions
+   * Resize image to maximum dimensions with high quality preservation
    * @param {File} file - The image file
    * @param {number} maxWidth - Maximum width
    * @param {number} maxHeight - Maximum height
-   * @param {number} quality - JPEG quality (0-1)
+   * @param {number|string} quality - JPEG quality (0-1 or string like "95")
    * @returns {Promise<string>} Base64 string of resized image
    */
-  async resizeImage(file, maxWidth = 800, maxHeight = 600, quality = 0.85) {
+  async resizeImage(file, maxWidth = 1200, maxHeight = 900, quality = "95") {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions
+        // Calculate new dimensions - be more conservative about resizing
         let { width, height } = img;
         
-        if (width > maxWidth || height > maxHeight) {
+        // Only resize if significantly larger to preserve quality
+        const needsResize = width > maxWidth * 1.2 || height > maxHeight * 1.2;
+        
+        if (needsResize) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width = Math.floor(width * ratio);
           height = Math.floor(height * ratio);
@@ -48,11 +51,19 @@ export class ImageService {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress image
+        // Use high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Draw image
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Convert to base64
-        const base64 = canvas.toDataURL('image/jpeg', quality);
+        // Convert to base64 with high quality
+        const qualityValue = typeof quality === 'string' ? 
+          parseInt(quality) / 100 : 
+          quality;
+        
+        const base64 = canvas.toDataURL('image/jpeg', Math.max(qualityValue, 0.9));
         resolve(base64);
       };
       
@@ -69,9 +80,9 @@ export class ImageService {
   async uploadBase64Image(base64Data, options = {}) {
     const {
       folder = 'newsor/uploads',
-      maxWidth = 800,
-      maxHeight = 600,
-      quality = 'auto',
+      maxWidth = 1200,
+      maxHeight = 900,
+      quality = '90',  // Use string format
       format = 'auto'
     } = options;
 

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useQuery } from '@apollo/client';
 import { GET_CATEGORIES } from '../graphql/queries';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
@@ -247,11 +248,15 @@ export default function Layout({ children }) {
                 >
                   <Avatar
                     size="sm"
-                    src={user?.profile?.avatarUrl}
+                    src={processImageUrlForDisplay(user?.profile?.avatarUrl)}
                     sx={{ 
                       bgcolor: 'primary.500',
                       color: 'white',
                       fontSize: '0.75rem'
+                    }}
+                    onError={(e) => {
+                      console.log('Avatar load error, falling back to initials:', e.target.src);
+                      e.target.style.display = 'none'; // This will show the initials
                     }}
                   >
                     {getUserInitials()}

@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import RichTextEditor from '../components/RichTextEditor';
 import TagAutocomplete from '../components/TagAutocomplete';
+import ImageUpload from '../components/ImageUpload';
 import { CREATE_NEWS, UPDATE_NEWS } from '../graphql/mutations';
 import { GET_CATEGORIES, GET_TAGS, GET_NEWS } from '../graphql/queries';
 
@@ -56,21 +57,25 @@ export default function CreateArticlePage() {
     }
   );
   const [createNews] = useMutation(CREATE_NEWS, {
-    update(cache, { data }) {
+    onCompleted: (data) => {
       if (data?.createNews?.success) {
-        // Refetch the my news query to update the list
-        cache.refetchQueries({
-          include: ['GetMyNews']
+        // Navigate after successful creation
+        navigate('/my-articles', { 
+          state: { 
+            message: 'Article created successfully! It has been saved as a draft.' 
+          }
         });
       }
     }
   });
   const [updateNews] = useMutation(UPDATE_NEWS, {
-    update(cache, { data }) {
+    onCompleted: (data) => {
       if (data?.updateNews?.success) {
-        // Refetch the my news query to update the list
-        cache.refetchQueries({
-          include: ['GetMyNews']
+        // Navigate after successful update
+        navigate('/my-articles', { 
+          state: { 
+            message: 'Article updated successfully!' 
+          }
         });
       }
     }
@@ -262,15 +267,10 @@ export default function CreateArticlePage() {
       }
 
       const operation = isEditing ? 'updateNews' : 'createNews';
-      if (data?.[operation]?.success) {
-        navigate('/my-articles', { 
-          state: { 
-            message: `Article ${isEditing ? 'updated' : 'created'} successfully! It has been saved as a draft.` 
-          }
-        });
-      } else {
+      if (!data?.[operation]?.success) {
         setErrors(data?.[operation]?.errors || [`Failed to ${isEditing ? 'update' : 'create'} article`]);
       }
+      // Success is handled by onCompleted callback
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} article:`, error);
       setErrors([error.message || `Failed to ${isEditing ? 'update' : 'create'} article`]);
@@ -364,6 +364,20 @@ export default function CreateArticlePage() {
                 label="Tags (Optional)"
                 placeholder="Type to search or add tags..."
               />
+
+              {/* Featured Image/Thumbnail */}
+              <FormControl>
+                <FormLabel>Featured Image (Thumbnail)</FormLabel>
+                <ImageUpload
+                  variant="thumbnail"
+                  currentImageUrl={formData.featuredImage}
+                  onImageUploaded={(imageUrl) => handleInputChange('featuredImage', imageUrl)}
+                  onImageRemoved={() => handleInputChange('featuredImage', '')}
+                  maxSizeInMB={5}
+                  uploadButtonText="Upload Thumbnail"
+                  removeButtonText="Remove Thumbnail"
+                />
+              </FormControl>
 
               {/* Content */}
               <FormControl required>

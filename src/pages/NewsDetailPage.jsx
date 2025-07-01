@@ -6,40 +6,54 @@ import { GET_NEWS } from '../graphql/queries';
 import { TOGGLE_LIKE, CREATE_COMMENT } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function NewsDetailPage() {
   const { slug } = useParams();
   const { user, isAuthenticated } = useAuth();
   const [comment, setComment] = useState('');
 
-  const { data, loading, error } = useQuery(GET_NEWS, {
+  const { data, loading, error, refetch } = useQuery(GET_NEWS, {
     variables: { slug: slug },
     skip: !slug,
   });
 
-  const [toggleLike] = useMutation(TOGGLE_LIKE);
+  const [toggleLike] = useMutation(TOGGLE_LIKE, {
+    onCompleted: () => {
+      refetch(); // Refetch to get updated like count and status
+    },
+    onError: (error) => {
+      console.error('Error toggling like:', error);
+    },
+  });
+
   const [createComment] = useMutation(CREATE_COMMENT, {
-    refetchQueries: [{ query: GET_NEWS, variables: { slug: slug } }],
+    onCompleted: () => {
+      setComment('');
+      refetch(); // Refetch to get updated comments
+    },
+    onError: (error) => {
+      console.error('Error creating comment:', error);
+    },
   });
 
   const news = data?.newsArticle;
 
   const handleLike = () => {
-    if (!isAuthenticated) return;
-    toggleLike({ variables: { newsId: news.id } });
+    if (!isAuthenticated || !news) return;
+    toggleLike({ variables: { newsId: parseInt(news.id) } });
   };
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-    if (!comment.trim() || !isAuthenticated) return;
+    if (!comment.trim() || !isAuthenticated || !news) return;
     
     createComment({
       variables: {
-        newsId: news.id,
+        articleId: news.id,
         content: comment,
       },
     });
-    setComment('');
   };
 
   if (loading) {
@@ -100,7 +114,23 @@ export default function NewsDetailPage() {
         {news.tags && news.tags.length > 0 && (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {news.tags.map((tag) => (
-              <Chip key={tag.id} size="sm" variant="outlined">
+              <Chip 
+                key={tag.id} 
+                size="sm" 
+                variant="outlined"
+                component={Link}
+                to={`/news?tag=${tag.id}`}
+                sx={{
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'var(--joy-palette-primary-100)',
+                    borderColor: 'var(--joy-palette-primary-400)',
+                    transform: 'translateY(-1px)',
+                  }
+                }}
+              >
                 #{tag.name}
               </Chip>
             ))}
@@ -109,11 +139,11 @@ export default function NewsDetailPage() {
       </Box>
 
       {/* Featured Image */}
-      {news.featuredImage && (
+      {news.featuredImageUrl && (
         <Box sx={{ mb: 4 }}>
           <Box
             component="img"
-            src={news.featuredImage}
+            src={processImageUrlForDisplay(news.featuredImageUrl)}
             alt={news.title}
             sx={{
               width: '100%',

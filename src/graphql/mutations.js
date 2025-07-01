@@ -276,8 +276,8 @@ export const UPDATE_NEWS_STATUS = gql`
 
 // Comment Mutations
 export const CREATE_COMMENT = gql`
-  mutation CreateComment($newsId: Int!, $content: String!) {
-    createComment(newsId: $newsId, content: $content) {
+  mutation CreateComment($articleId: ID!, $content: String!, $parentId: ID) {
+    createComment(articleId: $articleId, content: $content, parentId: $parentId) {
       comment {
         id
         content
@@ -320,8 +320,8 @@ export const DELETE_COMMENT = gql`
 
 // Like Mutations
 export const TOGGLE_LIKE = gql`
-  mutation ToggleLike($newsId: Int!) {
-    toggleLike(newsId: $newsId) {
+  mutation ToggleLike($newsId: Int, $commentId: Int) {
+    toggleLike(newsId: $newsId, commentId: $commentId) {
       liked
       likesCount
       success

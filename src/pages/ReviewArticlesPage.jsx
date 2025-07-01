@@ -265,7 +265,6 @@ export default function ReviewArticlesPage() {
                 onChange={(event, value) => setNewStatus(value)}
                 sx={{ width: '100%' }}
               >
-                <Option value="draft">Draft</Option>
                 <Option value="pending">Pending Review</Option>
                 <Option value="published">Published</Option>
                 <Option value="rejected">Rejected</Option>

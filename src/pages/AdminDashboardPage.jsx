@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { USER_ROLES, getRoleColor, formatDate } from '../utils/constants';
 import { GET_DASHBOARD_STATS, GET_RECENT_ACTIVITY } from '../graphql/queries';
 import UserManagement from '../components/UserManagement';
+import ContentManagement from '../components/ContentManagement';
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth();
@@ -304,19 +305,7 @@ export default function AdminDashboardPage() {
 
         {/* Content Management Tab */}
         <TabPanel value={2} sx={{ px: 0 }}>
-          <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Content Management
-          </Typography>
-          <Card variant="outlined">
-            <CardContent>
-              <Typography level="body1" sx={{ color: 'text.secondary' }}>
-                Content management features will be implemented here.
-              </Typography>
-              <Typography level="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                This could include article approval, category management, tag management, etc.
-              </Typography>
-            </CardContent>
-          </Card>
+          <ContentManagement />
         </TabPanel>
 
         {/* System Settings Tab */}

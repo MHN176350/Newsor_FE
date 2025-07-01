@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
 } from '@mui/joy';
 import { PhotoCamera, Upload, Delete } from '@mui/icons-material';
 import { container } from '../core/container.js';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 /**
  * Reusable image upload component
@@ -28,36 +29,54 @@ export default function ImageUpload({
   removeButtonText = 'Remove Image'
 }) {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(currentImageUrl);
   const [error, setError] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const fileInputRef = useRef(null);
   
   const imageService = container.imageService;
+
+  // Determine what URL to show for preview
+  const previewUrl = useMemo(() => {
+    // If user uploaded a new image, show that
+    if (uploadedImageUrl) {
+      return processImageUrlForDisplay(uploadedImageUrl);
+    }
+    // Otherwise show the current image from props
+    return processImageUrlForDisplay(currentImageUrl);
+  }, [uploadedImageUrl, currentImageUrl]);
 
   // Configuration based on variant
   const getConfig = () => {
     switch (variant) {
       case 'avatar':
         return {
-          maxWidth: 400,
-          maxHeight: 400,
-          quality: 0.9,
+          maxWidth: 600,   // Increased from 400
+          maxHeight: 600,  // Increased from 400
+          quality: "95",   // Very high quality
           aspectRatio: '1/1',
           previewSize: 120
         };
       case 'banner':
         return {
-          maxWidth: 1200,
-          maxHeight: 400,
-          quality: 0.85,
+          maxWidth: 1800,  // Increased from 1200
+          maxHeight: 600,  // Increased from 400
+          quality: "90",   // High quality
           aspectRatio: '3/1',
           previewSize: 300
         };
+      case 'thumbnail':
+        return {
+          maxWidth: 1600,  // Increased from 1200
+          maxHeight: 1200, // Increased from 900  
+          quality: "95",   // Very high quality
+          aspectRatio: '4/3',
+          previewSize: 250
+        };
       default:
         return {
-          maxWidth: 800,
-          maxHeight: 600,
-          quality: 0.85,
+          maxWidth: 1200,  // Increased from 800
+          maxHeight: 900,  // Increased from 600
+          quality: "90",   // High quality string
           aspectRatio: 'auto',
           previewSize: 200
         };
@@ -101,22 +120,30 @@ export default function ImageUpload({
         
         // For avatar uploads, we get back the updated profile
         if (result.profile) {
-          const imageUrl = result.profile.avatarUrl;
-          setPreviewUrl(imageUrl);
-          onImageUploaded?.(imageUrl, result.profile);
+          const originalAvatarUrl = result.profile.avatarUrl;
+          
+          setUploadedImageUrl(originalAvatarUrl);
+          onImageUploaded?.(originalAvatarUrl, result.profile);
         }
       } else {
         // Use general image upload
         const options = {
-          folder: variant === 'banner' ? 'newsor/banners' : 'newsor/uploads',
+          folder: variant === 'banner' ? 'newsor/banners' : 
+                  variant === 'thumbnail' ? 'newsor/thumbnails' : 'newsor/uploads',
           maxWidth: config.maxWidth,
           maxHeight: config.maxHeight,
-          quality: config.quality
+          quality: config.quality.toString(),
         };
         
         result = await imageService.processAndUploadImage(file, options);
-        setPreviewUrl(result.url);
-        onImageUploaded?.(result.url, result);
+        console.log('Image upload result:', result);
+        
+        // Store the uploaded image URL
+        const originalUrl = result.url || result.secure_url || result.cloudinaryUrl;
+        console.log('Original URL:', originalUrl);
+        
+        setUploadedImageUrl(originalUrl);
+        onImageUploaded?.(originalUrl, result);
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -131,7 +158,7 @@ export default function ImageUpload({
   };
 
   const handleRemoveImage = () => {
-    setPreviewUrl(null);
+    setUploadedImageUrl(null);
     setError(null);
     onImageRemoved?.();
   };
@@ -226,6 +253,7 @@ export default function ImageUpload({
       <Typography level="body-xs" sx={{ textAlign: 'center', color: 'text.secondary' }}>
         {variant === 'avatar' && 'Recommended: Square image, max 2MB'}
         {variant === 'banner' && 'Recommended: 3:1 aspect ratio, max 5MB'}
+        {variant === 'thumbnail' && 'Recommended: 4:3 aspect ratio, high quality processing (max 1600x1200px)'}
         {variant === 'standard' && `Max size: ${maxSizeInMB}MB`}
       </Typography>
     </Stack>

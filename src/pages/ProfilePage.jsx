@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, updateProfile, updateAvatar, loading, error } = useAuth();
@@ -123,12 +124,16 @@ export default function ProfilePage() {
                 ) : (
                   <Avatar
                     size="lg"
-                    src={user?.profile?.avatarUrl}
+                    src={processImageUrlForDisplay(user?.profile?.avatarUrl)}
                     sx={{ 
                       width: 120, 
                       height: 120,
                       mx: 'auto',
                       mb: 2
+                    }}
+                    onError={(e) => {
+                      console.log('Avatar load error, falling back to initials:', e.target.src);
+                      e.target.style.display = 'none'; // This will show the initials
                     }}
                   >
                     {user?.firstName?.[0]}{user?.lastName?.[0]}

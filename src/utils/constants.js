@@ -31,8 +31,8 @@ export const VALIDATION = {
 
 // Default Values
 export const DEFAULTS = {
-  AVATAR_PLACEHOLDER: '/default-avatar.png',
-  NEWS_IMAGE_PLACEHOLDER: '/default-news.png',
+  AVATAR_PLACEHOLDER: '/static/images/default-avatar.svg',
+  NEWS_IMAGE_PLACEHOLDER: '/static/images/default-news.svg',
   ITEMS_PER_PAGE: 10,
 };
 

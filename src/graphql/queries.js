@@ -151,6 +151,10 @@ export const GET_NEWS = gql`
       createdAt
       updatedAt
       slug
+      likesCount
+      commentsCount
+      readCount
+      isLikedByUser
       author {
         id
         username
@@ -166,6 +170,17 @@ export const GET_NEWS = gql`
         id
         name
         slug
+      }
+      comments {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+        }
       }
     }
   }
@@ -239,6 +254,8 @@ export const GET_CATEGORIES = gql`
       name
       slug
       description
+      createdAt
+      articleCount
     }
   }
 `;
@@ -261,6 +278,7 @@ export const GET_TAGS = gql`
       id
       name
       slug
+      createdAt
     }
   }
 `;

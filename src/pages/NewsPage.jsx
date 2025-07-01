@@ -6,6 +6,7 @@ import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
 import SearchAndFilter from '../components/SearchAndFilter';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function NewsPage() {
   const { user, isAuthenticated } = useAuth();
@@ -37,6 +38,19 @@ export default function NewsPage() {
 
   const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_PUBLISHED_NEWS, {
     variables: searchFilters,
+    onCompleted: (data) => {
+      console.log('News data loaded:', data);
+      if (data?.publishedNews) {
+        data.publishedNews.forEach((news, index) => {
+          if (news.featuredImageUrl) {
+            console.log(`Article ${index} - Image URL:`, news.featuredImageUrl);
+          }
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('News query error:', error);
+    }
   });
 
   const publishedNews = newsData?.publishedNews || [];
@@ -78,6 +92,36 @@ export default function NewsPage() {
           )}
         </Stack>
       </Box>
+{/* 
+      Filter Indicator
+      {searchFilters.tagId && (
+        <Box sx={{ mb: 3 }}>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+              Filtered by tag:
+            </Typography>
+            <Chip 
+              size="sm" 
+              variant="soft" 
+              color="primary"
+              endDecorator={
+                <Button
+                  size="sm"
+                  variant="plain"
+                  color="neutral"
+                  component={Link}
+                  to="/news"
+                  sx={{ minHeight: 'auto', p: 0.5 }}
+                >
+                  ✕
+                </Button>
+              }
+            >
+              #{tags.find(tag => tag.id === searchFilters.tagId.toString())?.name || 'Unknown Tag'}
+            </Chip>
+          </Stack>
+        </Box>
+      )} */}
 
       {/* Search and Filter Component */}
       <SearchAndFilter
@@ -128,18 +172,46 @@ export default function NewsPage() {
                   }
                 }}
               >
-                {news.featuredImage && (
+                {news.featuredImageUrl ? (
                   <Box
                     component="img"
-                    src={news.featuredImage}
+                    src={processImageUrlForDisplay(news.featuredImageUrl)}
                     alt={news.title}
+                    onError={(e) => {
+                      console.error('Failed to load image:', news.featuredImageUrl, 'Processed:', processImageUrlForDisplay(news.featuredImageUrl));
+                      // Try to load a default placeholder or hide the image
+                      e.target.src = '/static/images/default-news.svg';
+                      e.target.onerror = () => {
+                        // If default also fails, hide the image completely
+                        e.target.style.display = 'none';
+                      };
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', processImageUrlForDisplay(news.featuredImageUrl));
+                    }}
                     sx={{
                       width: '100%',
                       height: 200,
                       objectFit: 'cover',
                       borderRadius: 'var(--joy-radius-sm) var(--joy-radius-sm) 0 0',
+                      backgroundColor: 'var(--joy-palette-background-level2)', // Fallback background
                     }}
                   />
+                ) : (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: 200,
+                      backgroundColor: 'var(--joy-palette-background-level2)',
+                      borderRadius: 'var(--joy-radius-sm) var(--joy-radius-sm) 0 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--joy-palette-text-tertiary)',
+                    }}
+                  >
+                    📰 {/* News icon placeholder */}
+                  </Box>
                 )}
                 <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                   <Typography level="title-md" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>
