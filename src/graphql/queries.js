@@ -173,7 +173,7 @@ export const GET_NEWS = gql`
 
 export const GET_MY_NEWS = gql`
   query GetMyNews {
-    newsList(authorId: null) {
+    myNews {
       id
       title
       content
@@ -184,6 +184,39 @@ export const GET_MY_NEWS = gql`
       createdAt
       updatedAt
       slug
+      category {
+        id
+        name
+        slug
+      }
+      tags {
+        id
+        name
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_NEWS_FOR_REVIEW = gql`
+  query GetNewsForReview {
+    newsForReview {
+      id
+      title
+      content
+      excerpt
+      featuredImageUrl
+      status
+      publishedAt
+      createdAt
+      updatedAt
+      slug
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
       category {
         id
         name

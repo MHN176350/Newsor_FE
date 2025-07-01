@@ -202,7 +202,7 @@ export const canEditNews = (user, news) => {
     return true;
   }
   
-  // Writers can edit their own news if it's not published
+  
   if (user.profile?.role === USER_ROLES.WRITER && news.author.id === user.id) {
     return news.status !== NEWS_STATUS.PUBLISHED;
   }

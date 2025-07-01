@@ -19,7 +19,7 @@ import {
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_USERS } from '../graphql/queries';
 import { CHANGE_USER_ROLE } from '../graphql/mutations';
-import { getRoleColor } from '../utils/constants';
+import { getRoleColor, USER_ROLES } from '../utils/constants';
 
 export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -49,10 +49,15 @@ export default function UserManagement() {
   });
 
   const users = data?.users || [];
+  
+  // Filter out admin users from the role change table
+  const nonAdminUsers = users.filter(user => 
+    user.profile?.role?.toLowerCase() !== USER_ROLES.ADMIN.toLowerCase()
+  );
 
   const handleRoleChange = (user) => {
     setSelectedUser(user);
-    setNewRole((user.profile?.role || 'reader').toLowerCase());
+    setNewRole((user.profile?.role || USER_ROLES.READER).toLowerCase());
     setShowModal(true);
     setErrorMessage('');
   };
@@ -69,10 +74,11 @@ export default function UserManagement() {
   };
 
   const roleOptions = [
-    { value: 'reader', label: 'Reader', color: 'primary' },
-    { value: 'writer', label: 'Writer', color: 'success' },
-    { value: 'manager', label: 'Manager', color: 'warning' },
-    { value: 'admin', label: 'Admin', color: 'danger' },
+    { value: USER_ROLES.READER, label: 'Reader', color: 'primary' },
+    { value: USER_ROLES.WRITER, label: 'Writer', color: 'success' },
+    { value: USER_ROLES.MANAGER, label: 'Manager', color: 'warning' },
+    // Admin role is excluded from the dropdown for security reasons
+    // Only super admins should be able to create other admins through backend
   ];
 
   if (loading) {
@@ -97,6 +103,15 @@ export default function UserManagement() {
         User Management
       </Typography>
 
+      <Box sx={{ mb: 3, p: 2, bgcolor: 'background.level1', borderRadius: 'md' }}>
+        <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+          Total Users: {users.length} | Manageable Users: {nonAdminUsers.length}
+        </Typography>
+        <Typography level="body-xs" sx={{ color: 'text.tertiary', mt: 0.5 }}>
+          Admin users are not shown in the role management table for security reasons.
+        </Typography>
+      </Box>
+
       {successMessage && (
         <Alert color="success" sx={{ mb: 3 }}>
           {successMessage}
@@ -111,66 +126,77 @@ export default function UserManagement() {
 
       <Card variant="outlined">
         <CardContent>
-          <Table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Current Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <Box>
-                      <Typography level="body-sm" fontWeight="lg">
-                        {user.firstName || user.lastName 
-                          ? `${user.firstName} ${user.lastName}`.trim()
-                          : user.username
-                        }
-                      </Typography>
-                      <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-                        @{user.username}
-                      </Typography>
-                    </Box>
-                  </td>
-                  <td>
-                    <Typography level="body-sm">
-                      {user.email}
-                    </Typography>
-                  </td>
-                  <td>
-                    <Chip 
-                      size="sm" 
-                      color={getRoleColor(user.profile?.role || 'reader')}
-                    >
-                      {(user.profile?.role || 'reader').toUpperCase()}
-                    </Chip>
-                  </td>
-                  <td>
-                    <Chip 
-                      size="sm" 
-                      color={user.isActive ? 'success' : 'neutral'}
-                    >
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </Chip>
-                  </td>
-                  <td>
-                    <Button
-                      size="sm"
-                      variant="outlined"
-                      onClick={() => handleRoleChange(user)}
-                    >
-                      Change Role
-                    </Button>
-                  </td>
+          {nonAdminUsers.length === 0 ? (
+            <Box textAlign="center" py={4}>
+              <Typography level="body1" sx={{ color: 'text.secondary' }}>
+                No manageable users found.
+              </Typography>
+              <Typography level="body-sm" sx={{ color: 'text.tertiary', mt: 1 }}>
+                All users are either administrators or there are no users in the system.
+              </Typography>
+            </Box>
+          ) : (
+            <Table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Current Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {nonAdminUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <Box>
+                        <Typography level="body-sm" fontWeight="lg">
+                          {user.firstName || user.lastName 
+                            ? `${user.firstName} ${user.lastName}`.trim()
+                            : user.username
+                          }
+                        </Typography>
+                        <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
+                          @{user.username}
+                        </Typography>
+                      </Box>
+                    </td>
+                    <td>
+                      <Typography level="body-sm">
+                        {user.email}
+                      </Typography>
+                    </td>
+                    <td>
+                      <Chip 
+                        size="sm" 
+                        color={getRoleColor(user.profile?.role || USER_ROLES.READER)}
+                      >
+                        {(user.profile?.role || USER_ROLES.READER).toUpperCase()}
+                      </Chip>
+                    </td>
+                    <td>
+                      <Chip 
+                        size="sm" 
+                        color={user.isActive ? 'success' : 'neutral'}
+                      >
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </Chip>
+                    </td>
+                    <td>
+                      <Button
+                        size="sm"
+                        variant="outlined"
+                        onClick={() => handleRoleChange(user)}
+                      >
+                        Change Role
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -189,7 +215,7 @@ export default function UserManagement() {
                   User: <strong>{selectedUser.firstName} {selectedUser.lastName} (@{selectedUser.username})</strong>
                 </Typography>
                 <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                  Current Role: {selectedUser.profile?.role || 'reader'}
+                  Current Role: {selectedUser.profile?.role || USER_ROLES.READER}
                 </Typography>
               </Box>
 

@@ -121,9 +121,42 @@ export default function Layout({ children }) {
             </Menu>
           </Dropdown>
 
-          {/* Authenticated user additional navigation */}
+          {/* Role-based Article Actions */}
           {isAuthenticated && (
             <>
+              {/* Writers can access their articles */}
+              {user?.profile?.role?.toLowerCase() === 'writer' && (
+                <Button
+                  variant="soft"
+                  component={Link}
+                  to="/my-articles"
+                  sx={{ 
+                    color: 'primary.600',
+                    bgcolor: 'primary.100',
+                    '&:hover': { bgcolor: 'primary.200' }
+                  }}
+                >
+                  ✍️ My Articles
+                </Button>
+              )}
+              
+              {/* Managers can review articles */}
+              {user?.profile?.role?.toLowerCase() === 'manager' && (
+                <Button
+                  variant="soft"
+                  component={Link}
+                  to="/review-articles"
+                  sx={{ 
+                    color: 'warning.600',
+                    bgcolor: 'warning.100',
+                    '&:hover': { bgcolor: 'warning.200' }
+                  }}
+                >
+                  📋 Review Articles
+                </Button>
+              )}
+              
+              {/* Additional navigation for authenticated users */}
               <Button
                 variant="plain"
                 component={Link}

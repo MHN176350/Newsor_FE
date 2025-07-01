@@ -10,6 +10,8 @@ import RegisterPage from './pages/RegisterPage';
 import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import CreateArticlePage from './pages/CreateArticlePage';
+import MyArticlesPage from './pages/MyArticlesPage';
+import ReviewArticlesPage from './pages/ReviewArticlesPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -30,6 +32,10 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/create" element={<CreateArticlePage />} />
+              <Route path="/my-articles" element={<MyArticlesPage />} />
+              <Route path="/create-article/:mode" element={<CreateArticlePage />} />
+              <Route path="/create-article/:mode/:id" element={<CreateArticlePage />} />
+              <Route path="/review-articles" element={<ReviewArticlesPage />} />
               <Route path="/news/:slug" element={<NewsDetailPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

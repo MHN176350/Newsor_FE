@@ -259,6 +259,21 @@ export const REJECT_NEWS = gql`
   }
 `;
 
+export const UPDATE_NEWS_STATUS = gql`
+  mutation UpdateNewsStatus($id: Int!, $status: String!, $reviewComment: String) {
+    updateNewsStatus(id: $id, status: $status, reviewComment: $reviewComment) {
+      news {
+        id
+        title
+        status
+        updatedAt
+      }
+      success
+      errors
+    }
+  }
+`;
+
 // Comment Mutations
 export const CREATE_COMMENT = gql`
   mutation CreateComment($newsId: Int!, $content: String!) {
@@ -357,8 +372,8 @@ export const DELETE_CATEGORY = gql`
 
 // Tag Mutations
 export const CREATE_TAG = gql`
-  mutation CreateTag($name: String!) {
-    createTag(name: $name) {
+  mutation CreateTag($name: String!, $slug: String!) {
+    createTag(name: $name, slug: $slug) {
       tag {
         id
         name

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   Box,
@@ -13,19 +13,22 @@ import {
   Button,
   Stack,
   Alert,
-  Chip,
   FormControl,
   FormLabel,
   CircularProgress,
 } from '@mui/joy';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import RichTextEditor from '../components/RichTextEditor';
-import { CREATE_NEWS } from '../graphql/mutations';
-import { GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
+import TagAutocomplete from '../components/TagAutocomplete';
+import { CREATE_NEWS, UPDATE_NEWS } from '../graphql/mutations';
+import { GET_CATEGORIES, GET_TAGS, GET_NEWS } from '../graphql/queries';
 
 export default function CreateArticlePage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { mode, id } = useParams(); // mode can be 'new' or 'edit', id is article id for editing
+
+  const isEditing = mode === 'edit' && id;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -33,18 +36,62 @@ export default function CreateArticlePage() {
     content: '',
     excerpt: '',
     categoryId: '',
-    tagIds: [],
+    tags: [], // Changed from tagIds to tags (array of tag objects)
     featuredImage: '',
     metaDescription: '',
     metaKeywords: '',
   });
   const [errors, setErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // GraphQL hooks
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
   const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
-  const [createNews] = useMutation(CREATE_NEWS);
+  const { data: articleData, loading: articleLoading } = useQuery(
+    GET_NEWS,
+    {
+      variables: { id: parseInt(id) },
+      skip: !isEditing
+    }
+  );
+  const [createNews] = useMutation(CREATE_NEWS, {
+    update(cache, { data }) {
+      if (data?.createNews?.success) {
+        // Refetch the my news query to update the list
+        cache.refetchQueries({
+          include: ['GetMyNews']
+        });
+      }
+    }
+  });
+  const [updateNews] = useMutation(UPDATE_NEWS, {
+    update(cache, { data }) {
+      if (data?.updateNews?.success) {
+        // Refetch the my news query to update the list
+        cache.refetchQueries({
+          include: ['GetMyNews']
+        });
+      }
+    }
+  });
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (isEditing && articleData?.newsArticle) {
+      const article = articleData.newsArticle;
+      setFormData({
+        title: article.title || '',
+        content: article.content || '',
+        excerpt: article.excerpt || '',
+        categoryId: article.category?.id || '',
+        tags: article.tags || [],
+        featuredImage: article.featuredImageUrl || '',
+        metaDescription: article.metaDescription || '',
+        metaKeywords: article.metaKeywords || '',
+      });
+    }
+  }, [isEditing, articleData]);
 
   // Check authentication and permissions
   if (!isAuthenticated) {
@@ -54,7 +101,7 @@ export default function CreateArticlePage() {
           Authentication Required
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to create articles.
+          Please sign in to {isEditing ? 'edit' : 'create'} articles.
         </Typography>
         <Button onClick={() => navigate('/login')}>
           Sign In
@@ -73,7 +120,7 @@ export default function CreateArticlePage() {
           Permission Denied
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You need writer privileges to create articles.
+          You need writer privileges to {isEditing ? 'edit' : 'create'} articles.
         </Typography>
         <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
           Your current role: {user?.profile?.role || 'Reader'}
@@ -85,6 +132,75 @@ export default function CreateArticlePage() {
     );
   }
 
+  // Show loading state when editing and article data is loading
+  if (isEditing && articleLoading) {
+    return (
+      <Box textAlign="center" py={6}>
+        <CircularProgress />
+        <Typography level="body1" sx={{ mt: 2 }}>
+          Loading article...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Check if article exists and user owns it when editing
+  if (isEditing && articleData && !articleLoading) {
+    const article = articleData.newsArticle;
+    if (!article) {
+      return (
+        <Box textAlign="center" py={6}>
+          <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
+            Article Not Found
+          </Typography>
+          <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+            The article you're trying to edit doesn't exist.
+          </Typography>
+          <Button onClick={() => navigate('/my-articles')}>
+            Back to My Articles
+          </Button>
+        </Box>
+      );
+    }
+
+    // Check if user owns the article (unless they're admin/manager)
+    if (!['admin', 'manager'].includes(userRole) && article.author.id !== user.id) {
+      return (
+        <Box textAlign="center" py={6}>
+          <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
+            Permission Denied
+          </Typography>
+          <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+            You can only edit your own articles.
+          </Typography>
+          <Button onClick={() => navigate('/my-articles')}>
+            Back to My Articles
+          </Button>
+        </Box>
+      );
+    }
+
+    // Check if article can be edited (only drafts and rejected articles)
+    if (!['draft', 'rejected'].includes(article.status?.toLowerCase())) {
+      return (
+        <Box textAlign="center" py={6}>
+          <Typography level="h3" sx={{ mb: 2, color: 'warning.500' }}>
+            Cannot Edit Article
+          </Typography>
+          <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+            You can only edit articles that are in draft or rejected status.
+          </Typography>
+          <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+            Current status: {article.status}
+          </Typography>
+          <Button onClick={() => navigate('/my-articles')}>
+            Back to My Articles
+          </Button>
+        </Box>
+      );
+    }
+  }
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -93,12 +209,12 @@ export default function CreateArticlePage() {
     setErrors([]);
   };
 
-  const handleTagChange = (event, newValue) => {
-    const tagIds = newValue?.map(tag => parseInt(tag)) || [];
+  const handleTagsChange = (newTags) => {
     setFormData(prev => ({
       ...prev,
-      tagIds
+      tags: newTags
     }));
+    setErrors([]);
   };
 
   const handleSubmit = async (e) => {
@@ -121,31 +237,43 @@ export default function CreateArticlePage() {
         throw new Error('Category is required');
       }
 
-      const { data } = await createNews({
-        variables: {
-          title: formData.title.trim(),
-          content: formData.content,
-          excerpt: formData.excerpt.trim(),
-          categoryId: parseInt(formData.categoryId),
-          tagIds: formData.tagIds.length > 0 ? formData.tagIds : null,
-          featuredImage: formData.featuredImage || null,
-          metaDescription: formData.metaDescription || null,
-          metaKeywords: formData.metaKeywords || null,
-        }
-      });
+      const variables = {
+        title: formData.title.trim(),
+        content: formData.content,
+        excerpt: formData.excerpt.trim(),
+        categoryId: parseInt(formData.categoryId),
+        tagIds: formData.tags.length > 0 ? formData.tags.map(tag => parseInt(tag.id)) : null,
+        featuredImage: formData.featuredImage || null,
+        metaDescription: formData.metaDescription || null,
+        metaKeywords: formData.metaKeywords || null,
+      };
 
-      if (data?.createNews?.success) {
-        navigate('/news', { 
+      let data;
+      if (isEditing) {
+        // Update existing article
+        const result = await updateNews({
+          variables: { id: parseInt(id), ...variables }
+        });
+        data = result.data;
+      } else {
+        // Create new article
+        const result = await createNews({ variables });
+        data = result.data;
+      }
+
+      const operation = isEditing ? 'updateNews' : 'createNews';
+      if (data?.[operation]?.success) {
+        navigate('/my-articles', { 
           state: { 
-            message: 'Article created successfully! It has been saved as a draft.' 
+            message: `Article ${isEditing ? 'updated' : 'created'} successfully! It has been saved as a draft.` 
           }
         });
       } else {
-        setErrors(data?.createNews?.errors || ['Failed to create article']);
+        setErrors(data?.[operation]?.errors || [`Failed to ${isEditing ? 'update' : 'create'} article`]);
       }
     } catch (error) {
-      console.error('Error creating article:', error);
-      setErrors([error.message || 'Failed to create article']);
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} article:`, error);
+      setErrors([error.message || `Failed to ${isEditing ? 'update' : 'create'} article`]);
     } finally {
       setIsSubmitting(false);
     }
@@ -156,10 +284,10 @@ export default function CreateArticlePage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2 }}>
-          ✍️ Create New Article
+          ✍️ {isEditing ? 'Edit Article' : 'Create New Article'}
         </Typography>
         <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          Share your story with the world
+          {isEditing ? 'Make changes to your article' : 'Share your story with the world'}
         </Typography>
       </Box>
 
@@ -228,37 +356,14 @@ export default function CreateArticlePage() {
               </FormControl>
 
               {/* Tags */}
-              <FormControl>
-                <FormLabel>Tags (Optional)</FormLabel>
-                {tagsLoading ? (
-                  <CircularProgress size="sm" />
-                ) : (
-                  <Select
-                    placeholder="Select tags"
-                    multiple
-                    value={formData.tagIds.map(String)}
-                    onChange={handleTagChange}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', gap: '0.25rem' }}>
-                        {selected.map((selectedValue) => {
-                          const tag = tagsData?.tags?.find(t => t.id === parseInt(selectedValue));
-                          return (
-                            <Chip key={selectedValue} variant="soft" size="sm">
-                              {tag?.name}
-                            </Chip>
-                          );
-                        })}
-                      </Box>
-                    )}
-                  >
-                    {tagsData?.tags?.map((tag) => (
-                      <Option key={tag.id} value={String(tag.id)}>
-                        {tag.name}
-                      </Option>
-                    ))}
-                  </Select>
-                )}
-              </FormControl>
+              <TagAutocomplete
+                tags={tagsData?.tags || []}
+                selectedTags={formData.tags}
+                onTagsChange={handleTagsChange}
+                loading={tagsLoading}
+                label="Tags (Optional)"
+                placeholder="Type to search or add tags..."
+              />
 
               {/* Content */}
               <FormControl required>
@@ -302,7 +407,7 @@ export default function CreateArticlePage() {
               <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', mt: 4 }}>
                 <Button
                   variant="plain"
-                  onClick={() => navigate('/news')}
+                  onClick={() => navigate('/my-articles')}
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -312,7 +417,7 @@ export default function CreateArticlePage() {
                   loading={isSubmitting}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Article'}
+                  {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Article' : 'Create Article')}
                 </Button>
               </Stack>
             </Stack>
