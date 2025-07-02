@@ -213,7 +213,7 @@ export default function ReviewArticlesPage() {
                         <Button
                           size="sm"
                           variant="outlined"
-                          onClick={() => navigate(`/news/${article.id}`)}
+                          onClick={() => navigate(`/news/${article.slug}`)}
                         >
                           View
                         </Button>

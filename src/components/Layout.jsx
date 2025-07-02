@@ -5,6 +5,7 @@ import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useQuery } from '@apollo/client';
 import { GET_CATEGORIES } from '../graphql/queries';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import NotificationBell from './NotificationBell';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
@@ -102,7 +103,7 @@ export default function Layout({ children }) {
             </MenuButton>
             <Menu placement="bottom-start" sx={{ zIndex: 1300 }}>
               <MenuItem onClick={() => navigate('/news')}>
-                📰 All News
+                🗞️ All News
               </MenuItem>
               {categories.length > 0 && (
                 <>
@@ -137,7 +138,7 @@ export default function Layout({ children }) {
                     '&:hover': { bgcolor: 'primary.200' }
                   }}
                 >
-                  ✍️ My Articles
+                  🪶 My Articles
                 </Button>
               )}
               
@@ -153,7 +154,7 @@ export default function Layout({ children }) {
                     '&:hover': { bgcolor: 'warning.200' }
                   }}
                 >
-                  📋 Review Articles
+                  🔖 Review Articles
                 </Button>
               )}
               
@@ -207,13 +208,18 @@ export default function Layout({ children }) {
               '&:hover': { bgcolor: 'neutral.200' }
             }}
           >
-            {mode === 'dark' ? '🌞' : '🌙'}
+            {mode === 'dark' ? '⚡' : '🕶️'}
           </IconButton>
 
           {/* Auth Section */}
           {isAuthenticated ? (
             /* User Profile Dropdown */
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Notification Bell - only for managers and admins */}
+              {user?.profile?.role && ['manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
+                <NotificationBell />
+              )}
+              
               {/* User Role Badge */}
               {user?.profile?.role && (
                 <Chip

@@ -408,6 +408,21 @@ export const DELETE_TAG = gql`
   }
 `;
 
+export const TOGGLE_TAG = gql`
+  mutation ToggleTag($id: Int!) {
+    toggleTag(id: $id) {
+      tag {
+        id
+        name
+        slug
+        isActive
+      }
+      success
+      errors
+    }
+  }
+`;
+
 // Admin Mutations
 export const CHANGE_USER_ROLE = gql`
   mutation ChangeUserRole($userId: Int!, $newRole: String!) {
@@ -423,6 +438,45 @@ export const CHANGE_USER_ROLE = gql`
           role
         }
       }
+    }
+  }
+`;
+
+// Notification Mutations
+export const MARK_NOTIFICATION_AS_READ = gql`
+  mutation MarkNotificationAsRead($notificationId: Int!) {
+    markNotificationAsRead(notificationId: $notificationId) {
+      success
+      notification {
+        id
+        isRead
+        readAt
+      }
+      errors
+    }
+  }
+`;
+
+export const MARK_ALL_NOTIFICATIONS_AS_READ = gql`
+  mutation MarkAllNotificationsAsRead {
+    markAllNotificationsAsRead {
+      success
+      count
+      errors
+    }
+  }
+`;
+
+export const SUBMIT_NEWS_FOR_REVIEW = gql`
+  mutation SubmitNewsForReview($id: Int!) {
+    submitNewsForReview(id: $id) {
+      success
+      news {
+        id
+        title
+        status
+      }
+      errors
     }
   }
 `;

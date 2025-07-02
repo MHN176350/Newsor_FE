@@ -1,10 +1,11 @@
-import { Box, Typography, Card, CardContent, Button, Grid, Chip, Input, CircularProgress, Alert, Stack } from '@mui/joy';
+import { Box, Typography, Card, CardContent, Button, Grid, Chip, Stack } from '@mui/joy';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
+import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components';
 import SearchAndFilter from '../components/SearchAndFilter';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
@@ -15,7 +16,10 @@ export default function NewsPage() {
     search: null,
     categoryId: null,
     tagId: searchParams.get('tag') ? parseInt(searchParams.get('tag')) : null,
+    sortBy: 'newest',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6); // Fixed to 6 items per page as requested
 
   // Fetch categories to find ID by slug
   const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
@@ -36,7 +40,7 @@ export default function NewsPage() {
     }
   }, [searchParams, categories]);
 
-  const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_PUBLISHED_NEWS, {
+  const { data: newsData, loading: newsLoading, error: newsError, refetch: refetchNews } = useQuery(GET_PUBLISHED_NEWS, {
     variables: searchFilters,
     onCompleted: (data) => {
       console.log('News data loaded:', data);
@@ -55,20 +59,73 @@ export default function NewsPage() {
 
   const publishedNews = newsData?.publishedNews || [];
 
+  // Client-side sorting function
+  const sortNews = (news, sortBy) => {
+    const sortedNews = [...news];
+    
+    switch (sortBy) {
+      case 'oldest':
+        return sortedNews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case 'title_asc':
+        return sortedNews.sort((a, b) => a.title.localeCompare(b.title));
+      case 'title_desc':
+        return sortedNews.sort((a, b) => b.title.localeCompare(a.title));
+      case 'author_asc':
+        return sortedNews.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return aName.localeCompare(bName);
+        });
+      case 'author_desc':
+        return sortedNews.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return bName.localeCompare(aName);
+        });
+      case 'newest':
+      default:
+        return sortedNews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+  };
+
+  // Apply sorting to published news
+  const sortedNews = sortNews(publishedNews, searchFilters.sortBy);
+
+  // Pagination calculations
+  const totalItems = sortedNews.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentNews = sortedNews.slice(startIndex, endIndex);
+
   // Check if user can create articles
   const userRole = user?.profile?.role?.toLowerCase();
   const canCreateArticles = isAuthenticated && ['writer', 'manager', 'admin'].includes(userRole);
 
   const handleSearch = (searchTerm) => {
     setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const handleFilter = (filters) => {
     setSearchFilters(filters);
+    setCurrentPage(1); // Reset to first page on filter change
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <Box>
+      {/* SEO Meta Tags */}
+      <SEO 
+        title="News - Latest Articles & Stories"
+        description="Browse through our collection of latest news articles, stories, and insights from various categories."
+        keywords={['news', 'articles', 'stories', 'current events', 'breaking news']}
+        type="website"
+      />
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
@@ -133,18 +190,31 @@ export default function NewsPage() {
         initialFilters={searchFilters}
       />
 
-      {/* News Grid */}
-      {newsError && (
-        <Alert color="warning" sx={{ mb: 3 }}>
-          Unable to load news. Please check your connection to the backend server.
-        </Alert>
+      {/* Loading State */}
+      {newsLoading && (
+        <LoadingSpinner
+          size="lg"
+          message="Loading news articles..."
+          variant="card"
+          type="news"
+        />
       )}
 
-      {newsLoading ? (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress size="lg" />
-        </Box>
-      ) : publishedNews.length === 0 ? (
+      {/* Error State */}
+      {newsError && (
+        <ErrorDisplay
+          error={newsError}
+          title="Unable to load news articles"
+          message="Please check your connection to the backend server."
+          showRefresh={true}
+          onRefresh={() => refetchNews()}
+          color="warning"
+          size="md"
+        />
+      )}
+
+      {/* Empty State */}
+      {!newsLoading && !newsError && currentNews.length === 0 && (
         <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
             <Typography level="h4" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
@@ -153,25 +223,39 @@ export default function NewsPage() {
             <Typography level="body1" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
               Try different search terms or filters
             </Typography>
+            {canCreateArticles && (
+              <Button
+                component={Link}
+                to="/news/create"
+                variant="solid"
+                sx={{ mt: 2 }}
+              >
+                Create First Article
+              </Button>
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <Grid container spacing={3}>
-          {publishedNews.map((news) => (
-            <Grid key={news.id} xs={12} sm={6} lg={4}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    boxShadow: 'var(--joy-shadow-md)',
-                    transform: 'translateY(-2px)',
-                  }
-                }}
-              >
+      )}
+
+      {/* News Grid */}
+      {!newsLoading && !newsError && currentNews.length > 0 && (
+        <>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {currentNews.map((news) => (
+              <Grid key={news.id} xs={12} sm={6} lg={4}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      boxShadow: 'var(--joy-shadow-md)',
+                      transform: 'translateY(-2px)',
+                    }
+                  }}
+                >
                 {news.featuredImageUrl ? (
                   <Box
                     component="img"
@@ -274,17 +358,32 @@ export default function NewsPage() {
                 </CardContent>
               </Card>
             </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* Load More */}
-      {publishedNews.length > 0 && (
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-            Showing {publishedNews.length} articles
-          </Typography>
-        </Box>
+            ))}
+          </Grid>
+          
+          {/* Pagination Component */}
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                showFirstLast={true}
+                showPrevNext={true}
+                maxButtons={5}
+                size="md"
+                variant="outlined"
+              />
+            </Box>
+          )}
+          
+          {/* Results Info */}
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} articles
+            </Typography>
+          </Box>
+        </>
       )}
     </Box>
   );

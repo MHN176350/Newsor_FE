@@ -21,7 +21,7 @@ import {
 } from '@mui/joy';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_MY_NEWS } from '../graphql/queries';
-import { UPDATE_NEWS_STATUS } from '../graphql/mutations';
+import { UPDATE_NEWS_STATUS, SUBMIT_NEWS_FOR_REVIEW } from '../graphql/mutations';
 
 export default function MyArticlesPage() {
   const { user, isAuthenticated } = useAuth();
@@ -33,6 +33,7 @@ export default function MyArticlesPage() {
   // GraphQL hooks
   const { data: articlesData, loading: articlesLoading, refetch } = useQuery(GET_MY_NEWS);
   const [updateNewsStatus] = useMutation(UPDATE_NEWS_STATUS);
+  const [submitForReview] = useMutation(SUBMIT_NEWS_FOR_REVIEW);
 
   // Refetch data when coming from create/edit article
   useEffect(() => {
@@ -80,9 +81,24 @@ export default function MyArticlesPage() {
     );
   }
 
-  const handleSubmitForReview = (article) => {
-    setSelectedArticle(article);
-    setShowSubmitModal(true);
+  const handleSubmitForReview = async (article) => {
+    try {
+      const { data } = await submitForReview({
+        variables: {
+          id: parseInt(article.id)
+        }
+      });
+
+      if (data?.submitNewsForReview?.success) {
+        refetch(); // Refresh the articles list
+        // Show success message
+        console.log('Article submitted for review successfully!');
+      } else {
+        console.error('Failed to submit for review:', data?.submitNewsForReview?.errors);
+      }
+    } catch (error) {
+      console.error('Error submitting article for review:', error);
+    }
   };
 
   const handleStatusUpdate = async (newStatus) => {

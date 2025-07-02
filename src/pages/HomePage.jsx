@@ -11,6 +11,7 @@ export default function HomePage() {
     search: null,
     categoryId: null,
     tagId: null,
+    sortBy: 'newest',
   });
 
   const { data: newsData, loading: newsLoading, error: newsError, refetch: refetchNews } = useQuery(GET_PUBLISHED_NEWS, {
@@ -22,6 +23,38 @@ export default function HomePage() {
   const publishedNews = newsData?.publishedNews || [];
   const categories = categoriesData?.categories || [];
   const tags = tagsData?.tags || [];
+
+  // Client-side sorting function
+  const sortNews = (news, sortBy) => {
+    const sortedNews = [...news];
+    
+    switch (sortBy) {
+      case 'oldest':
+        return sortedNews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      case 'title_asc':
+        return sortedNews.sort((a, b) => a.title.localeCompare(b.title));
+      case 'title_desc':
+        return sortedNews.sort((a, b) => b.title.localeCompare(a.title));
+      case 'author_asc':
+        return sortedNews.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return aName.localeCompare(bName);
+        });
+      case 'author_desc':
+        return sortedNews.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return bName.localeCompare(aName);
+        });
+      case 'newest':
+      default:
+        return sortedNews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+  };
+
+  // Apply sorting to published news
+  const sortedNews = sortNews(publishedNews, searchFilters.sortBy);
 
   const handleSearch = (searchTerm) => {
     setSearchFilters(prev => ({ ...prev, search: searchTerm || null }));
@@ -231,9 +264,9 @@ export default function HomePage() {
           </Card>
         )}
 
-        {publishedNews.length > 0 && (
+        {sortedNews.length > 0 && (
           <Grid container spacing={3}>
-            {publishedNews.slice(0, 6).map((article) => (
+            {sortedNews.slice(0, 6).map((article) => (
               <Grid key={article.id} xs={12} sm={6} md={4}>
                 <Card
                   variant="outlined"
@@ -337,7 +370,7 @@ export default function HomePage() {
           </Grid>
         )}
 
-        {publishedNews.length > 6 && (
+        {sortedNews.length > 6 && (
           <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Button
               component={Link}

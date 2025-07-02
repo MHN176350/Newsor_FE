@@ -279,6 +279,21 @@ export const GET_TAGS = gql`
       name
       slug
       createdAt
+      isActive
+      articleCount
+    }
+  }
+`;
+
+export const GET_ADMIN_TAGS = gql`
+  query GetAdminTags {
+    adminTags {
+      id
+      name
+      slug
+      createdAt
+      isActive
+      articleCount
     }
   }
 `;
@@ -390,5 +405,62 @@ export const GET_RECENT_ACTIVITY = gql`
         lastName
       }
     }
+  }
+`;
+
+// Notification Queries
+export const GET_NOTIFICATIONS = gql`
+  query GetNotifications {
+    notifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      readAt
+      createdAt
+      sender {
+        id
+        username
+        firstName
+        lastName
+      }
+      article {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_UNREAD_NOTIFICATIONS = gql`
+  query GetUnreadNotifications {
+    unreadNotifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      readAt
+      createdAt
+      sender {
+        id
+        username
+        firstName
+        lastName
+      }
+      article {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_NOTIFICATION_COUNT = gql`
+  query GetNotificationCount {
+    notificationCount
   }
 `;

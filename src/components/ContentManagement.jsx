@@ -20,11 +20,12 @@ import {
   IconButton,
   Select,
   Option,
-  Divider
+  Divider,
+  Switch
 } from '@mui/joy';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_CATEGORIES, GET_TAGS, GET_NEWS_LIST } from '../graphql/queries';
+import { GET_CATEGORIES, GET_ADMIN_TAGS, GET_NEWS_LIST } from '../graphql/queries';
 import { 
   CREATE_CATEGORY, 
   UPDATE_CATEGORY, 
@@ -32,6 +33,7 @@ import {
   CREATE_TAG,
   UPDATE_TAG,
   DELETE_TAG,
+  TOGGLE_TAG,
   UPDATE_NEWS_STATUS
 } from '../graphql/mutations';
 
@@ -46,7 +48,7 @@ export default function ContentManagement() {
 
   // GraphQL hooks
   const { data: categoriesData, loading: categoriesLoading, refetch: refetchCategories } = useQuery(GET_CATEGORIES);
-  const { data: tagsData, loading: tagsLoading, refetch: refetchTags } = useQuery(GET_TAGS);
+  const { data: tagsData, loading: tagsLoading, refetch: refetchTags } = useQuery(GET_ADMIN_TAGS);
   const { data: newsData, loading: newsLoading, refetch: refetchNews } = useQuery(GET_NEWS_LIST);
 
   // Mutations
@@ -56,10 +58,11 @@ export default function ContentManagement() {
   const [createTag] = useMutation(CREATE_TAG);
   const [updateTag] = useMutation(UPDATE_TAG);
   const [deleteTag] = useMutation(DELETE_TAG);
+  const [toggleTag] = useMutation(TOGGLE_TAG);
   const [updateNewsStatus] = useMutation(UPDATE_NEWS_STATUS);
 
   const categories = categoriesData?.categories || [];
-  const tags = tagsData?.tags || [];
+  const tags = tagsData?.adminTags || [];
   const allNews = newsData?.newsList || [];
 
   // Debug logging
@@ -95,6 +98,27 @@ export default function ContentManagement() {
     setSelectedItem(null);
     setFormData({});
     setMessage('');
+  };
+
+  const handleToggleTag = async (tag) => {
+    try {
+      const result = await toggleTag({
+        variables: { id: parseInt(tag.id) }
+      });
+      
+      if (result.data?.toggleTag?.success) {
+        await refetchTags();
+        const newStatus = result.data.toggleTag.tag.isActive ? 'activated' : 'deactivated';
+        setMessage(`Tag "${tag.name}" ${newStatus} successfully!`);
+        // Clear message after 3 seconds
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage(`Failed to toggle tag: ${result.data?.toggleTag?.errors?.join(', ') || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Toggle tag error:', error);
+      setMessage('An error occurred while toggling the tag.');
+    }
   };
 
   const handleSubmit = async () => {
@@ -152,13 +176,14 @@ export default function ContentManagement() {
             await refetchTags();
             setMessage('Tag updated successfully!');
           }
-        } else if (modalType === 'delete') {
-          result = await deleteTag({
+        } else if (modalType === 'toggle') {
+          result = await toggleTag({
             variables: { id: parseInt(selectedItem.id) }
           });
-          if (result.data?.deleteTag?.success) {
+          if (result.data?.toggleTag?.success) {
             await refetchTags();
-            setMessage('Tag deleted successfully!');
+            const newStatus = result.data.toggleTag.tag.isActive ? 'activated' : 'deactivated';
+            setMessage(`Tag ${newStatus} successfully!`);
           }
         }
       } else if (modalEntity === 'news' && modalType === 'archive') {
@@ -263,7 +288,7 @@ export default function ContentManagement() {
                 size="sm"
                 onClick={() => handleOpenModal('create', 'category')}
               >
-                ➕ Add Category
+                 Add Category
               </Button>
             </Box>
 
@@ -357,6 +382,17 @@ export default function ContentManagement() {
               </Button>
             </Box>
 
+            {/* Success/Error Message Display */}
+            {message && (
+              <Alert 
+                color={message.includes('successfully') ? 'success' : 'danger'} 
+                sx={{ mb: 3 }}
+                onClose={() => setMessage('')}
+              >
+                {message}
+              </Alert>
+            )}
+
             {tagsLoading ? (
               <Box textAlign="center" py={4}>
                 <CircularProgress />
@@ -371,13 +407,30 @@ export default function ContentManagement() {
               <Grid container spacing={2}>
                 {tags.map((tag) => (
                   <Grid key={tag.id} xs={12} sm={6} md={4}>
-                    <Card variant="soft" size="sm">
+                    <Card 
+                      variant="soft" 
+                      size="sm"
+                      sx={{
+                        opacity: tag.isActive ? 1 : 0.6,
+                        border: tag.isActive ? '1px solid var(--joy-palette-success-300)' : '1px solid var(--joy-palette-neutral-300)'
+                      }}
+                    >
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
-                          <Typography level="body-md" sx={{ fontWeight: 'md' }}>
-                            #{tag.name}
-                          </Typography>
-                          <Stack direction="row" spacing={0.5}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography level="body-md" sx={{ fontWeight: 'md' }}>
+                              #{tag.name}
+                            </Typography>
+                            <Chip 
+                              size="sm" 
+                              variant="soft" 
+                              color={tag.isActive ? 'success' : 'neutral'}
+                              sx={{ mt: 0.5 }}
+                            >
+                              {tag.isActive ? 'Active' : 'Inactive'}
+                            </Chip>
+                          </Box>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
                             <IconButton
                               size="sm"
                               variant="plain"
@@ -385,14 +438,12 @@ export default function ContentManagement() {
                             >
                               ✏️
                             </IconButton>
-                            <IconButton
+                            <Switch
+                              checked={tag.isActive}
+                              onChange={() => handleToggleTag(tag)}
                               size="sm"
-                              variant="plain"
-                              color="danger"
-                              onClick={() => handleOpenModal('delete', 'tag', tag)}
-                            >
-                              🗑️
-                            </IconButton>
+                              color={tag.isActive ? 'success' : 'neutral'}
+                            />
                           </Stack>
                         </Box>
                         <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
@@ -401,6 +452,11 @@ export default function ContentManagement() {
                         <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 1 }}>
                           Created: {formatDate(tag.createdAt)}
                         </Typography>
+                        {!tag.isActive && (
+                          <Typography level="body-xs" sx={{ color: 'warning.500', mt: 1, fontStyle: 'italic' }}>
+                            ⚠️ Articles with this tag are archived
+                          </Typography>
+                        )}
                       </CardContent>
                     </Card>
                   </Grid>
