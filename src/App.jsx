@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
+import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './theme';
 import apolloClient from './apollo/client';
 import { initializeContainer } from './core/container.js';
@@ -11,7 +12,8 @@ import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import CreateArticlePage from './pages/CreateArticlePage';
 import MyArticlesPage from './pages/MyArticlesPage';
-import ReviewArticlesPage from './pages/ReviewArticlesPage';
+import WriterNewsDetailPage from './pages/WriterNewsDetailPage';
+import ReviewNewsPage from './pages/ReviewNewsPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -35,7 +37,8 @@ function App() {
               <Route path="/my-articles" element={<MyArticlesPage />} />
               <Route path="/create-article/:mode" element={<CreateArticlePage />} />
               <Route path="/create-article/:mode/:id" element={<CreateArticlePage />} />
-              <Route path="/review-articles" element={<ReviewArticlesPage />} />
+              <Route path="/writer/article/:id" element={<WriterNewsDetailPage />} />
+              <Route path="/review/:slug" element={<ReviewNewsPage />} />
               <Route path="/news/:slug" element={<NewsDetailPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -43,6 +46,7 @@ function App() {
             </Routes>
           </Layout>
         </Router>
+        <Toaster position="top-right" />
       </ThemeProvider>
     </ApolloProvider>
   );

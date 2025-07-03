@@ -69,8 +69,9 @@ export default function ContentManagement() {
   console.log('Categories data:', categories);
   console.log('Tags data:', tags);
 
-  // Filter published news for archiving
+  // Filter published news for archiving and archived news for display
   const publishedNews = allNews.filter(news => news.status === 'published');
+  const archivedNews = allNews.filter(news => news.status === 'archived');
 
   const handleOpenModal = (type, entity, item = null) => {
     setModalType(type);
@@ -186,17 +187,44 @@ export default function ContentManagement() {
             setMessage(`Tag ${newStatus} successfully!`);
           }
         }
-      } else if (modalEntity === 'news' && modalType === 'archive') {
-        result = await updateNewsStatus({
-          variables: { 
-            id: parseInt(selectedItem.id), 
-            status: 'archived',
-            reviewComment: 'Archived by admin'
+      } else if (modalEntity === 'news') {
+        if (modalType === 'archive') {
+          result = await updateNewsStatus({
+            variables: { 
+              id: parseInt(selectedItem.id), 
+              status: 'archived',
+              reviewComment: 'Archived by admin'
+            }
+          });
+          if (result.data?.updateNewsStatus?.success) {
+            await refetchNews();
+            setMessage('Article archived successfully!');
           }
-        });
-        if (result.data?.updateNewsStatus?.success) {
-          await refetchNews();
-          setMessage('Article archived successfully!');
+        } else if (modalType === 'unarchive') {
+          result = await updateNewsStatus({
+            variables: { 
+              id: parseInt(selectedItem.id), 
+              status: 'published',
+              reviewComment: 'Restored from archive by admin'
+            }
+          });
+          if (result.data?.updateNewsStatus?.success) {
+            await refetchNews();
+            setMessage('Article restored successfully!');
+          }
+        } else if (modalType === 'delete') {
+          // For now, we'll set status to 'deleted' instead of actually deleting
+          result = await updateNewsStatus({
+            variables: { 
+              id: parseInt(selectedItem.id), 
+              status: 'deleted',
+              reviewComment: 'Permanently deleted by admin'
+            }
+          });
+          if (result.data?.updateNewsStatus?.success) {
+            await refetchNews();
+            setMessage('Article deleted successfully!');
+          }
         }
       }
 
@@ -469,87 +497,186 @@ export default function ContentManagement() {
 
       {/* Archive News Tab */}
       {activeTab === 'archive' && (
-        <Card variant="outlined">
-          <CardContent>
-            <Box sx={{ mb: 3 }}>
-              <Typography level="h4" sx={{ mb: 1 }}>
-                Published Articles ({publishedNews.length})
-              </Typography>
-              <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                Only published articles can be archived
-              </Typography>
-            </Box>
-
-            {newsLoading ? (
-              <Box textAlign="center" py={4}>
-                <CircularProgress />
-              </Box>
-            ) : publishedNews.length === 0 ? (
-              <Box textAlign="center" py={4}>
-                <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  No published articles to archive
+        <Box>
+          {/* Published Articles Section */}
+          <Card variant="outlined" sx={{ mb: 4 }}>
+            <CardContent>
+              <Box sx={{ mb: 3 }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  📰 Published Articles ({publishedNews.length})
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+                  Articles that can be archived to remove from public view
                 </Typography>
               </Box>
-            ) : (
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Category</th>
-                    <th>Published</th>
-                    <th>Views</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {publishedNews.map((article) => (
-                    <tr key={article.id}>
-                      <td>
-                        <Typography level="body-sm" sx={{ fontWeight: 'md' }}>
-                          {article.title}
-                        </Typography>
-                        <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                          {article.excerpt?.substring(0, 80)}...
-                        </Typography>
-                      </td>
-                      <td>
-                        <Typography level="body-sm">
-                          {article.author?.firstName} {article.author?.lastName}
-                        </Typography>
-                      </td>
-                      <td>
-                        <Chip size="sm" variant="soft">
-                          {article.category?.name || 'Uncategorized'}
-                        </Chip>
-                      </td>
-                      <td>
-                        <Typography level="body-sm">
-                          {formatDate(article.publishedAt || article.createdAt)}
-                        </Typography>
-                      </td>
-                      <td>
-                        <Typography level="body-sm">
-                          {article.viewCount || 0}
-                        </Typography>
-                      </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          color="warning"
-                          onClick={() => handleOpenModal('archive', 'news', article)}
-                        >
-                          📦 Archive
-                        </Button>
-                      </td>
+
+              {newsLoading ? (
+                <Box textAlign="center" py={4}>
+                  <CircularProgress />
+                </Box>
+              ) : publishedNews.length === 0 ? (
+                <Box textAlign="center" py={4}>
+                  <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+                    No published articles to archive
+                  </Typography>
+                </Box>
+              ) : (
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Category</th>
+                      <th>Published</th>
+                      <th>Views</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {publishedNews.map((article) => (
+                      <tr key={article.id}>
+                        <td>
+                          <Typography level="body-sm" sx={{ fontWeight: 'md' }}>
+                            {article.title}
+                          </Typography>
+                          <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                            {article.excerpt?.substring(0, 80)}...
+                          </Typography>
+                        </td>
+                        <td>
+                          <Typography level="body-sm">
+                            {article.author?.firstName} {article.author?.lastName}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Chip size="sm" variant="soft">
+                            {article.category?.name || 'Uncategorized'}
+                          </Chip>
+                        </td>
+                        <td>
+                          <Typography level="body-sm">
+                            {formatDate(article.publishedAt || article.createdAt)}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Typography level="body-sm">
+                            {article.viewCount || 0}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="outlined"
+                            color="warning"
+                            onClick={() => handleOpenModal('archive', 'news', article)}
+                          >
+                            📦 Archive
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Archived Articles Section */}
+          <Card variant="outlined">
+            <CardContent>
+              <Box sx={{ mb: 3 }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  📦 Archived Articles ({archivedNews.length})
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+                  Articles that have been archived and are hidden from public view
+                </Typography>
+              </Box>
+
+              {newsLoading ? (
+                <Box textAlign="center" py={4}>
+                  <CircularProgress />
+                </Box>
+              ) : archivedNews.length === 0 ? (
+                <Box textAlign="center" py={4}>
+                  <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+                    No archived articles
+                  </Typography>
+                  <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-tertiary)', mt: 1 }}>
+                    Articles will appear here when they are archived
+                  </Typography>
+                </Box>
+              ) : (
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Category</th>
+                      <th>Archived Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedNews.map((article) => (
+                      <tr key={article.id}>
+                        <td>
+                          <Typography level="body-sm" sx={{ fontWeight: 'md', opacity: 0.7 }}>
+                            {article.title}
+                          </Typography>
+                          <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                            {article.excerpt?.substring(0, 80)}...
+                          </Typography>
+                        </td>
+                        <td>
+                          <Typography level="body-sm">
+                            {article.author?.firstName} {article.author?.lastName}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Chip size="sm" variant="soft" color="neutral">
+                            {article.category?.name || 'Uncategorized'}
+                          </Chip>
+                        </td>
+                        <td>
+                          <Typography level="body-sm">
+                            {formatDate(article.updatedAt || article.createdAt)}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Chip size="sm" variant="soft" color="neutral">
+                            Archived
+                          </Chip>
+                        </td>
+                        <td>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="success"
+                              onClick={() => handleOpenModal('unarchive', 'news', article)}
+                            >
+                              📤 Restore
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="danger"
+                              onClick={() => handleOpenModal('delete', 'news', article)}
+                            >
+                              🗑️ Delete
+                            </Button>
+                          </Stack>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       {/* Action Modal */}
@@ -559,8 +686,10 @@ export default function ContentManagement() {
           <Typography level="h4" sx={{ mb: 2 }}>
             {modalType === 'create' && `Create ${modalEntity}`}
             {modalType === 'edit' && `Edit ${modalEntity}`}
-            {modalType === 'delete' && `Delete ${modalEntity}`}
+            {modalType === 'delete' && modalEntity === 'news' && 'Delete Article'}
+            {modalType === 'delete' && modalEntity !== 'news' && `Delete ${modalEntity}`}
             {modalType === 'archive' && 'Archive Article'}
+            {modalType === 'unarchive' && 'Restore Article'}
           </Typography>
 
           {message && (
@@ -608,10 +737,22 @@ export default function ContentManagement() {
             )}
 
             {/* Delete Confirmation */}
-            {modalType === 'delete' && (
+            {modalType === 'delete' && modalEntity !== 'news' && (
               <Alert color="warning">
                 <Typography level="body-sm">
                   Are you sure you want to delete "{selectedItem?.name}"? This action cannot be undone.
+                </Typography>
+              </Alert>
+            )}
+
+            {/* Delete News Confirmation */}
+            {modalType === 'delete' && modalEntity === 'news' && (
+              <Alert color="danger">
+                <Typography level="body-sm">
+                  Are you sure you want to permanently delete "{selectedItem?.title}"? This action cannot be undone.
+                </Typography>
+                <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
+                  This will permanently remove the article from the system.
                 </Typography>
               </Alert>
             )}
@@ -621,6 +762,21 @@ export default function ContentManagement() {
               <Alert color="warning">
                 <Typography level="body-sm">
                   Are you sure you want to archive "{selectedItem?.title}"? This will remove it from public view.
+                </Typography>
+                <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
+                  You can restore it later if needed.
+                </Typography>
+              </Alert>
+            )}
+
+            {/* Unarchive Confirmation */}
+            {modalType === 'unarchive' && modalEntity === 'news' && (
+              <Alert color="success">
+                <Typography level="body-sm">
+                  Restore "{selectedItem?.title}" and make it publicly visible again?
+                </Typography>
+                <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
+                  This will publish the article and make it visible to readers.
                 </Typography>
               </Alert>
             )}
@@ -635,7 +791,12 @@ export default function ContentManagement() {
               </Button>
               <Button
                 variant="solid"
-                color={modalType === 'delete' || modalType === 'archive' ? 'danger' : 'primary'}
+                color={
+                  modalType === 'delete' ? 'danger' : 
+                  modalType === 'archive' ? 'warning' : 
+                  modalType === 'unarchive' ? 'success' : 
+                  'primary'
+                }
                 onClick={handleSubmit}
                 disabled={
                   (modalType === 'create' || modalType === 'edit') && 
@@ -648,6 +809,7 @@ export default function ContentManagement() {
                 {modalType === 'edit' && 'Update'}
                 {modalType === 'delete' && 'Delete'}
                 {modalType === 'archive' && 'Archive'}
+                {modalType === 'unarchive' && 'Restore'}
               </Button>
             </Stack>
           </Stack>

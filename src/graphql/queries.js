@@ -151,6 +151,8 @@ export const GET_NEWS = gql`
       createdAt
       updatedAt
       slug
+      metaDescription
+      metaKeywords
       likesCount
       commentsCount
       readCount
@@ -464,3 +466,21 @@ export const GET_NOTIFICATION_COUNT = gql`
     notificationCount
   }
 `;
+
+// Subscriptions
+export const NOTIFICATION_SUBSCRIPTION = gql`
+  subscription OnNotificationAdded {
+    notificationAdded {
+      id
+      message
+      notificationType
+      createdAt
+      article {
+        slug
+      }
+    }
+  }
+`;
+
+// Alias for GET_NEWS for specific use case
+export const GET_NEWS_ARTICLE = GET_NEWS;

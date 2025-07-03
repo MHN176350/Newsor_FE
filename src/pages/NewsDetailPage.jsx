@@ -138,23 +138,8 @@ export default function NewsDetailPage() {
         )}
       </Box>
 
-      {/* Featured Image */}
-      {news.featuredImageUrl && (
-        <Box sx={{ mb: 4 }}>
-          <Box
-            component="img"
-            src={processImageUrlForDisplay(news.featuredImageUrl)}
-            alt={news.title}
-            sx={{
-              width: '100%',
-              maxHeight: 400,
-              objectFit: 'cover',
-              borderRadius: 'lg',
-            }}
-          />
-        </Box>
-      )}
-
+    
+      
       {/* Article Content */}
       <Card variant="outlined" sx={{ mb: 4 }}>
         <CardContent>

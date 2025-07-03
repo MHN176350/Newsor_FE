@@ -1,21 +1,34 @@
 import { Box, IconButton, Badge, Menu, MenuItem, Typography, Divider, Button, Stack } from '@mui/joy';
-import { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { Notifications as NotificationsIcon, MarkEmailRead } from '@mui/icons-material';
-import { GET_UNREAD_NOTIFICATIONS } from '../graphql/queries';
+import { GET_UNREAD_NOTIFICATIONS, NOTIFICATION_SUBSCRIPTION } from '../graphql/queries';
 import { MARK_NOTIFICATION_AS_READ, MARK_ALL_NOTIFICATIONS_AS_READ } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 
 export default function NotificationBell() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   // Fetch unread notifications
   const { data: notificationsData, loading, refetch } = useQuery(GET_UNREAD_NOTIFICATIONS, {
-    pollInterval: 30000, // Poll every 30 seconds for new notifications
-    fetchPolicy: 'network-only', // Always fetch from the network
+    fetchPolicy: 'cache-and-network',
+    skip: !isAuthenticated,
+  });
+
+  // Real-time subscription for new notifications
+  const { data: subscriptionData } = useSubscription(NOTIFICATION_SUBSCRIPTION, {
+    skip: !isAuthenticated,
+    onData: ({ data }) => {
+      if (data?.data?.notificationAdded) {
+        // Refetch notifications when new one arrives
+        refetch();
+      }
+    },
   });
 
   const [markAsRead] = useMutation(MARK_NOTIFICATION_AS_READ, {
@@ -41,11 +54,12 @@ export default function NotificationBell() {
 
   const handleNotificationClick = (notification) => {
     // Optimistically navigate and close while mutation runs in the background
-    navigate(`/news/${notification.article.slug}`);
+    navigate(`/review/${notification.article.slug}`);
     handleClose();
     try {
       markAsRead({
-        variables: { notificationId: notification.id },
+        variables: { notificationId: parseInt
+          (notification.id) },
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);

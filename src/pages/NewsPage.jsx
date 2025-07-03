@@ -5,7 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
-import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components';
+import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
 import SearchAndFilter from '../components/SearchAndFilter';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
@@ -258,29 +258,66 @@ export default function NewsPage() {
                 >
                 {news.featuredImageUrl ? (
                   <Box
-                    component="img"
-                    src={processImageUrlForDisplay(news.featuredImageUrl)}
-                    alt={news.title}
-                    onError={(e) => {
-                      console.error('Failed to load image:', news.featuredImageUrl, 'Processed:', processImageUrlForDisplay(news.featuredImageUrl));
-                      // Try to load a default placeholder or hide the image
-                      e.target.src = '/static/images/default-news.svg';
-                      e.target.onerror = () => {
-                        // If default also fails, hide the image completely
-                        e.target.style.display = 'none';
-                      };
-                    }}
-                    onLoad={() => {
-                      console.log('Image loaded successfully:', processImageUrlForDisplay(news.featuredImageUrl));
-                    }}
                     sx={{
+                      position: 'relative',
                       width: '100%',
                       height: 200,
-                      objectFit: 'cover',
+                      overflow: 'hidden',
                       borderRadius: 'var(--joy-radius-sm) var(--joy-radius-sm) 0 0',
-                      backgroundColor: 'var(--joy-palette-background-level2)', // Fallback background
+                      '&::before, &::after': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        height: '30px',
+                        pointerEvents: 'none',
+                        transition: 'opacity 0.3s ease',
+                        zIndex: 1,
+                      },
+                      '&::before': {
+                        top: 0,
+                        background: 'linear-gradient(to bottom, rgba(255,255,255,0.6), transparent)',
+                      },
+                      '&::after': {
+                        bottom: 0,
+                        background: 'linear-gradient(to top, rgba(255,255,255,0.6), transparent)',
+                      },
+                      '&:hover::before, &:hover::after': {
+                        opacity: 0,
+                      },
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={processImageUrlForDisplay(news.featuredImageUrl)}
+                      alt={news.title}
+                      onError={(e) => {
+                        console.error('Failed to load image:', news.featuredImageUrl, 'Processed:', processImageUrlForDisplay(news.featuredImageUrl));
+                        // Try to load a default placeholder or hide the image
+                        e.target.src = '/static/images/default-news.svg';
+                        e.target.onerror = () => {
+                          // If default also fails, hide the image completely
+                          e.target.style.display = 'none';
+                        };
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', processImageUrlForDisplay(news.featuredImageUrl));
+                      }}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        backgroundColor: 'var(--joy-palette-background-level2)', // Fallback background
+                        filter: 'blur(0.5px)',
+                        transform: 'scale(1)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          filter: 'blur(0px)',
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    />
+                  </Box>
                 ) : (
                   <Box
                     sx={{

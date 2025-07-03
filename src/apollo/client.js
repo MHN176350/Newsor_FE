@@ -1,6 +1,9 @@
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from, split } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
+import { getMainDefinition } from '@apollo/client/utilities';
 import { getContainer } from '../core/container.js';
 
 // Variable to track if we're currently refreshing
@@ -91,6 +94,25 @@ const refreshToken = async () => {
 const httpLink = createHttpLink({
   uri: 'http://localhost:8000/graphql/',
 });
+
+// Create WebSocket link for subscriptions
+const wsLink = new GraphQLWsLink(createClient({
+  url: 'ws://localhost:8000/graphql/',
+  connectionParams: () => {
+    const container = getContainer();
+    const tokenService = container.tokenService;
+    const token = tokenService.getToken();
+    
+    return {
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+  },
+  on: {
+    connected: () => console.log('🔗 WebSocket connected'),
+    closed: () => console.log('🔌 WebSocket disconnected'),
+    error: (error) => console.error('❌ WebSocket error:', error),
+  },
+}));
 
 // Authentication link to add JWT token to requests
 const authLink = setContext((_, { headers }) => {
@@ -183,9 +205,22 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   }
 });
 
+// Split link: send subscriptions to WebSocket, queries/mutations to HTTP
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription'
+    );
+  },
+  wsLink,
+  from([errorLink, authLink, httpLink])
+);
+
 // Create Apollo Client instance
 export const apolloClient = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
+  link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

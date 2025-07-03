@@ -19,18 +19,15 @@ export function buildCloudinaryUrl(resourcePath, cloudName = DEFAULT_CLOUD_NAME)
   
   // If it's already a full URL, return as is
   if (resourcePath.startsWith('http://') || resourcePath.startsWith('https://')) {
-    console.log('buildCloudinaryUrl: Already full URL:', resourcePath);
     return resourcePath;
   }
   
   // If it's a default/static image (like default-avatar.svg), don't process it
   if (resourcePath.includes('default-') || resourcePath.includes('/static/') || resourcePath.includes('/media/')) {
-    console.log('buildCloudinaryUrl: Static/default image, returning as is:', resourcePath);
     // If it's a static path but we're in development, try to serve from public directory
     if (resourcePath.startsWith('/static/images/') && import.meta.env.DEV) {
       const filename = resourcePath.split('/').pop();
       const publicPath = `/${filename}`;
-      console.log('buildCloudinaryUrl: Development mode, serving from public:', publicPath);
       return publicPath;
     }
     return resourcePath;
@@ -38,7 +35,6 @@ export function buildCloudinaryUrl(resourcePath, cloudName = DEFAULT_CLOUD_NAME)
   
   // If it's already a Cloudinary URL (might happen with double processing), return as is
   if (resourcePath.includes('res.cloudinary.com')) {
-    console.log('buildCloudinaryUrl: Already Cloudinary URL:', resourcePath);
     return resourcePath;
   }
   
@@ -47,7 +43,6 @@ export function buildCloudinaryUrl(resourcePath, cloudName = DEFAULT_CLOUD_NAME)
   
   // Build the full Cloudinary URL
   const fullUrl = `https://res.cloudinary.com/${cloudName}/${cleanPath}`;
-  console.log('buildCloudinaryUrl: Built URL:', resourcePath, '->', fullUrl);
   return fullUrl;
 }
 

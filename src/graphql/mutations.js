@@ -115,6 +115,21 @@ export const UPDATE_USER_PROFILE = gql`
   }
 `;
 
+export const CHANGE_PASSWORD = gql`
+  mutation ChangePassword(
+    $currentPassword: String!
+    $newPassword: String!
+  ) {
+    changePassword(
+      currentPassword: $currentPassword
+      newPassword: $newPassword
+    ) {
+      success
+      errors
+    }
+  }
+`;
+
 // News Mutations
 export const CREATE_NEWS = gql`
   mutation CreateNews(
@@ -163,13 +178,14 @@ export const CREATE_NEWS = gql`
 export const UPDATE_NEWS = gql`
   mutation UpdateNews(
     $id: Int!
-    $title: String
-    $content: String
-    $excerpt: String
+    $title: String!
+    $content: String!
+    $excerpt: String!
     $featuredImage: String
-    $categoryId: Int
+    $categoryId: Int!
     $tagIds: [Int!]
-    $status: String
+    $metaDescription: String
+    $metaKeywords: String
   ) {
     updateNews(
       id: $id
@@ -179,14 +195,15 @@ export const UPDATE_NEWS = gql`
       featuredImage: $featuredImage
       categoryId: $categoryId
       tagIds: $tagIds
-      status: $status
+      metaDescription: $metaDescription
+      metaKeywords: $metaKeywords
     ) {
       news {
         id
         title
         content
         excerpt
-        featuredImage
+        featuredImageUrl
         status
         updatedAt
         category {

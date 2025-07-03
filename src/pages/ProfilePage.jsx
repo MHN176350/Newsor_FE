@@ -1,19 +1,52 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid } from '@mui/joy';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid, Modal, ModalDialog, ModalClose } from '@mui/joy';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
+import { CHANGE_PASSWORD } from '../graphql/mutations';
 import ImageUpload from '../components/ImageUpload';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, updateProfile, updateAvatar, loading, error } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordMessage, setPasswordMessage] = useState('');
   const [formData, setFormData] = useState({
     bio: '',
     phone: '',
     dateOfBirth: '',
   });
   const [message, setMessage] = useState('');
+
+  // Change password mutation
+  const [changePassword, { loading: passwordLoading }] = useMutation(CHANGE_PASSWORD, {
+    onCompleted: (data) => {
+      if (data.changePassword.success) {
+        setPasswordMessage('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordMessage('');
+        }, 2000);
+      } else {
+        setPasswordMessage(data.changePassword.errors?.join(', ') || 'Failed to change password');
+      }
+    },
+    onError: (error) => {
+      setPasswordMessage('An error occurred while changing password.');
+      console.error('Password change error:', error);
+    },
+  });
 
   // Initialize form data when user data is available
   useEffect(() => {
@@ -47,6 +80,56 @@ export default function ProfilePage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswordData({
+      ...passwordData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordMessage('');
+
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordMessage('All fields are required.');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage('New passwords do not match.');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setPasswordMessage('New password must be at least 8 characters long.');
+      return;
+    }
+
+    try {
+      await changePassword({
+        variables: {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        },
+      });
+    } catch (err) {
+      setPasswordMessage('Failed to change password. Please try again.');
+      console.error('Password change error:', err);
+    }
+  };
+
+  const handlePasswordModalClose = () => {
+    setShowPasswordModal(false);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setPasswordMessage('');
   };
 
   const handleAvatarUploaded = async (imageUrl, profile) => {
@@ -309,7 +392,11 @@ export default function ProfilePage() {
                   Update your password to keep your account secure
                 </Typography>
               </Box>
-              <Button variant="outlined" size="sm">
+              <Button 
+                variant="outlined" 
+                size="sm"
+                onClick={() => setShowPasswordModal(true)}
+              >
                 Change
               </Button>
             </Box>
@@ -342,6 +429,83 @@ export default function ProfilePage() {
           </Stack>
         </CardContent>
       </Card>
+
+      {/* Change Password Modal */}
+      <Modal open={showPasswordModal} onClose={handlePasswordModalClose}>
+        <ModalDialog sx={{ width: 400 }}>
+          <ModalClose />
+          <Typography level="h4" sx={{ mb: 2 }}>
+            Change Password
+          </Typography>
+          
+          <form onSubmit={handlePasswordSubmit}>
+            <Stack spacing={3}>
+              {passwordMessage && (
+                <Alert 
+                  color={passwordMessage.includes('success') ? 'success' : 'danger'}
+                  size="sm"
+                >
+                  {passwordMessage}
+                </Alert>
+              )}
+
+              <FormControl required>
+                <FormLabel>Current Password</FormLabel>
+                <Input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <FormControl required>
+                <FormLabel>New Password</FormLabel>
+                <Input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password (min 8 characters)"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <FormControl required>
+                <FormLabel>Confirm New Password</FormLabel>
+                <Input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm new password"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
+                <Button
+                  variant="plain"
+                  onClick={handlePasswordModalClose}
+                  disabled={passwordLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="solid"
+                  loading={passwordLoading}
+                  disabled={passwordLoading}
+                >
+                  Change Password
+                </Button>
+              </Stack>
+            </Stack>
+          </form>
+        </ModalDialog>
+      </Modal>
     </Box>
   );
 }

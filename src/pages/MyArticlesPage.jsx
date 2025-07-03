@@ -266,23 +266,24 @@ export default function MyArticlesPage() {
                     </td>
                     <td>
                       <Stack direction="row" spacing={1}>
-                        {/* View Button */}
+                        {/* Details Button */}
                         <Button
                           size="sm"
                           variant="outlined"
-                          onClick={() => navigate(`/news/${article.slug}`)}
+                          onClick={() => navigate(`/writer/article/${article.id}`)}
                         >
-                          View
+                          Details
                         </Button>
                         
-                        {/* Edit Button (only for drafts and rejected) */}
-                        {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                        {/* Public View Button */}
+                        {article.status?.toLowerCase() === 'published' && (
                           <Button
                             size="sm"
-                            variant="soft"
-                            onClick={() => navigate(`/create-article/edit/${article.id}`)}
+                            variant="outlined"
+                            color="neutral"
+                            onClick={() => navigate(`/news/${article.slug}`)}
                           >
-                            Edit
+                            View Public
                           </Button>
                         )}
                         
