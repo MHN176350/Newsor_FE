@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   Box,
@@ -27,9 +27,13 @@ import { GET_CATEGORIES, GET_TAGS, GET_NEWS } from '../graphql/queries';
 export default function CreateArticlePage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { mode, id } = useParams(); // mode can be 'new' or 'edit', id is article id for editing
-
-  const isEditing = mode === 'edit' && id;
+  const { id } = useParams(); // id is article id for editing/duplicating
+  const location = useLocation();
+  
+  // Determine mode based on current path
+  const isEditing = location.pathname.includes('/edit/');
+  const isDuplicating = location.pathname.includes('/duplicate/');
+  const isCreating = !isEditing && !isDuplicating;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -53,7 +57,7 @@ export default function CreateArticlePage() {
     GET_NEWS,
     {
       variables: { id: parseInt(id) },
-      skip: !isEditing
+      skip: !isEditing && !isDuplicating
     }
   );
   const [createNews] = useMutation(CREATE_NEWS, {
@@ -83,10 +87,10 @@ export default function CreateArticlePage() {
 
   // Populate form data when editing
   useEffect(() => {
-    if (isEditing && articleData?.newsArticle) {
+    if ((isEditing || isDuplicating) && articleData?.newsArticle) {
       const article = articleData.newsArticle;
       setFormData({
-        title: article.title || '',
+        title: isDuplicating ? `${article.title} (Copy)` : (article.title || ''),
         content: article.content || '',
         excerpt: article.excerpt || '',
         categoryId: article.category?.id || '',
@@ -96,7 +100,7 @@ export default function CreateArticlePage() {
         metaKeywords: article.metaKeywords || '',
       });
     }
-  }, [isEditing, articleData]);
+  }, [isEditing, isDuplicating, articleData]);
 
   // Check authentication and permissions
   if (!isAuthenticated) {
@@ -106,7 +110,7 @@ export default function CreateArticlePage() {
           Authentication Required
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to {isEditing ? 'edit' : 'create'} articles.
+          Please sign in to {isEditing ? 'edit' : isDuplicating ? 'duplicate' : 'create'} articles.
         </Typography>
         <Button onClick={() => navigate('/login')}>
           Sign In
@@ -261,19 +265,19 @@ export default function CreateArticlePage() {
         });
         data = result.data;
       } else {
-        // Create new article
+        // Create new article (includes duplication)
         const result = await createNews({ variables });
         data = result.data;
       }
 
       const operation = isEditing ? 'updateNews' : 'createNews';
       if (!data?.[operation]?.success) {
-        setErrors(data?.[operation]?.errors || [`Failed to ${isEditing ? 'update' : 'create'} article`]);
+        setErrors(data?.[operation]?.errors || [`Failed to ${isEditing ? 'update' : isDuplicating ? 'duplicate' : 'create'} article`]);
       }
       // Success is handled by onCompleted callback
     } catch (error) {
-      console.error(`Error ${isEditing ? 'updating' : 'creating'} article:`, error);
-      setErrors([error.message || `Failed to ${isEditing ? 'update' : 'create'} article`]);
+      console.error(`Error ${isEditing ? 'updating' : isDuplicating ? 'duplicating' : 'creating'} article:`, error);
+      setErrors([error.message || `Failed to ${isEditing ? 'update' : isDuplicating ? 'duplicate' : 'create'} article`]);
     } finally {
       setIsSubmitting(false);
     }
@@ -284,10 +288,10 @@ export default function CreateArticlePage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2 }}>
-          ✍️ {isEditing ? 'Edit Article' : 'Create New Article'}
+          ✍️ {isEditing ? 'Edit Article' : isDuplicating ? 'Duplicate Article' : 'Create New Article'}
         </Typography>
         <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          {isEditing ? 'Make changes to your article' : 'Share your story with the world'}
+          {isEditing ? 'Make changes to your article' : isDuplicating ? 'Create a copy of your article' : 'Share your story with the world'}
         </Typography>
       </Box>
 

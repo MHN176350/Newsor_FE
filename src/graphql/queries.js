@@ -153,15 +153,16 @@ export const GET_NEWS = gql`
       slug
       metaDescription
       metaKeywords
-      likesCount
-      commentsCount
-      readCount
-      isLikedByUser
+      viewCount
+      likeCount
       author {
         id
         username
         firstName
         lastName
+        profile {
+          avatarUrl
+        }
       }
       category {
         id
@@ -173,20 +174,12 @@ export const GET_NEWS = gql`
         name
         slug
       }
-      comments {
-        id
-        content
-        createdAt
-        author {
-          id
-          username
-          firstName
-          lastName
-        }
-      }
     }
   }
 `;
+
+// Alias for GET_NEWS for article editing pages
+export const GET_NEWS_ARTICLE = GET_NEWS;
 
 export const GET_MY_NEWS = gql`
   query GetMyNews {
@@ -263,7 +256,7 @@ export const GET_CATEGORIES = gql`
 `;
 
 export const GET_CATEGORY = gql`
-  query GetCategory($id: Int!) {
+  query GetCategory($id: Int) {
     category(id: $id) {
       id
       name
@@ -323,8 +316,17 @@ export const GET_COMMENTS = gql`
         username
         firstName
         lastName
+        profile{
+          avatarUrl
+        }
       }
     }
+  }
+`;
+export const GET_COMMENT_LIKE_STATUS = gql`
+  query GetCommentLikeStatus($commentId: Int!) {
+    commentLikeCount(commentId: $commentId)
+    isCommentLiked(commentId: $commentId)
   }
 `;
 
@@ -482,5 +484,243 @@ export const NOTIFICATION_SUBSCRIPTION = gql`
   }
 `;
 
-// Alias for GET_NEWS for specific use case
-export const GET_NEWS_ARTICLE = GET_NEWS;
+export const GET_COUNTS_AND_COMMENTS = gql`
+  query GetCountsAndComments($articleId: Int!) {
+    articleLikeCount(articleId: $articleId)
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      updatedAt
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+    }
+    articleCommentCount(articleId: $articleId)
+    articleReadCount(articleId: $articleId)
+    isArticleLiked(articleId: $articleId)
+    hasReadArticle(articleId: $articleId)
+  }
+`;
+
+export const GET_COMMENTS_WITH_REPLIES = gql`
+  query GetCommentsWithReplies($articleId: Int!) {
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      likeCount
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+      parent {
+        id
+        author {
+          id
+          username
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        likeCount
+        author {
+          id
+          username
+          firstName
+          lastName
+        }
+        parent {
+          id
+          author {
+            id
+            username
+          }
+        }
+      }
+      likes {
+        user {
+          id
+          username
+        }
+      }
+    }
+  }
+`;
+
+export const GET_COMMENTS_WITH_LIKE_STATUS = gql`
+  query GetCommentsWithLikeStatus($articleId: Int!) {
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+export const GET_LATEST_COMMENTS = gql`
+  query GetLatestComments($articleId: Int!, $limit: Int, $offset: Int) {
+    latestArticleComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+
+export const GET_TOP_LIKED_COMMENTS = gql`
+  query GetTopLikedComments($articleId: Int!, $limit: Int, $offset: Int) {
+    topLikedComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;

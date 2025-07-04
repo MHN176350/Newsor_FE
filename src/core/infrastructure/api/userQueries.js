@@ -280,3 +280,13 @@ export const UPLOAD_AVATAR_IMAGE = gql`
     }
   }
 `;
+
+export const UPLOAD_REGISTRATION_AVATAR_IMAGE = gql`
+  mutation UploadRegistrationAvatarImage($base64Data: String!) {
+    uploadRegistrationAvatarImage(base64Data: $base64Data) {
+      url
+      success
+      errors
+    }
+  }
+`;

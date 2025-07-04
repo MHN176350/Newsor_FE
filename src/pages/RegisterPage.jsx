@@ -142,6 +142,7 @@ export default function RegisterPage() {
                   uploadButtonText="Choose Profile Picture"
                   removeButtonText="Remove Picture"
                   showPreview={true}
+                  isRegistration={true}
                 />
               </FormControl>
 

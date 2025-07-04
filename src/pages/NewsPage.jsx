@@ -140,7 +140,7 @@ export default function NewsPage() {
           {canCreateArticles && (
             <Button
               component={Link}
-              to="/news/create"
+              to="/articles/create"
               variant="solid"
               sx={{ mt: 1 }}
             >
@@ -226,7 +226,7 @@ export default function NewsPage() {
             {canCreateArticles && (
               <Button
                 component={Link}
-                to="/news/create"
+                to="/articles/create"
                 variant="solid"
                 sx={{ mt: 2 }}
               >

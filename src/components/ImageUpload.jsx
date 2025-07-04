@@ -26,7 +26,8 @@ export default function ImageUpload({
   disabled = false,
   showPreview = true,
   uploadButtonText = 'Upload Image',
-  removeButtonText = 'Remove Image'
+  removeButtonText = 'Remove Image',
+  isRegistration = false // Flag for registration uploads (no auth required)
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -116,14 +117,22 @@ export default function ImageUpload({
       
       if (variant === 'avatar') {
         // Use specialized avatar upload
-        result = await imageService.processAndUploadAvatar(file);
+        result = await imageService.processAndUploadAvatar(file, isRegistration);
         
-        // For avatar uploads, we get back the updated profile
-        if (result.profile) {
-          const originalAvatarUrl = result.profile.avatarUrl;
-          
-          setUploadedImageUrl(originalAvatarUrl);
-          onImageUploaded?.(originalAvatarUrl, result.profile);
+        if (isRegistration) {
+          // For registration avatar uploads, we get back just the URL
+          if (result.url) {
+            setUploadedImageUrl(result.url);
+            onImageUploaded?.(result.url);
+          }
+        } else {
+          // For authenticated avatar uploads, we get back the updated profile
+          if (result.profile) {
+            const originalAvatarUrl = result.profile.avatarUrl;
+            
+            setUploadedImageUrl(originalAvatarUrl);
+            onImageUploaded?.(originalAvatarUrl, result.profile);
+          }
         }
       } else {
         // Use general image upload

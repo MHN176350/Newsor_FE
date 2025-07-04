@@ -32,7 +32,7 @@ export default function ReviewNewsPage() {
         setIsSubmitting(false);
         // Navigate back to review list after 2 seconds
         setTimeout(() => {
-          navigate('/review-articles');
+          navigate('/review');
         }, 2000);
       } else {
         setMessage(`Error: ${data.updateNewsStatus.errors?.join(', ') || 'Unknown error'}`);
@@ -110,7 +110,7 @@ export default function ReviewNewsPage() {
     return (
       <Box textAlign="center" py={4}>
         <Typography level="h3" sx={{ mb: 2 }}>Article Not Found</Typography>
-        <Button component={Link} to="/review-articles">
+        <Button component={Link} to="/review">
           Back to Review Queue
         </Button>
       </Box>
@@ -144,7 +144,7 @@ export default function ReviewNewsPage() {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Button
             component={Link}
-            to="/review-articles"
+            to="/review"
             variant="outlined"
             size="sm"
           >

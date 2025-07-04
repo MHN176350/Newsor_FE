@@ -189,7 +189,7 @@ export default function MyArticlesPage() {
         <Button
           variant="solid"
           size="lg"
-          onClick={() => navigate('/create-article/new')}
+          onClick={() => navigate('/articles/create')}
           sx={{
             bgcolor: 'primary.600',
             '&:hover': { bgcolor: 'primary.700' }
@@ -212,7 +212,7 @@ export default function MyArticlesPage() {
               </Typography>
               <Button
                 variant="solid"
-                onClick={() => navigate('/create-article/new')}
+                onClick={() => navigate('/articles/create')}
               >
                 Create Your First Article
               </Button>
@@ -270,7 +270,7 @@ export default function MyArticlesPage() {
                         <Button
                           size="sm"
                           variant="outlined"
-                          onClick={() => navigate(`/writer/article/${article.id}`)}
+                          onClick={() => navigate(`/writer/articles/${article.id}`)}
                         >
                           Details
                         </Button>
@@ -286,6 +286,28 @@ export default function MyArticlesPage() {
                             View Public
                           </Button>
                         )}
+                        
+                        {/* Edit Button - only for draft and rejected articles */}
+                        {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                          <Button
+                            size="sm"
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => navigate(`/articles/edit/${article.id}`)}
+                          >
+                            ✏️ Edit
+                          </Button>
+                        )}
+                        
+                        {/* Duplicate Button - for all articles */}
+                        <Button
+                          size="sm"
+                          variant="outlined"
+                          color="neutral"
+                          onClick={() => navigate(`/articles/duplicate/${article.id}`)}
+                        >
+                          📋 Duplicate
+                        </Button>
                         
                         {/* Submit/Resubmit Button */}
                         {getStatusAction(article.status) && (

@@ -11,7 +11,8 @@ import {
   UPDATE_USER_PROFILE,
   CHANGE_USER_ROLE,
   UPLOAD_BASE64_IMAGE,
-  UPLOAD_AVATAR_IMAGE
+  UPLOAD_AVATAR_IMAGE,
+  UPLOAD_REGISTRATION_AVATAR_IMAGE
 } from '../api/userQueries.js';
 
 /**
@@ -234,6 +235,24 @@ export class GraphQLUserRepository extends IUserRepository {
     } catch (error) {
       console.error('Error uploading avatar:', error);
       throw new Error(error.message || 'Failed to upload avatar');
+    }
+  }
+
+  async uploadRegistrationAvatar(base64Data) {
+    try {
+      const { data } = await this.client.mutate({
+        mutation: UPLOAD_REGISTRATION_AVATAR_IMAGE,
+        variables: { base64Data }
+      });
+
+      return {
+        url: data.uploadRegistrationAvatarImage.url,
+        success: data.uploadRegistrationAvatarImage.success,
+        errors: data.uploadRegistrationAvatarImage.errors
+      };
+    } catch (error) {
+      console.error('Error uploading registration avatar:', error);
+      throw new Error(error.message || 'Failed to upload registration avatar');
     }
   }
 

@@ -54,7 +54,7 @@ export default function NotificationBell() {
 
   const handleNotificationClick = (notification) => {
     // Optimistically navigate and close while mutation runs in the background
-    navigate(`/review/${notification.article.slug}`);
+    navigate(`/review/article/${notification.article.slug}`);
     handleClose();
     try {
       markAsRead({

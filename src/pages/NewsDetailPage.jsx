@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_NEWS } from '../graphql/queries';
-import { TOGGLE_LIKE, CREATE_COMMENT } from '../graphql/mutations';
+import { TOGGLE_LIKE } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
@@ -11,29 +11,18 @@ import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 export default function NewsDetailPage() {
   const { slug } = useParams();
   const { user, isAuthenticated } = useAuth();
-  const [comment, setComment] = useState('');
 
-  const { data, loading, error, refetch } = useQuery(GET_NEWS, {
+  const { data, loading, error } = useQuery(GET_NEWS, {
     variables: { slug: slug },
     skip: !slug,
   });
 
   const [toggleLike] = useMutation(TOGGLE_LIKE, {
     onCompleted: () => {
-      refetch(); // Refetch to get updated like count and status
+      // Use refetch sparingly to avoid infinite loops
     },
     onError: (error) => {
       console.error('Error toggling like:', error);
-    },
-  });
-
-  const [createComment] = useMutation(CREATE_COMMENT, {
-    onCompleted: () => {
-      setComment('');
-      refetch(); // Refetch to get updated comments
-    },
-    onError: (error) => {
-      console.error('Error creating comment:', error);
     },
   });
 
@@ -42,18 +31,6 @@ export default function NewsDetailPage() {
   const handleLike = () => {
     if (!isAuthenticated || !news) return;
     toggleLike({ variables: { newsId: parseInt(news.id) } });
-  };
-
-  const handleCommentSubmit = (e) => {
-    e.preventDefault();
-    if (!comment.trim() || !isAuthenticated || !news) return;
-    
-    createComment({
-      variables: {
-        articleId: news.id,
-        content: comment,
-      },
-    });
   };
 
   if (loading) {
@@ -186,18 +163,18 @@ export default function NewsDetailPage() {
         <CardContent>
           <Stack direction="row" spacing={2} alignItems="center">
             <Button
-              variant={news.isLikedByUser ? 'solid' : 'outlined'}
+              variant="outlined"
               size="sm"
               onClick={handleLike}
               disabled={!isAuthenticated}
             >
-              ❤️ {news.likesCount}
+              ❤️ {news.likeCount || 0}
             </Button>
             <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              💬 {news.commentsCount} Comments
+              💬 0 Comments
             </Typography>
             <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              👁️ {news.readCount} Reads
+              👁️ {news.viewCount || 0} Views
             </Typography>
           </Stack>
         </CardContent>
@@ -207,71 +184,20 @@ export default function NewsDetailPage() {
       <Card variant="outlined">
         <CardContent>
           <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Comments ({news.commentsCount})
+            Comments (0)
           </Typography>
 
-          {isAuthenticated ? (
-            <form onSubmit={handleCommentSubmit}>
-              <Stack spacing={2} sx={{ mb: 4 }}>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--joy-palette-divider)',
-                    fontFamily: 'inherit',
-                    fontSize: '14px',
-                    resize: 'vertical',
-                  }}
-                />
-                <Button type="submit" size="sm" sx={{ alignSelf: 'flex-start' }}>
-                  Post Comment
-                </Button>
-              </Stack>
-            </form>
-          ) : (
-            <Box sx={{ mb: 4, p: 2, backgroundColor: 'var(--joy-palette-background-level1)', borderRadius: 'sm' }}>
-              <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                <Link to="/login" style={{ color: 'var(--joy-palette-primary-700)' }}>
-                  Sign in
-                </Link>{' '}
-                to leave a comment
-              </Typography>
-            </Box>
-          )}
+          <Box sx={{ mb: 4, p: 2, backgroundColor: 'var(--joy-palette-background-level1)', borderRadius: 'sm' }}>
+            <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
+              Comments feature coming soon! Stay tuned for updates.
+            </Typography>
+          </Box>
 
           <Stack spacing={3}>
-            {news.comments?.map((comment) => (
-              <Box key={comment.id}>
-                <Stack direction="row" spacing={2} alignItems="flex-start">
-                  <Avatar size="sm" />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <Typography level="body2" sx={{ fontWeight: 600, color: 'var(--joy-palette-text-primary)' }}>
-                        {comment.author?.firstName} {comment.author?.lastName}
-                      </Typography>
-                      <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-                        {formatDate(comment.createdAt)}
-                      </Typography>
-                    </Stack>
-                    <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                      {comment.content}
-                    </Typography>
-                  </Box>
-                </Stack>
-                <Divider sx={{ mt: 2 }} />
-              </Box>
-            ))}
-
-            {(!news.comments || news.comments.length === 0) && (
-              <Typography level="body2" textAlign="center" sx={{ py: 4, color: 'var(--joy-palette-text-tertiary)' }}>
-                No comments yet. Be the first to comment!
-              </Typography>
-            )}
+            {/* For now, show a message that comments are not implemented */}
+            <Typography level="body2" textAlign="center" sx={{ py: 4, color: 'var(--joy-palette-text-tertiary)' }}>
+              Comments feature coming soon!
+            </Typography>
           </Stack>
         </CardContent>
       </Card>

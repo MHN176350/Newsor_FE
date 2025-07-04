@@ -147,7 +147,7 @@ export default function Layout({ children }) {
                 <Button
                   variant="soft"
                   component={Link}
-                  to="/review-articles"
+                  to="/review"
                   sx={{ 
                     color: 'warning.600',
                     bgcolor: 'warning.100',

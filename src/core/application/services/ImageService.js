@@ -135,6 +135,29 @@ export class ImageService {
   }
 
   /**
+   * Upload avatar image for registration (no authentication required)
+   * @param {string} base64Data - Base64 encoded avatar image
+   * @returns {Promise<Object>} Upload result with avatar URL
+   */
+  async uploadRegistrationAvatar(base64Data) {
+    try {
+      const result = await this.userRepository.uploadRegistrationAvatar(base64Data);
+
+      if (!result.success) {
+        throw new Error(result.errors?.join(', ') || 'Registration avatar upload failed');
+      }
+
+      return {
+        url: result.url,
+        success: true
+      };
+    } catch (error) {
+      console.error('Registration avatar upload error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Process and upload image file
    * @param {File} file - Image file
    * @param {Object} options - Processing and upload options
@@ -174,7 +197,13 @@ export class ImageService {
    * @param {File} file - Avatar image file
    * @returns {Promise<Object>} Upload result with updated profile
    */
-  async processAndUploadAvatar(file) {
+  /**
+   * Process and upload avatar image
+   * @param {File} file - Avatar image file
+   * @param {boolean} isRegistration - Whether this is for registration (no auth required)
+   * @returns {Promise<Object>} Upload result
+   */
+  async processAndUploadAvatar(file, isRegistration = false) {
     try {
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -189,8 +218,12 @@ export class ImageService {
       // Resize for avatar (square, 400x400)
       const base64Data = await this.resizeImage(file, 400, 400, 0.9);
 
-      // Upload avatar
-      return await this.uploadAvatar(base64Data);
+      // Upload avatar - use registration upload if specified
+      if (isRegistration) {
+        return await this.uploadRegistrationAvatar(base64Data);
+      } else {
+        return await this.uploadAvatar(base64Data);
+      }
     } catch (error) {
       console.error('Avatar processing error:', error);
       throw error;

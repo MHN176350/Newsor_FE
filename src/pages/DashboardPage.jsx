@@ -69,7 +69,7 @@ export default function DashboardPage() {
           <Grid xs={12} sm={6} md={3}>
             <Card
               component={Link}
-              to="/news/create"
+              to="/articles/create"
               variant="outlined"
               sx={{
                 p: 3,
