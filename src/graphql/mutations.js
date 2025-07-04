@@ -293,7 +293,7 @@ export const UPDATE_NEWS_STATUS = gql`
 
 // Comment Mutations
 export const CREATE_COMMENT = gql`
-  mutation CreateComment($articleId: ID!, $content: String!, $parentId: ID) {
+  mutation CreateComment($articleId: Int!, $content: String!, $parentId: Int) {
     createComment(articleId: $articleId, content: $content, parentId: $parentId) {
       comment {
         id
@@ -304,6 +304,13 @@ export const CREATE_COMMENT = gql`
           username
           firstName
           lastName
+        }
+        parent {
+          id
+          author {
+            id
+            username
+          }
         }
       }
       success
@@ -336,11 +343,27 @@ export const DELETE_COMMENT = gql`
 `;
 
 // Like Mutations
-export const TOGGLE_LIKE = gql`
-  mutation ToggleLike($newsId: Int, $commentId: Int) {
-    toggleLike(newsId: $newsId, commentId: $commentId) {
-      liked
-      likesCount
+export const CREATE_LIKE_ARTICLE = gql`
+  mutation CreateLikeArticle($articleId: Int!) {
+    createLikeArticle(articleId: $articleId) {
+      success
+      errors
+    }
+  }
+`;
+
+export const CREATE_LIKE_COMMENT = gql`
+  mutation CreateLikeComment($commentId: Int!) {
+    createLikeComment(commentId: $commentId) {
+      success
+      errors
+    }
+  }
+`;
+
+export const UPDATE_LIKE_STATUS = gql`
+  mutation UpdateLikeStatus($articleId: Int, $commentId: Int) {
+    updateLikeStatus(articleId: $articleId, commentId: $commentId) {
       success
       errors
     }
@@ -493,6 +516,20 @@ export const SUBMIT_NEWS_FOR_REVIEW = gql`
         title
         status
       }
+      errors
+    }
+  }
+`;
+
+// Reading History Mutations
+export const CREATE_READING_HISTORY = gql`
+  mutation CreateReadingHistory($articleId: Int!, $ipAddress: String, $userAgent: String) {
+    createReadinghistory(
+      articleId: $articleId
+      ipAddress: $ipAddress
+      userAgent: $userAgent
+    ) {
+      success
       errors
     }
   }
