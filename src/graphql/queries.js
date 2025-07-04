@@ -497,3 +497,116 @@ export const GET_COMMENTS_WITH_LIKE_STATUS = gql`
     }
   }
 `;
+export const GET_LATEST_COMMENTS = gql`
+  query GetLatestComments($articleId: Int!, $limit: Int, $offset: Int) {
+    latestArticleComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+
+export const GET_TOP_LIKED_COMMENTS = gql`
+  query GetTopLikedComments($articleId: Int!, $limit: Int, $offset: Int) {
+    topLikedComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
