@@ -1,596 +1,527 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import {
   Box,
   Typography,
+  Card,
+  CardContent,
   Input,
   Textarea,
-  Button,
-  Card,
-  Stack,
-  Chip,
-  Divider,
-  CircularProgress,
-  Alert,
   Select,
   Option,
+  Button,
+  Stack,
+  Alert,
   FormControl,
   FormLabel,
-  AspectRatio
+  CircularProgress,
+  Chip,
+  Divider,
 } from '@mui/joy';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import RichTextEditor from '../components/RichTextEditor';
-import { GET_NEWS_ARTICLE, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
-import { UPDATE_NEWS, GET_CLOUDINARY_SIGNATURE } from '../graphql/mutations';
+import TagAutocomplete from '../components/TagAutocomplete';
+import ImageUpload from '../components/ImageUpload';
+import { UPDATE_NEWS } from '../graphql/mutations';
+import { GET_CATEGORIES, GET_TAGS, GET_NEWS_ARTICLE } from '../graphql/queries';
 
-const WriterNewsDetailPage = () => {
-  const { id } = useParams();
+export default function WriterNewsDetailPage() {
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('edit');
-  const [validationErrors, setValidationErrors] = useState({});
-  const [isDirty, setIsDirty] = useState(false);
-  const [wordCount, setWordCount] = useState(0);
+  const { id } = useParams();
+
+  // Form state
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     excerpt: '',
     categoryId: '',
-    tagIds: [],
+    tags: [],
     featuredImage: '',
     metaDescription: '',
-    metaKeywords: ''
+    metaKeywords: '',
   });
+  const [errors, setErrors] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const { data: articleData, loading: articleLoading, error: articleError, refetch } = useQuery(GET_NEWS_ARTICLE, {
+  // GraphQL hooks
+  const { data: articleData, loading: articleLoading, error: articleError } = useQuery(GET_NEWS_ARTICLE, {
     variables: { id: parseInt(id) },
     skip: !id
   });
-  const { data: categoriesData } = useQuery(GET_CATEGORIES);
-  const { data: tagsData } = useQuery(GET_TAGS);
-  const [updateNews] = useMutation(UPDATE_NEWS, {
-    onCompleted: (data) => {
-      if (data.updateNews.success) {
-        toast.success('Article updated successfully and submitted for review!');
-        setIsEditing(false);
-        setIsDirty(false);
-        refetch();
-      } else {
-        toast.error(data.updateNews.errors.join(', '));
-      }
-    },
-    onError: (error) => {
-      toast.error(`Update failed: ${error.message}`);
-    }
-  });
-  const [getCloudinarySignature] = useMutation(GET_CLOUDINARY_SIGNATURE);
+  const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES);
+  const { data: tagsData, loading: tagsLoading } = useQuery(GET_TAGS);
+  const [updateNews] = useMutation(UPDATE_NEWS);
 
-  useEffect(() => {
-    if (articleData?.newsArticle) {
-      const article = articleData.newsArticle;
-      setFormData({
-        title: article.title || '',
-        content: article.content || '',
-        excerpt: article.excerpt || '',
-        categoryId: article.category?.id || '',
-        tagIds: article.tags?.map(tag => tag.id) || [],
-        featuredImage: article.featuredImageUrl || '',
-        metaDescription: article.metaDescription || '',
-        metaKeywords: article.metaKeywords || ''
-      });
-      if (article.content) {
-        const count = getWordCount(article.content);
-        setWordCount(count);
-      }
-    }
-  }, [articleData]);
-
-  const getWordCount = (text) => {
-    const strippedContent = text?.replace(/<[^>]*>/g, '') || '';
-    const words = strippedContent.split(/\s+/).filter(Boolean);
-    return words.length;
-  };
-  const getReadingTime = (wordCount) => {
-    const wordsPerMinute = 225;
-    const minutes = Math.max(1, Math.round(wordCount / wordsPerMinute));
-    return minutes;
-  };
-  useEffect(() => {
-    if (formData.content) {
-      const count = getWordCount(formData.content);
-      setWordCount(count);
-    }
-  }, [formData.content]);
-
-  const handleInputChange = (field, value) => {
+  // Memoized values - must be before any conditional returns
+  const categories = useMemo(() => categoriesData?.categories || [], [categoriesData?.categories]);
+  const allTags = useMemo(() => tagsData?.tags || [], [tagsData?.tags]);
+  
+  const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    setIsDirty(true);
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [field]: undefined
-      }));
-    }
-  };
+    setHasChanges(true);
+    
+    // Clear errors for this field
+    setErrors(prev => prev.filter(error => !error.includes(field)));
+  }, []);
 
-  const validateForm = () => {
-    const errors = {};
+  const validateForm = useCallback(() => {
+    const newErrors = [];
+    
     if (!formData.title.trim()) {
-      errors.title = 'Title is required';
+      newErrors.push('Title is required');
     } else if (formData.title.trim().length < 5) {
-      errors.title = 'Title should be at least 5 characters long';
+      newErrors.push('Title must be at least 5 characters long');
     }
-    if (!formData.content || formData.content.trim() === '') {
-      errors.content = 'Content is required';
-    } else if (wordCount < 20) {
-      errors.content = 'Content should have at least 20 words';
+    
+    if (!formData.content || formData.content.trim() === '' || formData.content === '<p></p>') {
+      newErrors.push('Article content is required');
     }
+    
     if (!formData.excerpt.trim()) {
-      errors.excerpt = 'Excerpt is required';
+      newErrors.push('Excerpt is required');
     } else if (formData.excerpt.trim().length < 10) {
-      errors.excerpt = 'Excerpt should be at least 10 characters long';
+      newErrors.push('Excerpt must be at least 10 characters long');
     }
+    
     if (!formData.categoryId) {
-      errors.categoryId = 'Category is required';
+      newErrors.push('Category is required');
     }
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  }, [formData.title, formData.content, formData.excerpt, formData.categoryId]);
 
-  const handleSave = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
-      const firstError = Object.values(validationErrors)[0];
-      toast.error(firstError || 'Please fix the errors before saving');
+      toast.error('Please fix the errors before submitting');
       return;
     }
-    if (window.confirm('This will submit your article for review by editors. Continue?')) {
-      try {
-        await updateNews({
-          variables: {
-            id: parseInt(id),
-            title: formData.title,
-            content: formData.content,
-            excerpt: formData.excerpt,
-            categoryId: parseInt(formData.categoryId),
-            tagIds: formData.tagIds.map(id => parseInt(id)),
-            featuredImage: formData.featuredImage,
-            metaDescription: formData.metaDescription,
-            metaKeywords: formData.metaKeywords
-          }
-        });
-      } catch (error) {
-        console.error('Save error:', error);
-      }
-    }
-  };
 
-  const handleCancel = () => {
-    if (isDirty && !window.confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+    if (!window.confirm('This will submit your article for review. You won\'t be able to edit it until it\'s reviewed. Continue?')) {
       return;
     }
+
+    setIsSubmitting(true);
+    
+    try {
+      const { data } = await updateNews({
+        variables: {
+          id: parseInt(id),
+          title: formData.title.trim(),
+          content: formData.content,
+          excerpt: formData.excerpt.trim(),
+          categoryId: parseInt(formData.categoryId),
+          tagIds: formData.tags.map(tag => parseInt(tag.id)),
+          featuredImage: formData.featuredImage,
+          metaDescription: formData.metaDescription,
+          metaKeywords: formData.metaKeywords,
+        }
+      });
+
+      if (data?.updateNews?.success) {
+        toast.success('Article updated and submitted for review successfully!');
+        navigate('/my-articles', { 
+          state: { message: 'Article updated and submitted for review!' }
+        });
+      } else {
+        const errorMessage = data?.updateNews?.errors?.join(', ') || 'Failed to update article';
+        toast.error(errorMessage);
+        setErrors([errorMessage]);
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('An error occurred while updating the article');
+      setErrors(['An error occurred while updating the article']);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [validateForm, updateNews, id, formData, navigate]);
+
+  const handleCancel = useCallback(() => {
+    if (hasChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+      return;
+    }
+    navigate('/my-articles');
+  }, [hasChanges, navigate]);
+
+  const getWordCount = useCallback((content) => {
+    const text = content?.replace(/<[^>]*>/g, '') || '';
+    return text.split(/\s+/).filter(Boolean).length;
+  }, []);
+
+  const wordCount = useMemo(() => getWordCount(formData.content), [getWordCount, formData.content]);
+  const readingTime = useMemo(() => Math.max(1, Math.round(wordCount / 225)), [wordCount]);
+
+  const getStatusColor = useCallback((status) => {
+    switch (status?.toLowerCase()) {
+      case 'published': return 'success';
+      case 'draft': return 'neutral';
+      case 'pending': return 'warning';
+      case 'rejected': return 'danger';
+      default: return 'neutral';
+    }
+  }, []);
+
+  // Load article data when it's available
+  useEffect(() => {
     if (articleData?.newsArticle) {
       const article = articleData.newsArticle;
       setFormData({
         title: article.title || '',
         content: article.content || '',
         excerpt: article.excerpt || '',
-        categoryId: article.category?.id || '',
-        tagIds: article.tags?.map(tag => tag.id) || [],
+        categoryId: article.category?.id?.toString() || '',
+        tags: article.tags || [],
         featuredImage: article.featuredImageUrl || '',
         metaDescription: article.metaDescription || '',
-        metaKeywords: article.metaKeywords || ''
+        metaKeywords: article.metaKeywords || '',
       });
     }
-    setIsEditing(false);
-    setIsDirty(false);
-    setValidationErrors({});
-  };
+  }, [articleData]);
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'published':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'draft':
-        return 'info';
-      case 'rejected':
-        return 'error';
-      default:
-        return 'neutral';
-    }
-  };
+  // Derived state - calculated after hooks
+  const userRole = user?.profile?.role?.toLowerCase();
+  const canEditArticles = ['writer', 'manager', 'admin'].includes(userRole);
+  const article = articleData?.newsArticle;
+  const canEdit = article ? ['draft', 'rejected'].includes(article.status?.toLowerCase()) : false;
 
-  if (articleLoading) {
+  // Check authentication and permissions - render conditionally
+  if (!isAuthenticated) {
     return (
-      <Box sx={{ maxWidth: '1200px', mx: 'auto', py: 4, display: 'flex', justifyContent: 'center' }}>
+      <Box textAlign="center" py={6}>
+        <Typography level="h3" sx={{ mb: 2 }}>
+          Authentication Required
+        </Typography>
+        <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+          Please sign in to edit articles.
+        </Typography>
+        <Button onClick={() => navigate('/login')}>
+          Sign In
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!canEditArticles) {
+    return (
+      <Box textAlign="center" py={6}>
+        <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
+          Permission Denied
+        </Typography>
+        <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+          You need writer privileges to edit articles.
+        </Typography>
+        <Button onClick={() => navigate('/my-articles')}>
+          Back to My Articles
+        </Button>
+      </Box>
+    );
+  }
+
+  if (articleLoading || categoriesLoading || tagsLoading) {
+    return (
+      <Box textAlign="center" py={6}>
         <CircularProgress />
+        <Typography level="body1" sx={{ mt: 2 }}>
+          Loading article...
+        </Typography>
       </Box>
     );
   }
 
-  if (articleError || !articleData?.newsArticle) {
+  if (articleError || !article) {
     return (
-      <Box sx={{ maxWidth: '1200px', mx: 'auto', py: 4 }}>
-        <Alert color="danger">
-          Article not found or you don't have permission to view it.
-        </Alert>
+      <Box textAlign="center" py={6}>
+        <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
+          Article Not Found
+        </Typography>
+        <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+          The article you're looking for doesn't exist or you don't have permission to edit it.
+        </Typography>
+        <Button onClick={() => navigate('/my-articles')}>
+          Back to My Articles
+        </Button>
       </Box>
     );
   }
 
-  const article = articleData.newsArticle;
-  const categories = categoriesData?.categories || [];
-  const tags = tagsData?.tags || [];
+  if (!canEdit) {
+    return (
+      <Box textAlign="center" py={6}>
+        <Typography level="h3" sx={{ mb: 2, color: 'warning.500' }}>
+          Cannot Edit This Article
+        </Typography>
+        <Typography level="body1" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
+          Only articles with "Draft" or "Rejected" status can be edited.
+        </Typography>
+        <Typography level="body2" sx={{ mb: 3 }}>
+          Current status: <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
+        </Typography>
+        <Button onClick={() => navigate('/my-articles')}>
+          Back to My Articles
+        </Button>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ maxWidth: '1200px', mx: 'auto', py: 4, px: 2 }}>
-      <Card variant="outlined" sx={{ p: 4 }}>
-        {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
-          <Box>
-            <Typography level="h4">
-              {isEditing ? 'Edit Article' : article.title}
-            </Typography>
-            <Box display="flex" gap={1} alignItems="center">
-              <Chip 
-                variant="soft"
-                color={getStatusColor(article.status)}
-                size="sm"
-              >
-                {article.status}
-              </Chip>
-              <Typography level="body-sm" color="neutral">
-                Created: {new Date(article.createdAt).toLocaleDateString()}
-              </Typography>
-              {article.updatedAt && (
-                <Typography level="body-sm" color="neutral">
-                  • Updated: {new Date(article.updatedAt).toLocaleDateString()}
-                </Typography>
-              )}
+    <Box>
+      {/* Header */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box>
+          <Typography level="h1" sx={{ mb: 1 }}>
+            ✏️ Edit Article
+          </Typography>
+          <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)', mb: 2 }}>
+            Make your changes and submit for review
+          </Typography>
+          <Box display="flex" gap={2} alignItems="center">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography level="body-sm">Status:</Typography>
+              <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
             </Box>
-          </Box>
-          <Box display="flex" gap={1}>
-            {!isEditing ? (
-              <>
-                <Button
-                  variant="solid"
-                  onClick={() => setIsEditing(true)}
-                  disabled={!['draft', 'rejected'].includes(article.status?.toLowerCase())}
-                >
-                  ✏️ Edit
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate(`/news/${article.slug}`)}
-                >
-                  👁️ Preview
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="solid"
-                  onClick={handleSave}
-                  color="success"
-                >
-                  💾 Save & Submit for Review
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={handleCancel}
-                >
-                  ❌ Cancel
-                </Button>
-              </>
+            <Typography level="body-sm" color="neutral">
+              Created: {new Date(article.createdAt).toLocaleDateString()}
+            </Typography>
+            {wordCount > 0 && (
+              <Typography level="body-sm" color="neutral">
+                {wordCount} words • {readingTime} min read
+              </Typography>
             )}
           </Box>
         </Box>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="solid"
+            onClick={handleSubmit}
+            loading={isSubmitting}
+            color="success"
+          >
+            {isSubmitting ? 'Submitting...' : 'Save & Submit for Review'}
+          </Button>
+        </Box>
+      </Box>
 
-        <Divider sx={{ mb: 3 }} />
-
-        {/* Tabs when editing */}
-        {isEditing && (
-          <Box mb={3}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant={activeTab === 'edit' ? 'solid' : 'plain'}
-                  size="sm"
-                  onClick={() => setActiveTab('edit')}
-                >
-                  Edit Content
-                </Button>
-                <Button
-                  variant={activeTab === 'preview' ? 'solid' : 'plain'}
-                  size="sm"
-                  onClick={() => setActiveTab('preview')}
-                >
-                  Preview
-                </Button>
-              </Stack>
-            </Box>
+      {/* Errors */}
+      {errors.length > 0 && (
+        <Alert color="danger" sx={{ mb: 3 }}>
+          <Box>
+            <Typography level="title-sm">Please fix the following errors:</Typography>
+            <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+              {errors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
           </Box>
-        )}
+        </Alert>
+      )}
 
-        {/* Unsaved changes warning */}
-        {isEditing && isDirty && (
-          <Box mb={2}>
-            <Alert color="warning" size="sm">
-              You have unsaved changes
-            </Alert>
-          </Box>
-        )}
+      {/* Unsaved changes warning */}
+      {hasChanges && (
+        <Alert color="warning" sx={{ mb: 3 }}>
+          You have unsaved changes
+        </Alert>
+      )}
 
-        {/* Main Content Area */}
-        {(!isEditing || activeTab === 'edit') && (
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-            {/* Main Content */}
-            <Box sx={{ flex: 2 }}>
-              {/* Title */}
-              <Box mb={3}>
-                {isEditing ? (
-                  <FormControl>
-                    <FormLabel>Title *</FormLabel>
-                    {validationErrors.title && (
-                      <Typography level="body-sm" color="danger" sx={{ mb: 1 }}>
-                        {validationErrors.title}
-                      </Typography>
-                    )}
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      required
-                      error={!!validationErrors.title}
-                      placeholder="Enter a compelling article title"
-                    />
-                    <Typography level="body-xs" sx={{ mt: 0.5, textAlign: 'right' }}>
-                      {formData.title.length}/100 characters
-                    </Typography>
-                  </FormControl>
-                ) : (
-                  <Typography level="h4" gutterBottom>
-                    {article.title}
+      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
+        {/* Main Content */}
+        <Box sx={{ flex: 2 }}>
+          <Card variant="outlined">
+            <CardContent sx={{ p: 4 }}>
+              <Stack spacing={3}>
+                {/* Title */}
+                <FormControl required>
+                  <FormLabel>Article Title</FormLabel>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    placeholder="Enter a compelling article title"
+                    error={Boolean(errors?.some(err => err.includes('Title')))}
+                  />
+                  <Typography level="body-xs" sx={{ textAlign: 'right', mt: 0.5 }}>
+                    {formData.title.length}/100 characters
                   </Typography>
-                )}
-              </Box>
+                </FormControl>
 
-              {/* Excerpt */}
-              <Box mb={3}>
-                {isEditing ? (
-                  <FormControl>
-                    <FormLabel>Excerpt *</FormLabel>
-                    {validationErrors.excerpt && (
-                      <Typography level="body-sm" color="danger" sx={{ mb: 1 }}>
-                        {validationErrors.excerpt}
-                      </Typography>
-                    )}
-                    <Textarea
-                      value={formData.excerpt}
-                      onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                      minRows={3}
-                      required
-                      error={!!validationErrors.excerpt}
-                      placeholder="Brief summary of the article"
-                      maxRows={5}
-                    />
-                    <Typography level="body-xs" sx={{ mt: 0.5, textAlign: 'right' }}>
-                      {formData.excerpt.length}/200 characters
-                    </Typography>
-                  </FormControl>
-                ) : (
-                  <>
-                    <Typography level="h6" gutterBottom>
-                      Excerpt
-                    </Typography>
-                    <Typography level="body-md" color="neutral">
-                      {article.excerpt}
-                    </Typography>
-                  </>
-                )}
-              </Box>
+                {/* Excerpt */}
+                <FormControl required>
+                  <FormLabel>Article Excerpt</FormLabel>
+                  <Textarea
+                    value={formData.excerpt}
+                    onChange={(e) => handleInputChange('excerpt', e.target.value)}
+                    placeholder="Brief summary of your article (shown in article previews)"
+                    minRows={3}
+                    maxRows={5}
+                    error={Boolean(errors?.some(err => err.includes('Excerpt')))}
+                  />
+                  <Typography level="body-xs" sx={{ textAlign: 'right', mt: 0.5 }}>
+                    {formData.excerpt.length}/300 characters
+                  </Typography>
+                </FormControl>
 
-              {/* Content */}
-              <Box mb={3}>
-                {isEditing ? (
-                  <FormControl sx={{ width: '100%' }}>
-                    <FormLabel>Content *</FormLabel>
-                    {validationErrors.content && (
-                      <Typography level="body-sm" color="danger" sx={{ mb: 1 }}>
-                        {validationErrors.content}
-                      </Typography>
-                    )}
-                    <Box 
-                      sx={{ 
-                        border: validationErrors.content ? '1px solid red' : '1px solid var(--joy-palette-neutral-outlinedBorder)',
-                        borderRadius: 'sm',
-                        mb: 2
-                      }}
-                    >
-                      <RichTextEditor
-                        content={formData.content}
-                        onChange={(content) => handleInputChange('content', content)}
-                        placeholder="Start writing your article content here..."
-                      />
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography level="body-xs">
-                        {wordCount > 0 && (
-                          <>Word count: <strong>{wordCount}</strong></>
-                        )}
-                      </Typography>
-                      <Typography level="body-xs">
-                        {wordCount > 0 && (
-                          <>Estimated reading time: <strong>{getReadingTime(wordCount)} min</strong></>
-                        )}
-                      </Typography>
-                    </Box>
-                  </FormControl>
-                ) : (
-                  <>
-                    <Typography level="h6" gutterBottom>
-                      Content
+                {/* Content */}
+                <FormControl required>
+                  <FormLabel>Article Content</FormLabel>
+                  <RichTextEditor
+                    content={formData.content}
+                    onChange={(content) => handleInputChange('content', content)}
+                    placeholder="Write your article content here. Use the toolbar to format text, add images, and create rich content..."
+                  />
+                  {wordCount > 0 && (
+                    <Typography level="body-xs" sx={{ mt: 1 }}>
+                      {wordCount} words • Estimated reading time: {readingTime} minutes
                     </Typography>
-                    <Box 
-                      sx={{ 
-                        border: 1, 
-                        borderColor: 'divider', 
-                        borderRadius: 1, 
-                        p: 2,
-                        maxHeight: 500,
-                        overflow: 'auto'
-                      }}
-                      dangerouslySetInnerHTML={{ __html: article.content }}
-                    />
-                  </>
-                )}
-              </Box>
-            </Box>
+                  )}
+                </FormControl>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
 
-            {/* Sidebar */}
-            <Box sx={{ flex: 1 }}>
-              {/* Category */}
-              <Box mb={3}>
-                {isEditing ? (
-                  <FormControl>
-                    <FormLabel>Category *</FormLabel>
-                    {validationErrors.categoryId && (
-                      <Typography level="body-sm" color="danger" sx={{ mb: 1 }}>
-                        {validationErrors.categoryId}
-                      </Typography>
-                    )}
+        {/* Sidebar */}
+        <Box sx={{ flex: 1 }}>
+          <Stack spacing={3}>
+            {/* Publishing Options */}
+            <Card variant="outlined">
+              <CardContent>
+                <Typography level="title-md" sx={{ mb: 2 }}>
+                  📋 Publishing Details
+                </Typography>
+                
+                <Stack spacing={2}>
+                  {/* Category */}
+                  <FormControl required>
+                    <FormLabel>Category</FormLabel>
                     <Select
                       value={formData.categoryId}
                       onChange={(event, newValue) => handleInputChange('categoryId', newValue)}
-                      required
-                      error={!!validationErrors.categoryId}
                       placeholder="Select a category"
+                      error={Boolean(errors?.some(err => err.includes('Category')))}
                     >
                       {categories.map((category) => (
-                        <Option key={category.id} value={category.id}>
+                        <Option key={category.id} value={category.id.toString()}>
                           {category.name}
                         </Option>
                       ))}
                     </Select>
                   </FormControl>
-                ) : (
-                  <>
-                    <Typography level="h6" sx={{ mb: 1 }}>
-                      Category
-                    </Typography>
-                    <Chip variant="soft" color="primary">{article.category?.name}</Chip>
-                  </>
-                )}
-              </Box>
 
-              {/* Tags */}
-              <Box mb={3}>
-                {isEditing ? (
+                  {/* Tags */}
                   <FormControl>
-                    <FormLabel>Tags</FormLabel>
-                    <Select
-                      multiple
-                      value={formData.tagIds}
-                      onChange={(event, newValue) => handleInputChange('tagIds', newValue)}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((tagId) => {
-                            const tag = tags.find(t => t.id === tagId);
-                            return (
-                              <Chip key={tagId} variant="soft" size="sm">
-                                {tag?.name || tagId}
-                              </Chip>
-                            );
-                          })}
-                        </Box>
-                      )}
-                    >
-                      {tags.map((tag) => (
-                        <Option key={tag.id} value={tag.id}>
-                          {tag.name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <>
-                    <Typography level="h6" sx={{ mb: 1 }}>
-                      Tags
-                    </Typography>
-                    <Box display="flex" flexWrap="wrap" gap={1}>
-                      {article.tags?.map((tag) => (
-                        <Chip key={tag.id} variant="soft" size="sm">{tag.name}</Chip>
-                      ))}
-                    </Box>
-                  </>
-                )}
-              </Box>
-
-              {/* Article Stats */}
-              {!isEditing && (
-                <Box mb={3}>
-                  <Typography level="h6" sx={{ mb: 1 }}>
-                    Statistics
-                  </Typography>
-                  <Typography level="body-sm" color="neutral">
-                    Views: {article.readCount || 0}
-                  </Typography>
-                  <Typography level="body-sm" color="neutral">
-                    Likes: {article.likesCount || 0}
-                  </Typography>
-                  <Typography level="body-sm" color="neutral">
-                    Comments: {article.commentsCount || 0}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        )}
-
-        {/* Preview Tab */}
-        {isEditing && activeTab === 'preview' && (
-          <Box>
-            <Typography level="h4" gutterBottom>
-              {formData.title || 'Untitled Article'}
-            </Typography>
-            {formData.featuredImage && (
-              <Box mb={3}>
-                <Card>
-                  <AspectRatio ratio="2">
-                    <img
-                      src={formData.featuredImage}
-                      alt="Featured image"
-                      style={{ objectFit: 'cover' }}
+                    <FormLabel>Tags (Optional)</FormLabel>
+                    <TagAutocomplete
+                      tags={allTags}
+                      selectedTags={formData.tags}
+                      onTagsChange={(tags) => handleInputChange('tags', tags)}
+                      loading={tagsLoading}
+                      placeholder="Add tags to help categorize your article"
                     />
-                  </AspectRatio>
-                </Card>
-              </Box>
-            )}
-            <Typography level="body-md" color="neutral" sx={{ fontStyle: 'italic', mb: 3 }}>
-              {formData.excerpt || 'No excerpt provided'}
-            </Typography>
-            <Divider sx={{ mb: 3 }} />
-            <Box 
-              sx={{ 
-                border: 1, 
-                borderColor: 'divider', 
-                borderRadius: 1, 
-                p: 2,
-                maxHeight: 600,
-                overflow: 'auto',
-                backgroundColor: 'background.surface'
-              }}
-              dangerouslySetInnerHTML={{ __html: formData.content || '<p>No content provided</p>' }}
-            />
-          </Box>
-        )}
-      </Card>
+                  </FormControl>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Featured Image */}
+            <Card variant="outlined">
+              <CardContent>
+                <Typography level="title-md" sx={{ mb: 2 }}>
+                  🖼️ Featured Image
+                </Typography>
+                <ImageUpload
+                  currentImageUrl={formData.featuredImage}
+                  onImageUploaded={(imageUrl) => handleInputChange('featuredImage', imageUrl)}
+                  onImageRemoved={() => handleInputChange('featuredImage', '')}
+                  placeholder="Upload a featured image for your article"
+                  showPreview={true}
+                  uploadButtonText="Upload Featured Image"
+                  removeButtonText="Remove Image"
+                />
+              </CardContent>
+            </Card>
+
+            {/* SEO Settings */}
+            <Card variant="outlined">
+              <CardContent>
+                <Typography level="title-md" sx={{ mb: 2 }}>
+                  🔍 SEO Settings (Optional)
+                </Typography>
+                
+                <Stack spacing={2}>
+                  <FormControl>
+                    <FormLabel>Meta Description</FormLabel>
+                    <Textarea
+                      value={formData.metaDescription}
+                      onChange={(e) => handleInputChange('metaDescription', e.target.value)}
+                      placeholder="Brief description for search engines (max 160 characters)"
+                      minRows={2}
+                      maxRows={3}
+                    />
+                    <Typography level="body-xs" sx={{ textAlign: 'right', mt: 0.5 }}>
+                      {formData.metaDescription.length}/160 characters
+                    </Typography>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Meta Keywords</FormLabel>
+                    <Input
+                      value={formData.metaKeywords}
+                      onChange={(e) => handleInputChange('metaKeywords', e.target.value)}
+                      placeholder="Comma-separated keywords"
+                    />
+                  </FormControl>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Article Info */}
+            <Card variant="outlined">
+              <CardContent>
+                <Typography level="title-md" sx={{ mb: 2 }}>
+                  📊 Article Info
+                </Typography>
+                
+                <Stack spacing={1}>
+                  <Typography level="body-sm">
+                    <strong>Created:</strong> {new Date(article.createdAt).toLocaleDateString()}
+                  </Typography>
+                  {article.updatedAt && (
+                    <Typography level="body-sm">
+                      <strong>Last Updated:</strong> {new Date(article.updatedAt).toLocaleDateString()}
+                    </Typography>
+                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography level="body-sm">
+                      <strong>Status:</strong>
+                    </Typography>
+                    <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
+                  </Box>
+                  {article.status?.toLowerCase() === 'rejected' && article.rejectionReason && (
+                    <Box sx={{ mt: 1, p: 2, bgcolor: 'danger.50', borderRadius: 'sm' }}>
+                      <Typography level="body-sm" color="danger">
+                        <strong>Rejection Reason:</strong> {article.rejectionReason}
+                      </Typography>
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Box>
+      </Box>
     </Box>
   );
-};
-
-export default WriterNewsDetailPage;
+}

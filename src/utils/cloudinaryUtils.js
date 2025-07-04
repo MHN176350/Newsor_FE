@@ -13,7 +13,6 @@ const DEFAULT_CLOUD_NAME = 'dbx4ilvha'; // Updated to match actual Cloudinary cl
  */
 export function buildCloudinaryUrl(resourcePath, cloudName = DEFAULT_CLOUD_NAME) {
   if (!resourcePath) {
-    console.log('buildCloudinaryUrl: No resource path provided');
     return null;
   }
   
@@ -33,7 +32,6 @@ export function buildCloudinaryUrl(resourcePath, cloudName = DEFAULT_CLOUD_NAME)
     return resourcePath;
   }
   
-  // If it's already a Cloudinary URL (might happen with double processing), return as is
   if (resourcePath.includes('res.cloudinary.com')) {
     return resourcePath;
   }

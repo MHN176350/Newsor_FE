@@ -51,10 +51,19 @@ export default function ProfilePage() {
   // Initialize form data when user data is available
   useEffect(() => {
     if (user?.profile) {
+      // Format date for HTML date input (YYYY-MM-DD)
+      let formattedDate = '';
+      if (user.profile.dateOfBirth) {
+        const date = new Date(user.profile.dateOfBirth);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toISOString().split('T')[0];
+        }
+      }
+      
       setFormData({
         bio: user.profile.bio || '',
         phone: user.profile.phone || '',
-        dateOfBirth: user.profile.dateOfBirth || '',
+        dateOfBirth: formattedDate || '',
       });
     }
   }, [user]);
@@ -167,10 +176,19 @@ export default function ProfilePage() {
   };
 
   const handleCancel = () => {
+    // Format date for HTML date input (YYYY-MM-DD)
+    let formattedDate = '';
+    if (user?.profile?.dateOfBirth) {
+      const date = new Date(user.profile.dateOfBirth);
+      if (!isNaN(date.getTime())) {
+        formattedDate = date.toISOString().split('T')[0];
+      }
+    }
+    
     setFormData({
       bio: user?.profile?.bio || '',
       phone: user?.profile?.phone || '',
-      dateOfBirth: user?.profile?.dateOfBirth || '',
+      dateOfBirth: formattedDate || '',
     });
     setEditing(false);
     setMessage('');
@@ -329,10 +347,10 @@ export default function ProfilePage() {
                     <FormLabel>Phone</FormLabel>
                     <Input
                       name="phone"
-                      value={formData.phone}
+                      value={editing ? (formData.phone || '') : (formData.phone || 'Not provided')}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder={editing ? "Enter your phone number" : (formData.phone ? "" : "Not provided")}
+                      placeholder={editing ? "Enter your phone number" : ""}
                     />
                   </FormControl>
 
@@ -340,11 +358,11 @@ export default function ProfilePage() {
                     <FormLabel>Date of Birth</FormLabel>
                     <Input
                       name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
+                      type={editing ? "date" : "text"}
+                      value={editing ? (formData.dateOfBirth || '') : (formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided')}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder={editing ? "" : (formData.dateOfBirth ? "" : "Not provided")}
+                      placeholder={editing ? "" : ""}
                     />
                   </FormControl>
 
@@ -352,10 +370,10 @@ export default function ProfilePage() {
                     <FormLabel>Bio</FormLabel>
                     <textarea
                       name="bio"
-                      value={formData.bio}
+                      value={editing ? (formData.bio || '') : (formData.bio || 'No bio provided')}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder={editing ? "Tell us about yourself..." : (formData.bio ? "" : "No bio provided")}
+                      placeholder={editing ? "Tell us about yourself..." : ""}
                       rows={4}
                       style={{
                         width: '100%',

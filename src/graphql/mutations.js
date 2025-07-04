@@ -349,7 +349,7 @@ export const TOGGLE_LIKE = gql`
 
 // Category Mutations
 export const CREATE_CATEGORY = gql`
-  mutation CreateCategory($name: String!, $description: String) {
+  mutation CreateCategory($name: String!, $description: String!) {
     createCategory(name: $name, description: $description) {
       category {
         id

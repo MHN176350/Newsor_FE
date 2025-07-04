@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useMutation } from '@apollo/client';
 import {
   Box,
@@ -27,7 +27,6 @@ export default function TagAutocomplete({
   required = false
 }) {
   const [inputValue, setInputValue] = useState('');
-  const [filteredTags, setFilteredTags] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const inputRef = useRef(null);
@@ -51,28 +50,37 @@ export default function TagAutocomplete({
     }
   });
 
-  // Filter tags based on input value
-  useEffect(() => {
+  // Memoize tags to ensure stable references
+  const memoizedTags = useMemo(() => {
+    if (!Array.isArray(tags)) return [];
+    return tags;
+  }, [tags]);
+  
+  // Memoize selected tag IDs for comparison
+  const selectedTagIds = useMemo(() => {
+    if (!Array.isArray(selectedTags)) return new Set();
+    return new Set(selectedTags.map(tag => tag.id));
+  }, [selectedTags]);
+  
+  // Memoize filtered tags based on input and selection
+  const filteredTags = useMemo(() => {
     if (!inputValue.trim()) {
-      setFilteredTags([]);
-      return;
+      return [];
     }
 
-    const filtered = tags.filter(tag => 
+    return memoizedTags.filter(tag => 
       tag.name.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !selectedTags.some(selectedTag => selectedTag.id === tag.id)
+      !selectedTagIds.has(tag.id)
     );
-    
-    setFilteredTags(filtered);
-  }, [inputValue, tags, selectedTags]);
+  }, [inputValue, memoizedTags, selectedTagIds]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const value = e.target.value;
     setInputValue(value);
     setShowSuggestions(value.trim().length > 0);
-  };
+  }, []);
 
-  const handleInputKeyDown = async (e) => {
+  const handleInputKeyDown = useCallback(async (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       e.preventDefault();
       await handleAddTag(inputValue.trim());
@@ -84,28 +92,32 @@ export default function TagAutocomplete({
       const newSelectedTags = selectedTags.slice(0, -1);
       onTagsChange(newSelectedTags);
     }
-  };
+  }, [inputValue, selectedTags, onTagsChange]);
 
-  const handleSelectTag = (tag) => {
+  const handleSelectTag = useCallback((tag) => {
     const newSelectedTags = [...selectedTags, tag];
     onTagsChange(newSelectedTags);
     setInputValue('');
     setShowSuggestions(false);
     inputRef.current?.focus();
-  };
+  }, [selectedTags, onTagsChange]);
 
-  const handleAddTag = async (tagName) => {
+  const handleAddTag = useCallback(async (tagName) => {
     if (!tagName.trim()) return;
 
     // Check if tag already exists
-    const existingTag = tags.find(tag => 
+    const existingTag = memoizedTags.find(tag => 
       tag.name.toLowerCase() === tagName.toLowerCase()
     );
 
     if (existingTag) {
       // Tag exists, just select it
       if (!selectedTags.some(selected => selected.id === existingTag.id)) {
-        handleSelectTag(existingTag);
+        const newSelectedTags = [...selectedTags, existingTag];
+        onTagsChange(newSelectedTags);
+        setInputValue('');
+        setShowSuggestions(false);
+        inputRef.current?.focus();
       }
       return;
     }
@@ -136,31 +148,33 @@ export default function TagAutocomplete({
     } finally {
       setIsCreatingTag(false);
     }
-  };
+  }, [memoizedTags, selectedTags, createTag, onTagsChange]);
 
-  const handleRemoveTag = (tagToRemove) => {
+  const handleRemoveTag = useCallback((tagToRemove) => {
     const newSelectedTags = selectedTags.filter(tag => tag.id !== tagToRemove.id);
     onTagsChange(newSelectedTags);
-  };
+  }, [selectedTags, onTagsChange]);
 
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     if (inputValue.trim()) {
       setShowSuggestions(true);
     }
-  };
+  }, [inputValue]);
 
-  const handleInputBlur = (e) => {
+  const handleInputBlur = useCallback((e) => {
     // Delay hiding suggestions to allow clicking on them
     setTimeout(() => {
       if (!listRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
       }
     }, 150);
-  };
+  }, []);
 
-  const shouldShowCreateOption = inputValue.trim() && 
-    !filteredTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) &&
-    !selectedTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase());
+  const shouldShowCreateOption = useMemo(() => {
+    return inputValue.trim() && 
+      !filteredTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) &&
+      !selectedTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase());
+  }, [inputValue, filteredTags, selectedTags]);
 
   return (
     <FormControl required={required}>
