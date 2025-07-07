@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - newsor-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Placeholder for backend service (uncomment and configure when backend is ready)
+  backend:
+    image: newsor-backend:latest  # Replace with your backend image
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgresql://user:password@db:5432/newsor
+    depends_on:
+      - db
+    networks:
+      - newsor-network
+    restart: unless-stopped
+
+  # Database service (uncomment if using PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=newsor
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - newsor-network
+    restart: unless-stopped
+
+networks:
+  newsor-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
