@@ -153,16 +153,15 @@ export const GET_NEWS = gql`
       slug
       metaDescription
       metaKeywords
-      viewCount
-      likeCount
+      likesCount
+      commentsCount
+      readCount
+      isLikedByUser
       author {
         id
         username
         firstName
         lastName
-        profile {
-          avatarUrl
-        }
         profile {
           avatarUrl
         }
@@ -196,9 +195,6 @@ export const GET_NEWS = gql`
     isArticleLiked(articleId: $id)
   }
 `;
-
-// Alias for GET_NEWS for article editing pages
-export const GET_NEWS_ARTICLE = GET_NEWS;
 
 export const GET_MY_NEWS = gql`
   query GetMyNews {
@@ -514,6 +510,7 @@ export const GET_NOTIFICATION_COUNT = gql`
 
 
 // Alias for GET_NEWS for specific use case
+export const GET_NEWS_ARTICLE = GET_NEWS;
 
 export const GET_COUNTS_AND_COMMENTS = gql`
   query GetCountsAndComments($articleId: Int!) {
