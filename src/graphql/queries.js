@@ -153,10 +153,8 @@ export const GET_NEWS = gql`
       slug
       metaDescription
       metaKeywords
-      likesCount
-      commentsCount
-      readCount
-      isLikedByUser
+      viewCount
+      likeCount
       author {
         id
         username
@@ -177,22 +175,6 @@ export const GET_NEWS = gql`
         slug
       }
     }
-    articleLikeCount(articleId: $id)
-    articleComments(articleId: $id) {
-      id
-      content
-      createdAt
-      updatedAt
-      author {
-        id
-        username
-        firstName
-        lastName
-      }
-    }
-    articleCommentCount(articleId: $id)
-    articleReadCount(articleId: $id)
-    isArticleLiked(articleId: $id)
   }
 `;
 
@@ -528,7 +510,6 @@ export const GET_COUNTS_AND_COMMENTS = gql`
       }
     }
     articleCommentCount(articleId: $articleId)
-    articleReadCount(articleId: $articleId)
     isArticleLiked(articleId: $articleId)
     hasReadArticle(articleId: $articleId)
   }
