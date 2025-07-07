@@ -350,10 +350,26 @@ export default function NewsDetailPage() {
           )}
         </Stack>
 
-        {news.tags && news.tags.length > 0 && (
+      {news.tags && news.tags.length > 0 && (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {news.tags.map((tag) => (
-              <Chip key={tag.id} size="sm" variant="outlined">
+              <Chip 
+                key={tag.id} 
+                size="sm" 
+                variant="outlined"
+                component={Link}
+                to={`/news?tag=${tag.id}`}
+                sx={{
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'var(--joy-palette-primary-100)',
+                    borderColor: 'var(--joy-palette-primary-400)',
+                    transform: 'translateY(-1px)',
+                  }
+                }}
+              >
                 #{tag.name}
               </Chip>
             ))}

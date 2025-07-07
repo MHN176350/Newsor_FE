@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { getContainer } from '../core/container.js';
+import { API_ENDPOINTS } from '../utils/constants.js';
 
 export const useNotificationWebSocket = (onNotification) => {
   const { user, isAuthenticated } = useAuth();
@@ -20,7 +21,7 @@ export const useNotificationWebSocket = (onNotification) => {
       const token = tokenService.getAccessToken();
       
       // Create WebSocket connection
-      ws.current = new WebSocket(`ws://localhost:8000/ws/notifications/?token=${token}`);
+      ws.current = new WebSocket(`${API_ENDPOINTS.WS_BASE}/ws/notifications/?token=${token}`);
       
       ws.current.onopen = () => {
         console.log('✅ WebSocket connected for notifications');

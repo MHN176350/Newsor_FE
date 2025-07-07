@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
-import { formatDate, truncateText } from '../utils/constants';
+import { formatDate, truncateText, API_ENDPOINTS } from '../utils/constants';
 import SearchAndFilter from '../components/SearchAndFilter';
 
 export default function HomePage() {
@@ -230,7 +230,7 @@ export default function HomePage() {
           >
             <CardContent>
               <Typography level="body-md" sx={{ color: '#92400e' }}>
-                Unable to load news. Make sure your Django GraphQL server is running at http://localhost:8000/graphql/
+                Unable to load news. Make sure your Django GraphQL server is running at {API_ENDPOINTS.GRAPHQL}
               </Typography>
               <Typography level="body-sm" sx={{ mt: 1, color: '#b45309' }}>
                 Error: {newsError.message}

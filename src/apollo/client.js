@@ -5,6 +5,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { getContainer } from '../core/container.js';
+import { API_ENDPOINTS } from '../utils/constants.js';
 
 // Variable to track if we're currently refreshing
 let isRefreshing = false;
@@ -38,7 +39,7 @@ const refreshToken = async () => {
 
   try {
     console.log('📡 Sending refresh token request to backend...');
-    const response = await fetch('http://localhost:8000/graphql/', {
+    const response = await fetch(API_ENDPOINTS.GRAPHQL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -92,12 +93,12 @@ const refreshToken = async () => {
 
 // Create HTTP link to GraphQL endpoint
 const httpLink = createHttpLink({
-  uri: 'http://localhost:8000/graphql/',
+  uri: API_ENDPOINTS.GRAPHQL,
 });
 
 // Create WebSocket link for subscriptions
 const wsLink = new GraphQLWsLink(createClient({
-  url: 'ws://localhost:8000/graphql/',
+  url: API_ENDPOINTS.GRAPHQL.replace('http://', 'ws://').replace('https://', 'wss://'),
   connectionParams: () => {
     const container = getContainer();
     const tokenService = container.tokenService;
