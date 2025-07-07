@@ -63,7 +63,7 @@ export default function LoginPage() {
       if (result.success) {
         // The useAuth hook will handle updating the auth state
         // Redirect based on user role (if available in the result)
-        navigate('/dashboard');
+        navigate('/');
       } else {
         setError(result.error || 'Invalid username or password');
       }

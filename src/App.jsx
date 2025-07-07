@@ -16,11 +16,11 @@ import WriterNewsDetailPage from './pages/WriterNewsDetailPage';
 import ReviewNewsPage from './pages/ReviewNewsPage';
 import ReviewArticlesPage from './pages/ReviewArticlesPage';
 import ProfilePage from './pages/ProfilePage';
-import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ImageUploadTestPage from './pages/ImageUploadTestPage';
 import CommentHistoryPage from './pages/CommentHistoryPage';
 import ReadingHistoryPage from './pages/ReadingHistoryPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Initialize the Clean Architecture container
 initializeContainer(apolloClient);
@@ -54,9 +54,8 @@ function App() {
               <Route path="/review/articles" element={<ReviewArticlesPage />} />
               <Route path="/review/article/:slug" element={<ReviewNewsPage />} />
               
-              {/* User Profile & Dashboard */}
+              {/* User Profile */}
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboardPage />} />
@@ -66,6 +65,9 @@ function App() {
               
               {/* Development/Testing Routes */}
               <Route path="/test/image-upload" element={<ImageUploadTestPage />} />
+              
+              {/* 404 Not Found - This should be the last route */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Layout>
         </Router>

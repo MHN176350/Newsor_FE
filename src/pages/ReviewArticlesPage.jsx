@@ -59,8 +59,8 @@ export default function ReviewArticlesPage() {
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
           You don't have permission to review articles.
         </Typography>
-        <Button onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
+        <Button onClick={() => navigate('/')}>
+          Go to Homepage
         </Button>
       </Box>
     );

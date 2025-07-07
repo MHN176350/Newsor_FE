@@ -197,19 +197,6 @@ export default function Layout({ children }) {
               >
                 Profile
               </Button>
-              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
-                <Button
-                  variant="plain"
-                  component={Link}
-                  to="/dashboard"
-                  sx={{ 
-                    color: 'text.secondary',
-                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
-                  }}
-                >
-                  Dashboard
-                </Button>
-              )}
               {user?.profile?.role?.toLowerCase() === 'admin' && (
                 <Button
                   variant="plain"
@@ -302,11 +289,6 @@ export default function Layout({ children }) {
                   <MenuItem onClick={() => navigate('/profile')}>
                     👤 Profile
                   </MenuItem>
-                  {user?.profile?.role && ['writer', 'manager', 'admin', 'reader'].includes(user.profile.role.toLowerCase()) && (
-                    <MenuItem onClick={() => navigate('/dashboard')}>
-                      📊 Dashboard
-                    </MenuItem>
-                  )}
                   {user?.profile?.role?.toLowerCase() === 'admin' && (
                     <MenuItem onClick={() => navigate('/admin')}>
                       ⚙️ Admin Dashboard
