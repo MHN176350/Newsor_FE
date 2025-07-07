@@ -514,7 +514,6 @@ export const GET_NOTIFICATION_COUNT = gql`
 
 
 // Alias for GET_NEWS for specific use case
-export const GET_NEWS_ARTICLE = GET_NEWS;
 
 export const GET_COUNTS_AND_COMMENTS = gql`
   query GetCountsAndComments($articleId: Int!) {
