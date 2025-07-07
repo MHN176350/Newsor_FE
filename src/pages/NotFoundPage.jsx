@@ -95,8 +95,8 @@ export default function NotFoundPage() {
             <Typography 
               level="body2" 
               sx={{ 
-                color: 'var(--joy-palette-text-tertiary)',
-                mb: 2
+                color: 'var(--joy-palette-text-primary)',
+                mb: 2,
               }}
             >
               Need help? Try these popular pages:
@@ -114,6 +114,13 @@ export default function NotFoundPage() {
                 to="/news"
                 variant="plain"
                 size="sm"
+                sx={{
+                  transition: 'background 0.2s, color 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'var(--joy-palette-primary-100)',
+                    color: 'var(--joy-palette-primary-700)',
+                  },
+                }}
               >
                 Browse News
               </Button>
@@ -123,6 +130,13 @@ export default function NotFoundPage() {
                 to="/profile"
                 variant="plain"
                 size="sm"
+                sx={{
+                  transition: 'background 0.2s, color 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'var(--joy-palette-primary-100)',
+                    color: 'var(--joy-palette-primary-700)',
+                  },
+                }}
               >
                 Profile
               </Button>
@@ -132,6 +146,13 @@ export default function NotFoundPage() {
                 to="/articles/create"
                 variant="plain"
                 size="sm"
+                sx={{
+                  transition: 'background 0.2s, color 0.2s',
+                  '&:hover': {
+                    backgroundColor: 'var(--joy-palette-primary-100)',
+                    color: 'var(--joy-palette-primary-700)',
+                  },
+                }}
               >
                 Write Article
               </Button>

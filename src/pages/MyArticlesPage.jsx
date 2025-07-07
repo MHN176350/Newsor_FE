@@ -127,10 +127,10 @@ export default function MyArticlesPage() {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'published': return 'success';
-      case 'draft': return 'neutral';
+      case 'draft': return 'primary';
       case 'pending': return 'warning';
       case 'rejected': return 'danger';
-      default: return 'neutral';
+      default: return 'primary';
     }
   };
 
@@ -222,21 +222,21 @@ export default function MyArticlesPage() {
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Status</th>
-                  <th>Category</th>
-                  <th>Created</th>
-                  <th>Last Updated</th>
-                  <th>Actions</th>
+                  <th style={{ width: 80 }}>Status</th>
+                  <th style={{ width: 100 }}>Category</th>
+                  <th style={{ width: 150 }}>Created</th>
+                  <th style={{ width: 150 }}>Last Updated</th>
+                  <th style={{ minWidth: 260 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {articles.map((article) => (
                   <tr key={article.id}>
                     <td>
-                      <Typography level="body-sm" sx={{ fontWeight: 'md' }}>
+                      <Typography level="body-sm" sx={{ color: 'text.secondary', fontWeight: 'md' }}>
                         {article.title}
                       </Typography>
-                      <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                      <Typography level="body-xs" sx={{ mt: 0.5 }}>
                         {article.excerpt?.substring(0, 100)}...
                       </Typography>
                     </td>
@@ -245,79 +245,92 @@ export default function MyArticlesPage() {
                         size="sm"
                         variant="soft"
                         color={getStatusColor(article.status)}
+                        sx={{ minWidth: 60, justifyContent: 'center' }}
                       >
                         {article.status}
                       </Chip>
                     </td>
                     <td>
-                      <Typography level="body-sm">
+                      <Typography level="body-sm" sx={{ minWidth: 60, maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {article.category?.name}
                       </Typography>
                     </td>
                     <td>
-                      <Typography level="body-sm">
+                      <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
                         {formatDate(article.createdAt)}
                       </Typography>
                     </td>
                     <td>
-                      <Typography level="body-sm">
+                      <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
                         {formatDate(article.updatedAt)}
                       </Typography>
                     </td>
                     <td>
-                      <Stack direction="row" spacing={1}>
-                        {/* Details Button */}
+                      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', minWidth: 280, gap: 0.5 }}>
+                        {/* Details Button - always visible */}
                         <Button
                           size="sm"
                           variant="outlined"
+                          color="neutral"
                           onClick={() => navigate(`/writer/articles/${article.id}`)}
+                          sx={{ minWidth: 'auto', px: 1 }}
                         >
                           Details
                         </Button>
-                        
-                        {/* Public View Button */}
+
+                        {/* View Public Button - only for published articles */}
                         {article.status?.toLowerCase() === 'published' && (
                           <Button
                             size="sm"
                             variant="outlined"
-                            color="neutral"
+                            color="primary"
                             onClick={() => navigate(`/news/${article.slug}`)}
+                            sx={{ minWidth: 'auto', px: 1 }}
                           >
                             View Public
                           </Button>
                         )}
-                        
+
                         {/* Edit Button - only for draft and rejected articles */}
                         {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
                           <Button
                             size="sm"
                             variant="outlined"
-                            color="primary"
+                            color="neutral"
                             onClick={() => navigate(`/articles/edit/${article.id}`)}
+                            sx={{ minWidth: 'auto', px: 1 }}
                           >
                             ✏️ Edit
                           </Button>
                         )}
-                        
-                        {/* Duplicate Button - for all articles */}
+
+                        {/* Duplicate Button - always visible */}
                         <Button
                           size="sm"
                           variant="outlined"
                           color="neutral"
                           onClick={() => navigate(`/articles/duplicate/${article.id}`)}
+                          sx={{ minWidth: 'auto', px: 1 }}
                         >
                           📋 Duplicate
                         </Button>
-                        
-                        {/* Submit/Resubmit Button */}
-                        {getStatusAction(article.status) && (
+
+                        {/* Submit/Resubmit Button - for draft and rejected articles */}
+                        {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
                           <Button
                             size="sm"
                             variant="solid"
                             color="success"
                             onClick={() => handleSubmitForReview(article)}
+                            sx={{
+                              minWidth: 'auto',
+                              px: 1.5,
+                              fontSize: '0.8rem',
+                              whiteSpace: 'nowrap',
+                              fontWeight: 'md'
+                            }}
                           >
-                            {getStatusAction(article.status)}
+                            {article.status?.toLowerCase() === 'rejected' ? 'Resubmit' : 'Submit for Review'}
                           </Button>
                         )}
                       </Stack>
@@ -337,9 +350,9 @@ export default function MyArticlesPage() {
           <Typography level="h4" sx={{ mb: 2 }}>
             Submit Article for Review
           </Typography>
-          
+
           <Typography level="body-sm" sx={{ mb: 3 }}>
-            Are you sure you want to submit "{selectedArticle?.title}" for review? 
+            Are you sure you want to submit "{selectedArticle?.title}" for review?
             Once submitted, you won't be able to edit it until it's reviewed.
           </Typography>
 
