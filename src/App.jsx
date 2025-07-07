@@ -17,6 +17,8 @@ import ReviewNewsPage from './pages/ReviewNewsPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import CommentHistoryPage from './pages/CommentHistoryPage';
+import ReadingHistoryPage from './pages/ReadingHistoryPage';
 
 // Initialize the Clean Architecture container
 initializeContainer(apolloClient);
@@ -43,6 +45,8 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/comment-history" element={<CommentHistoryPage />} />
+              <Route path="/reading-history" element={<ReadingHistoryPage />} />
             </Routes>
           </Layout>
         </Router>

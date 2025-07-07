@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Chip, Button, Stack, Divider, Avatar, Select, Option } from '@mui/joy'; // Thêm Select, Optioimport { useParams, Link } from 'react-router-dom';
+import { Box, Typography, Card, CardContent, Chip, Button, Stack, Divider, Avatar, Select, Option } from '@mui/joy';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_NEWS, GET_COUNTS_AND_COMMENTS, GET_LATEST_COMMENTS, GET_TOP_LIKED_COMMENTS } from '../graphql/queries'; // Thêm 2 queries mới
+import { GET_NEWS, GET_COUNTS_AND_COMMENTS, GET_LATEST_COMMENTS, GET_TOP_LIKED_COMMENTS } from '../graphql/queries';
 import { CREATE_LIKE_ARTICLE, UPDATE_LIKE_STATUS, CREATE_COMMENT, CREATE_READING_HISTORY, CREATE_LIKE_COMMENT } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
-import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 import ReactMarkdown from 'react-markdown';
-
 
 export default function NewsDetailPage() {
   const { slug } = useParams();
@@ -20,58 +18,86 @@ export default function NewsDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [commentLikeState, setCommentLikeState] = useState({});
-  const [sortBy, setSortBy] = useState('top'); // Thêm state này
-
+  const [sortBy, setSortBy] = useState('top');
 
   // States for managing replies display
-  const [visibleReplies, setVisibleReplies] = useState({}); // {parentId: numberOfVisibleReplies}
-  const [showReplyForm, setShowReplyForm] = useState(null); // commentId that shows reply form
-  const [replyText, setReplyText] = useState(''); // text for individual reply forms
+  const [visibleReplies, setVisibleReplies] = useState({});
+  const [showReplyForm, setShowReplyForm] = useState(null);
+  const [replyText, setReplyText] = useState('');
 
   const REPLIES_PER_PAGE = 5;
 
   // 1. Fetch article by slug
-  const { data: newsData, loading: newsLoading, error, refetch: newsError } = useQuery(GET_NEWS, {
+  const { data: newsData, loading: newsLoading, error: newsError } = useQuery(GET_NEWS, {
     variables: { slug },
     skip: !slug,
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (data?.newsArticle?.id) setArticleId(Number(data.newsArticle.id));
     },
   });
-
+  
   // 2. Fetch counts/comments by articleId
-  const { data: countsData, loading: countsLoading } = useQuery(GET_COUNTS_AND_COMMENTS, {
+  const { data: countsData, loading: countsLoading, refetch: refetchCounts } = useQuery(GET_COUNTS_AND_COMMENTS, {
     variables: { articleId },
     skip: !articleId,
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-and-network',
   });
 
   // Fetch comments with like status (1 level replies only)
-  const { data: topCommentsData, loading: topLoading } = useQuery(GET_TOP_LIKED_COMMENTS, {
+  const { data: topCommentsData, loading: topLoading, refetch: refetchTopComments } = useQuery(GET_TOP_LIKED_COMMENTS, {
     variables: { articleId, limit: 50, offset: 0 },
     skip: !articleId,
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-and-network',
   });
 
-  const { data: latestCommentsData, loading: latestLoading } = useQuery(GET_LATEST_COMMENTS, {
+  const { data: latestCommentsData, loading: latestLoading, refetch: refetchLatestComments } = useQuery(GET_LATEST_COMMENTS, {
     variables: { articleId, limit: 50, offset: 0 },
     skip: !articleId,
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-and-network',
   });
 
   const commentsData = sortBy === 'top' ? topCommentsData : latestCommentsData;
   const commentsLoading = sortBy === 'top' ? topLoading : latestLoading;
+
+  // Helper function to refetch comments based on current sort
+  const refetchComments = () => {
+    if (sortBy === 'top') {
+      refetchTopComments();
+    } else {
+      refetchLatestComments();
+    }
+    // Also refetch counts to update comment count
+    refetchCounts();
+  };
+
   const [createLikeArticle] = useMutation(CREATE_LIKE_ARTICLE, {
     onCompleted: () => {
-      // refetch counts/comments after like
       if (articleId) refetchCounts();
     },
   });
+
   const [updateLikeStatus] = useMutation(UPDATE_LIKE_STATUS, {
     onCompleted: () => {
       if (articleId) refetchCounts();
     },
   });
-  const [createComment] = useMutation(CREATE_COMMENT);
-  const [createReadingHistory] = useMutation(CREATE_READING_HISTORY);
 
+  const [createComment] = useMutation(CREATE_COMMENT, {
+    onCompleted: () => {
+      refetchComments();
+    },
+  });
+
+  const [createReadingHistory] = useMutation(CREATE_READING_HISTORY, {
+    onCompleted: () => {
+      refetchCounts(); // refetch lại số đọc và trạng thái hasReadArticle
+    }
+  });
   // Mutations for comment likes
   const [createLikeComment] = useMutation(CREATE_LIKE_COMMENT, {
     onCompleted: () => refetchComments(),
@@ -80,12 +106,6 @@ export default function NewsDetailPage() {
   // Use existing UPDATE_LIKE_STATUS for comments too
   const [updateLikeCommentStatus] = useMutation(UPDATE_LIKE_STATUS, {
     onCompleted: () => refetchComments(),
-  });
-
-  // Helper to refetch counts/comments
-  const { refetch: refetchCounts } = useQuery(GET_COUNTS_AND_COMMENTS, {
-    variables: { articleId },
-    skip: true,
   });
 
   const news = newsData?.newsArticle;
@@ -216,7 +236,7 @@ export default function NewsDetailPage() {
       });
       setComment('');
       setReplyTo(null);
-      refetchComments();
+      // refetchComments() will be called automatically via mutation's onCompleted
     } catch (error) {
       console.error('Error creating comment:', error);
     }
@@ -229,6 +249,7 @@ export default function NewsDetailPage() {
     try {
       // If replying to a reply, use the original parent comment's ID
       const parentId = targetComment.parent ? targetComment.parent.id : targetComment.id;
+      const actualParentId = targetComment.parent ? targetComment.parent.id : targetComment.id;
 
       await createComment({
         variables: {
@@ -237,10 +258,17 @@ export default function NewsDetailPage() {
           parentId: parseInt(parentId, 10),
         },
       });
+
+      // Automatically show the reply by expanding the parent comment's replies
+      setVisibleReplies(prev => ({
+        ...prev,
+        [actualParentId]: Math.max((prev[actualParentId] || 0), 1) // Ensure at least 1 reply is visible
+      }));
+
       setReplyText('');
       setShowReplyForm(null);
       setReplyTo(null);
-      refetchComments();
+      // refetchComments() will be called automatically via mutation's onCompleted
     } catch (error) {
       console.error('Error creating reply:', error);
     }
@@ -249,17 +277,17 @@ export default function NewsDetailPage() {
   const handleViewMoreReplies = (parentId) => {
     setVisibleReplies(prev => ({
       ...prev,
-      [parentId]: (prev[parentId] || 0) + REPLIES_PER_PAGE // Đổi lại thành 0
+      [parentId]: (prev[parentId] || 0) + REPLIES_PER_PAGE
     }));
   };
 
   const getVisibleReplies = (replies, parentId) => {
-    const visibleCount = visibleReplies[parentId] || 0; // Đổi lại thành 0
+    const visibleCount = visibleReplies[parentId] || 0;
     return replies.slice(0, visibleCount);
   };
 
   const hasMoreReplies = (replies, parentId) => {
-    const visibleCount = visibleReplies[parentId] || 0; // Đổi lại thành 0
+    const visibleCount = visibleReplies[parentId] || 0;
     return replies.length > visibleCount;
   };
 
@@ -325,23 +353,7 @@ export default function NewsDetailPage() {
         {news.tags && news.tags.length > 0 && (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {news.tags.map((tag) => (
-              <Chip 
-                key={tag.id} 
-                size="sm" 
-                variant="outlined"
-                component={Link}
-                to={`/news?tag=${tag.id}`}
-                sx={{
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    backgroundColor: 'var(--joy-palette-primary-100)',
-                    borderColor: 'var(--joy-palette-primary-400)',
-                    transform: 'translateY(-1px)',
-                  }
-                }}
-              >
+              <Chip key={tag.id} size="sm" variant="outlined">
                 #{tag.name}
               </Chip>
             ))}
@@ -349,8 +361,23 @@ export default function NewsDetailPage() {
         )}
       </Box>
 
-    
-      
+      {/* Featured Image */}
+      {news.featuredImage && (
+        <Box sx={{ mb: 4 }}>
+          <Box
+            component="img"
+            src={news.featuredImage}
+            alt={news.title}
+            sx={{
+              width: '100%',
+              maxHeight: 400,
+              objectFit: 'cover',
+              borderRadius: 'lg',
+            }}
+          />
+        </Box>
+      )}
+
       {/* Article Content */}
       <Card variant="outlined" sx={{ mb: 4 }}>
         <CardContent>

@@ -331,7 +331,7 @@ export default function MyArticlesPage() {
             <Button
               variant="solid"
               color="success"
-              onClick={() => handleStatusUpdate('pending')}
+              onClick={() => handleStatusUpdate('draft')}
             >
               Submit for Review
             </Button>

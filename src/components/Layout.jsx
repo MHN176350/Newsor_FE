@@ -122,7 +122,34 @@ export default function Layout({ children }) {
               )}
             </Menu>
           </Dropdown>
-
+          
+          {/* History - chỉ hiện khi đăng nhập */}
+          {isAuthenticated && (
+            <>
+              <Button
+                variant="plain"
+                component={Link}
+                to="/comment-history"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                Comment History
+              </Button>
+              <Button
+                variant="plain"
+                component={Link}
+                to="/reading-history"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                Reading History
+              </Button>
+            </>
+          )}
           {/* Role-based Article Actions */}
           {isAuthenticated && (
             <>
@@ -208,7 +235,7 @@ export default function Layout({ children }) {
               '&:hover': { bgcolor: 'neutral.200' }
             }}
           >
-            {mode === 'dark' ? '⚡' : '🕶️'}
+            {mode === 'dark' ? '☀️' : '🌑'}
           </IconButton>
 
           {/* Auth Section */}
@@ -275,7 +302,7 @@ export default function Layout({ children }) {
                   <MenuItem onClick={() => navigate('/profile')}>
                     👤 Profile
                   </MenuItem>
-                  {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
+                  {user?.profile?.role && ['writer', 'manager', 'admin', 'reader'].includes(user.profile.role.toLowerCase()) && (
                     <MenuItem onClick={() => navigate('/dashboard')}>
                       📊 Dashboard
                     </MenuItem>
