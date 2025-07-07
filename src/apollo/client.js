@@ -1,7 +1,10 @@
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from, split } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { getToken, getRefreshToken, setToken, clearAuthData } from '../utils/constants';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { getContainer } from '../core/container.js';
 
 // Variable to track if we're currently refreshing
 let isRefreshing = false;
@@ -22,13 +25,19 @@ const processQueue = (error, token = null) => {
 
 // Function to refresh token
 const refreshToken = async () => {
-  const refreshTokenValue = getRefreshToken();
+  const container = getContainer();
+  const tokenService = container.tokenService;
+  const refreshTokenValue = tokenService.getRefreshToken();
+  
+  console.log('🔄 Attempting token refresh...');
   
   if (!refreshTokenValue) {
+    console.error('❌ No refresh token available');
     throw new Error('No refresh token available');
   }
 
   try {
+    console.log('📡 Sending refresh token request to backend...');
     const response = await fetch('http://localhost:8000/graphql/', {
       method: 'POST',
       headers: {
@@ -39,6 +48,8 @@ const refreshToken = async () => {
           mutation RefreshToken($refreshToken: String!) {
             refreshToken(refreshToken: $refreshToken) {
               token
+              payload
+              refreshToken
             }
           }
         `,
@@ -47,16 +58,34 @@ const refreshToken = async () => {
     });
 
     const result = await response.json();
+    console.log('📥 Refresh token response:', result);
     
     if (result.data?.refreshToken?.token) {
       const newToken = result.data.refreshToken.token;
-      setToken(newToken);
+      const newRefreshToken = result.data.refreshToken.refreshToken;
+      
+      console.log('✅ New access token received');
+      tokenService.setToken(newToken);
+      
+      if (newRefreshToken) {
+        console.log('✅ New refresh token received');
+        tokenService.setRefreshToken(newRefreshToken);
+      }
+      
       return newToken;
+    } else if (result.errors) {
+      console.error('❌ GraphQL refresh token errors:', result.errors);
+      throw new Error(result.errors[0]?.message || 'Failed to refresh token');
     } else {
+      console.error('❌ Unexpected refresh token response format:', result);
       throw new Error('Failed to refresh token');
     }
   } catch (error) {
-    clearAuthData();
+    console.error('❌ Refresh token error:', error);
+    // Clear all auth data through the token service
+    tokenService.clearTokens();
+    const storageService = container.storageService;
+    storageService.removeItem('currentUser');
     throw error;
   }
 };
@@ -66,10 +95,31 @@ const httpLink = createHttpLink({
   uri: 'http://localhost:8000/graphql/',
 });
 
+// Create WebSocket link for subscriptions
+const wsLink = new GraphQLWsLink(createClient({
+  url: 'ws://localhost:8000/graphql/',
+  connectionParams: () => {
+    const container = getContainer();
+    const tokenService = container.tokenService;
+    const token = tokenService.getToken();
+    
+    return {
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+  },
+  on: {
+    connected: () => console.log('🔗 WebSocket connected'),
+    closed: () => console.log('🔌 WebSocket disconnected'),
+    error: (error) => console.error('❌ WebSocket error:', error),
+  },
+}));
+
 // Authentication link to add JWT token to requests
 const authLink = setContext((_, { headers }) => {
-  // Get the authentication token from local storage if it exists
-  const token = getToken();
+  
+  const container = getContainer();
+  const tokenService = container.tokenService;
+  const token = tokenService.getToken();
   
   return {
     headers: {
@@ -88,8 +138,9 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
         `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`
       );
       
-      // Handle JWT token expiration
-      if (message.includes('token') && (message.includes('expired') || message.includes('invalid'))) {
+      // Handle JWT token expiration - more comprehensive error detection
+      if ((message.includes('token') || message.includes('JWT') || message.includes('authentication') || message.includes('Signature')) &&
+          (message.includes('expired') || message.includes('invalid') || message.includes('decode') || message.includes('verify'))) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
           
@@ -98,12 +149,19 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
             
             refreshToken()
               .then((newToken) => {
+                console.log('✅ Token refreshed successfully:', newToken ? 'New token received' : 'No token received');
                 processQueue(null, newToken);
                 resolve(forward(operation));
               })
               .catch((error) => {
+                console.error('❌ Token refresh failed:', error.message);
                 processQueue(error, null);
-                clearAuthData();
+                // Clear auth data through the container
+                const container = getContainer();
+                const tokenService = container.tokenService;
+                const storageService = container.storageService;
+                tokenService.clearTokens();
+                storageService.removeItem('currentUser');
                 window.location.href = '/login';
                 reject(error);
               })
@@ -119,8 +177,10 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   if (networkError) {
     console.error(`Network error: ${networkError}`);
     
-    // Handle 401 unauthorized errors
-    if ('statusCode' in networkError && networkError.statusCode === 401) {
+    // Handle 401 unauthorized errors or other auth-related network errors
+    if (('statusCode' in networkError && networkError.statusCode === 401) || 
+        ('status' in networkError && networkError.status === 401) ||
+        (networkError.message && networkError.message.includes('401'))) {
       if (!isRefreshing) {
         isRefreshing = true;
         
@@ -131,7 +191,12 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
           })
           .catch((error) => {
             isRefreshing = false;
-            clearAuthData();
+            // Clear auth data through the container
+            const container = getContainer();
+            const tokenService = container.tokenService;
+            const storageService = container.storageService;
+            tokenService.clearTokens();
+            storageService.removeItem('currentUser');
             window.location.href = '/login';
             return Promise.reject(error);
           });
@@ -140,9 +205,22 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   }
 });
 
+// Split link: send subscriptions to WebSocket, queries/mutations to HTTP
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription'
+    );
+  },
+  wsLink,
+  from([errorLink, authLink, httpLink])
+);
+
 // Create Apollo Client instance
 export const apolloClient = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
+  link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

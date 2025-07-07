@@ -1,38 +1,72 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid } from '@mui/joy';
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useMutation } from '@apollo/client';
-import { UPDATE_USER_PROFILE } from '../graphql/mutations';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Avatar, Grid, Modal, ModalDialog, ModalClose } from '@mui/joy';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
+import { CHANGE_PASSWORD } from '../graphql/mutations';
+import ImageUpload from '../components/ImageUpload';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, updateUser } = useAuth();
+  const { user, isAuthenticated, updateProfile, updateAvatar, loading, error } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordMessage, setPasswordMessage] = useState('');
   const [formData, setFormData] = useState({
-    bio: user?.profile?.bio || '',
-    phone: user?.profile?.phone || '',
-    dateOfBirth: user?.profile?.dateOfBirth || '',
+    bio: '',
+    phone: '',
+    dateOfBirth: '',
   });
   const [message, setMessage] = useState('');
 
-  const [updateProfile, { loading }] = useMutation(UPDATE_USER_PROFILE, {
+  // Change password mutation
+  const [changePassword, { loading: passwordLoading }] = useMutation(CHANGE_PASSWORD, {
     onCompleted: (data) => {
-      if (data.updateUserProfile?.success) {
-        updateUser({
-          ...user,
-          profile: {
-            ...user.profile,
-            ...data.updateUserProfile.profile,
-          },
+      if (data.changePassword.success) {
+        setPasswordMessage('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
         });
-        setMessage('Profile updated successfully!');
-        setEditing(false);
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordMessage('');
+        }, 2000);
+      } else {
+        setPasswordMessage(data.changePassword.errors?.join(', ') || 'Failed to change password');
       }
     },
     onError: (error) => {
-      setMessage('Failed to update profile. Please try again.');
+      setPasswordMessage('An error occurred while changing password.');
+      console.error('Password change error:', error);
     },
   });
+
+  // Initialize form data when user data is available
+  useEffect(() => {
+    if (user?.profile) {
+      // Format date for HTML date input (YYYY-MM-DD)
+      let formattedDate = '';
+      if (user.profile.dateOfBirth) {
+        const date = new Date(user.profile.dateOfBirth);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toISOString().split('T')[0];
+        }
+      }
+      
+      setFormData({
+        bio: user.profile.bio || '',
+        phone: user.profile.phone || '',
+        dateOfBirth: formattedDate || '',
+      });
+    }
+  }, [user]);
 
   if (!isAuthenticated) {
     return (
@@ -57,19 +91,104 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setMessage('');
-    updateProfile({
-      variables: formData,
+  const handlePasswordChange = (e) => {
+    setPasswordData({
+      ...passwordData,
+      [e.target.name]: e.target.value,
     });
   };
 
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordMessage('');
+
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordMessage('All fields are required.');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage('New passwords do not match.');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setPasswordMessage('New password must be at least 8 characters long.');
+      return;
+    }
+
+    try {
+      await changePassword({
+        variables: {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        },
+      });
+    } catch (err) {
+      setPasswordMessage('Failed to change password. Please try again.');
+      console.error('Password change error:', err);
+    }
+  };
+
+  const handlePasswordModalClose = () => {
+    setShowPasswordModal(false);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setPasswordMessage('');
+  };
+
+  const handleAvatarUploaded = async (imageUrl, profile) => {
+    try {
+      // Update the user data with the new avatar
+      await updateAvatar(profile);
+      setMessage('Avatar updated successfully!');
+    } catch (err) {
+      setMessage('Failed to update avatar. Please try again.');
+      console.error('Avatar update error:', err);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const result = await updateProfile({
+        bio: formData.bio || null,
+        phone: formData.phone || null,
+        dateOfBirth: formData.dateOfBirth || null,
+      });
+
+      if (result.success) {
+        setMessage('Profile updated successfully!');
+        setEditing(false);
+      } else {
+        setMessage(result.errors?.join(', ') || 'Update failed');
+      }
+    } catch (err) {
+      setMessage('Failed to update profile. Please try again.');
+      console.error('Profile update error:', err);
+    }
+  };
+
   const handleCancel = () => {
+    // Format date for HTML date input (YYYY-MM-DD)
+    let formattedDate = '';
+    if (user?.profile?.dateOfBirth) {
+      const date = new Date(user.profile.dateOfBirth);
+      if (!isNaN(date.getTime())) {
+        formattedDate = date.toISOString().split('T')[0];
+      }
+    }
+    
     setFormData({
       bio: user?.profile?.bio || '',
       phone: user?.profile?.phone || '',
-      dateOfBirth: user?.profile?.dateOfBirth || '',
+      dateOfBirth: formattedDate || '',
     });
     setEditing(false);
     setMessage('');
@@ -92,13 +211,36 @@ export default function ProfilePage() {
         <Grid xs={12} md={4}>
           <Card variant="outlined">
             <CardContent sx={{ textAlign: 'center' }}>
-              <Avatar
-                size="lg"
-                src={user?.profile?.avatarUrl}
-                sx={{ mb: 2, mx: 'auto', width: 100, height: 100 }}
-              >
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </Avatar>
+              {/* Avatar Upload Section */}
+              <Box sx={{ mb: 3 }}>
+                {editing ? (
+                  <ImageUpload
+                    variant="avatar"
+                    currentImageUrl={user?.profile?.avatarUrl}
+                    onImageUploaded={handleAvatarUploaded}
+                    maxSizeInMB={2}
+                    uploadButtonText="Update Avatar"
+                    removeButtonText="Remove Avatar"
+                  />
+                ) : (
+                  <Avatar
+                    size="lg"
+                    src={processImageUrlForDisplay(user?.profile?.avatarUrl)}
+                    sx={{ 
+                      width: 120, 
+                      height: 120,
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                    onError={(e) => {
+                      console.log('Avatar load error, falling back to initials:', e.target.src);
+                      e.target.style.display = 'none'; // This will show the initials
+                    }}
+                  >
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </Avatar>
+                )}
+              </Box>
               <Typography level="h4" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>
                 {user?.firstName} {user?.lastName}
               </Typography>
@@ -145,7 +287,8 @@ export default function ProfilePage() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={handleSubmit}
+                      type="submit"
+                      form="profile-form"
                       loading={loading}
                     >
                       Save
@@ -160,7 +303,13 @@ export default function ProfilePage() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit}>
+              {editing && (
+                <Alert color="primary" variant="soft" sx={{ mb: 3 }}>
+                  💡 Tip: Click "Edit Profile" to update your profile picture and information
+                </Alert>
+              )}
+
+              <form id="profile-form" onSubmit={handleSubmit}>
                 <Stack spacing={3}>
                   <Grid container spacing={2}>
                     <Grid xs={12} sm={6}>
@@ -198,10 +347,10 @@ export default function ProfilePage() {
                     <FormLabel>Phone</FormLabel>
                     <Input
                       name="phone"
-                      value={formData.phone}
+                      value={editing ? (formData.phone || '') : (formData.phone || 'Not provided')}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder="Enter your phone number"
+                      placeholder={editing ? "Enter your phone number" : ""}
                     />
                   </FormControl>
 
@@ -209,10 +358,11 @@ export default function ProfilePage() {
                     <FormLabel>Date of Birth</FormLabel>
                     <Input
                       name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
+                      type={editing ? "date" : "text"}
+                      value={editing ? (formData.dateOfBirth || '') : (formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided')}
                       onChange={handleChange}
                       disabled={!editing}
+                      placeholder={editing ? "" : ""}
                     />
                   </FormControl>
 
@@ -220,10 +370,10 @@ export default function ProfilePage() {
                     <FormLabel>Bio</FormLabel>
                     <textarea
                       name="bio"
-                      value={formData.bio}
+                      value={editing ? (formData.bio || '') : (formData.bio || 'No bio provided')}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder="Tell us about yourself..."
+                      placeholder={editing ? "Tell us about yourself..." : ""}
                       rows={4}
                       style={{
                         width: '100%',
@@ -260,7 +410,11 @@ export default function ProfilePage() {
                   Update your password to keep your account secure
                 </Typography>
               </Box>
-              <Button variant="outlined" size="sm">
+              <Button 
+                variant="outlined" 
+                size="sm"
+                onClick={() => setShowPasswordModal(true)}
+              >
                 Change
               </Button>
             </Box>
@@ -293,6 +447,83 @@ export default function ProfilePage() {
           </Stack>
         </CardContent>
       </Card>
+
+      {/* Change Password Modal */}
+      <Modal open={showPasswordModal} onClose={handlePasswordModalClose}>
+        <ModalDialog sx={{ width: 400 }}>
+          <ModalClose />
+          <Typography level="h4" sx={{ mb: 2 }}>
+            Change Password
+          </Typography>
+          
+          <form onSubmit={handlePasswordSubmit}>
+            <Stack spacing={3}>
+              {passwordMessage && (
+                <Alert 
+                  color={passwordMessage.includes('success') ? 'success' : 'danger'}
+                  size="sm"
+                >
+                  {passwordMessage}
+                </Alert>
+              )}
+
+              <FormControl required>
+                <FormLabel>Current Password</FormLabel>
+                <Input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <FormControl required>
+                <FormLabel>New Password</FormLabel>
+                <Input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password (min 8 characters)"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <FormControl required>
+                <FormLabel>Confirm New Password</FormLabel>
+                <Input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm new password"
+                  disabled={passwordLoading}
+                />
+              </FormControl>
+
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
+                <Button
+                  variant="plain"
+                  onClick={handlePasswordModalClose}
+                  disabled={passwordLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="solid"
+                  loading={passwordLoading}
+                  disabled={passwordLoading}
+                >
+                  Change Password
+                </Button>
+              </Stack>
+            </Stack>
+          </form>
+        </ModalDialog>
+      </Modal>
     </Box>
   );
 }

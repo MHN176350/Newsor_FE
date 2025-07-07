@@ -31,8 +31,8 @@ export const VALIDATION = {
 
 // Default Values
 export const DEFAULTS = {
-  AVATAR_PLACEHOLDER: '/default-avatar.png',
-  NEWS_IMAGE_PLACEHOLDER: '/default-news.png',
+  AVATAR_PLACEHOLDER: '/static/images/default-avatar.svg',
+  NEWS_IMAGE_PLACEHOLDER: '/static/images/default-news.svg',
   ITEMS_PER_PAGE: 10,
 };
 
@@ -202,7 +202,7 @@ export const canEditNews = (user, news) => {
     return true;
   }
   
-  // Writers can edit their own news if it's not published
+  
   if (user.profile?.role === USER_ROLES.WRITER && news.author.id === user.id) {
     return news.status !== NEWS_STATUS.PUBLISHED;
   }

@@ -1,5 +1,20 @@
 import { gql } from '@apollo/client';
 
+// Image Upload Mutations
+export const GET_CLOUDINARY_SIGNATURE = gql`
+  mutation GetCloudinarySignature {
+    getCloudinarySignature {
+      signature
+      timestamp
+      apiKey
+      cloudName
+      folder
+      success
+      errors
+    }
+  }
+`;
+
 // Authentication Mutations
 export const LOGIN_USER = gql`
   mutation LoginUser($username: String!, $password: String!) {
@@ -100,32 +115,49 @@ export const UPDATE_USER_PROFILE = gql`
   }
 `;
 
+export const CHANGE_PASSWORD = gql`
+  mutation ChangePassword(
+    $currentPassword: String!
+    $newPassword: String!
+  ) {
+    changePassword(
+      currentPassword: $currentPassword
+      newPassword: $newPassword
+    ) {
+      success
+      errors
+    }
+  }
+`;
+
 // News Mutations
 export const CREATE_NEWS = gql`
   mutation CreateNews(
     $title: String!
     $content: String!
-    $excerpt: String
-    $featuredImage: String
+    $excerpt: String!
     $categoryId: Int!
-    $tagIds: [Int!]
-    $status: String
+    $tagIds: [Int]
+    $featuredImage: String
+    $metaDescription: String
+    $metaKeywords: String
   ) {
     createNews(
       title: $title
       content: $content
       excerpt: $excerpt
-      featuredImage: $featuredImage
       categoryId: $categoryId
       tagIds: $tagIds
-      status: $status
+      featuredImage: $featuredImage
+      metaDescription: $metaDescription
+      metaKeywords: $metaKeywords
     ) {
       news {
         id
         title
         content
         excerpt
-        featuredImage
+        featuredImageUrl
         status
         createdAt
         category {
@@ -146,13 +178,14 @@ export const CREATE_NEWS = gql`
 export const UPDATE_NEWS = gql`
   mutation UpdateNews(
     $id: Int!
-    $title: String
-    $content: String
-    $excerpt: String
+    $title: String!
+    $content: String!
+    $excerpt: String!
     $featuredImage: String
-    $categoryId: Int
+    $categoryId: Int!
     $tagIds: [Int!]
-    $status: String
+    $metaDescription: String
+    $metaKeywords: String
   ) {
     updateNews(
       id: $id
@@ -162,14 +195,15 @@ export const UPDATE_NEWS = gql`
       featuredImage: $featuredImage
       categoryId: $categoryId
       tagIds: $tagIds
-      status: $status
+      metaDescription: $metaDescription
+      metaKeywords: $metaKeywords
     ) {
       news {
         id
         title
         content
         excerpt
-        featuredImage
+        featuredImageUrl
         status
         updatedAt
         category {
@@ -242,10 +276,25 @@ export const REJECT_NEWS = gql`
   }
 `;
 
+export const UPDATE_NEWS_STATUS = gql`
+  mutation UpdateNewsStatus($id: Int!, $status: String!, $reviewComment: String) {
+    updateNewsStatus(id: $id, status: $status, reviewComment: $reviewComment) {
+      news {
+        id
+        title
+        status
+        updatedAt
+      }
+      success
+      errors
+    }
+  }
+`;
+
 // Comment Mutations
 export const CREATE_COMMENT = gql`
-  mutation CreateComment($newsId: Int!, $content: String!) {
-    createComment(newsId: $newsId, content: $content) {
+  mutation CreateComment($articleId: Int!, $content: String!, $parentId: Int) {
+    createComment(articleId: $articleId, content: $content, parentId: $parentId) {
       comment {
         id
         content
@@ -255,6 +304,13 @@ export const CREATE_COMMENT = gql`
           username
           firstName
           lastName
+        }
+        parent {
+          id
+          author {
+            id
+            username
+          }
         }
       }
       success
@@ -287,11 +343,27 @@ export const DELETE_COMMENT = gql`
 `;
 
 // Like Mutations
-export const TOGGLE_LIKE = gql`
-  mutation ToggleLike($newsId: Int!) {
-    toggleLike(newsId: $newsId) {
-      liked
-      likesCount
+export const CREATE_LIKE_ARTICLE = gql`
+  mutation CreateLikeArticle($articleId: Int!) {
+    createLikeArticle(articleId: $articleId) {
+      success
+      errors
+    }
+  }
+`;
+
+export const CREATE_LIKE_COMMENT = gql`
+  mutation CreateLikeComment($commentId: Int!) {
+    createLikeComment(commentId: $commentId) {
+      success
+      errors
+    }
+  }
+`;
+
+export const UPDATE_LIKE_STATUS = gql`
+  mutation UpdateLikeStatus($articleId: Int, $commentId: Int) {
+    updateLikeStatus(articleId: $articleId, commentId: $commentId) {
       success
       errors
     }
@@ -300,7 +372,7 @@ export const TOGGLE_LIKE = gql`
 
 // Category Mutations
 export const CREATE_CATEGORY = gql`
-  mutation CreateCategory($name: String!, $description: String) {
+  mutation CreateCategory($name: String!, $description: String!) {
     createCategory(name: $name, description: $description) {
       category {
         id
@@ -340,8 +412,8 @@ export const DELETE_CATEGORY = gql`
 
 // Tag Mutations
 export const CREATE_TAG = gql`
-  mutation CreateTag($name: String!) {
-    createTag(name: $name) {
+  mutation CreateTag($name: String!, $slug: String!) {
+    createTag(name: $name, slug: $slug) {
       tag {
         id
         name
@@ -370,6 +442,93 @@ export const UPDATE_TAG = gql`
 export const DELETE_TAG = gql`
   mutation DeleteTag($id: Int!) {
     deleteTag(id: $id) {
+      success
+      errors
+    }
+  }
+`;
+
+export const TOGGLE_TAG = gql`
+  mutation ToggleTag($id: Int!) {
+    toggleTag(id: $id) {
+      tag {
+        id
+        name
+        slug
+        isActive
+      }
+      success
+      errors
+    }
+  }
+`;
+
+// Admin Mutations
+export const CHANGE_USER_ROLE = gql`
+  mutation ChangeUserRole($userId: Int!, $newRole: String!) {
+    changeUserRole(userId: $userId, newRole: $newRole) {
+      success
+      errors
+      user {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          role
+        }
+      }
+    }
+  }
+`;
+
+// Notification Mutations
+export const MARK_NOTIFICATION_AS_READ = gql`
+  mutation MarkNotificationAsRead($notificationId: Int!) {
+    markNotificationAsRead(notificationId: $notificationId) {
+      success
+      notification {
+        id
+        isRead
+        readAt
+      }
+      errors
+    }
+  }
+`;
+
+export const MARK_ALL_NOTIFICATIONS_AS_READ = gql`
+  mutation MarkAllNotificationsAsRead {
+    markAllNotificationsAsRead {
+      success
+      count
+      errors
+    }
+  }
+`;
+
+export const SUBMIT_NEWS_FOR_REVIEW = gql`
+  mutation SubmitNewsForReview($id: Int!) {
+    submitNewsForReview(id: $id) {
+      success
+      news {
+        id
+        title
+        status
+      }
+      errors
+    }
+  }
+`;
+
+// Reading History Mutations
+export const CREATE_READING_HISTORY = gql`
+  mutation CreateReadingHistory($articleId: Int!, $ipAddress: String, $userAgent: String) {
+    createReadinghistory(
+      articleId: $articleId
+      ipAddress: $ipAddress
+      userAgent: $userAgent
+    ) {
       success
       errors
     }

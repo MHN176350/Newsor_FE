@@ -34,6 +34,17 @@ export const GET_USERS = gql`
       firstName
       lastName
       isActive
+      profile {
+        id
+        role
+        bio
+        avatarUrl
+        phone
+        dateOfBirth
+        isVerified
+        createdAt
+        updatedAt
+      }
     }
   }
 `;
@@ -140,11 +151,18 @@ export const GET_NEWS = gql`
       createdAt
       updatedAt
       slug
+      metaDescription
+      metaKeywords
+      viewCount
+      likeCount
       author {
         id
         username
         firstName
         lastName
+        profile {
+          avatarUrl
+        }
       }
       category {
         id
@@ -162,7 +180,7 @@ export const GET_NEWS = gql`
 
 export const GET_MY_NEWS = gql`
   query GetMyNews {
-    newsList(authorId: null) {
+    myNews {
       id
       title
       content
@@ -187,6 +205,39 @@ export const GET_MY_NEWS = gql`
   }
 `;
 
+export const GET_NEWS_FOR_REVIEW = gql`
+  query GetNewsForReview {
+    newsForReview {
+      id
+      title
+      content
+      excerpt
+      featuredImageUrl
+      status
+      publishedAt
+      createdAt
+      updatedAt
+      slug
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+      category {
+        id
+        name
+        slug
+      }
+      tags {
+        id
+        name
+        slug
+      }
+    }
+  }
+`;
+
 // Category Queries
 export const GET_CATEGORIES = gql`
   query GetCategories {
@@ -195,12 +246,14 @@ export const GET_CATEGORIES = gql`
       name
       slug
       description
+      createdAt
+      articleCount
     }
   }
 `;
 
 export const GET_CATEGORY = gql`
-  query GetCategory($id: Int!) {
+  query GetCategory($id: Int) {
     category(id: $id) {
       id
       name
@@ -217,6 +270,22 @@ export const GET_TAGS = gql`
       id
       name
       slug
+      createdAt
+      isActive
+      articleCount
+    }
+  }
+`;
+
+export const GET_ADMIN_TAGS = gql`
+  query GetAdminTags {
+    adminTags {
+      id
+      name
+      slug
+      createdAt
+      isActive
+      articleCount
     }
   }
 `;
@@ -244,8 +313,17 @@ export const GET_COMMENTS = gql`
         username
         firstName
         lastName
+        profile{
+          avatarUrl
+        }
       }
     }
+  }
+`;
+export const GET_COMMENT_LIKE_STATUS = gql`
+  query GetCommentLikeStatus($commentId: Int!) {
+    commentLikeCount(commentId: $commentId)
+    isCommentLiked(commentId: $commentId)
   }
 `;
 
@@ -287,26 +365,196 @@ export const GET_NEWS_ANALYTICS = gql`
     }
   }
 `;
+*/
 
-// Dashboard Queries - These would need to be implemented in the backend
+// Dashboard Queries
 export const GET_DASHBOARD_STATS = gql`
   query GetDashboardStats {
     dashboardStats {
-      totalNews
-      totalPublished
-      totalDrafts
-      totalPending
-      totalRejected
       totalUsers
       totalReaders
       totalWriters
       totalManagers
       totalAdmins
-      recentActivity {
+      newUsersThisMonth
+      totalNews
+      publishedNews
+      draftNews
+      pendingNews
+      rejectedNews
+      newsThisMonth
+      totalCategories
+      totalTags
+      totalViews
+      totalLikes
+      totalComments
+    }
+  }
+`;
+
+export const GET_RECENT_ACTIVITY = gql`
+  query GetRecentActivity($limit: Int) {
+    recentActivity(limit: $limit) {
+      id
+      action
+      description
+      timestamp
+      user {
         id
-        action
-        description
-        timestamp
+        username
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+// Notification Queries
+export const GET_NOTIFICATIONS = gql`
+  query GetNotifications {
+    notifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      readAt
+      createdAt
+      sender {
+        id
+        username
+        firstName
+        lastName
+      }
+      article {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;
+
+
+
+// Subscriptions
+export const NOTIFICATION_SUBSCRIPTION = gql`
+  subscription OnNotificationAdded {
+    notificationAdded {
+      id
+      message
+      notificationType
+      createdAt
+      article {
+        slug
+      }
+    }
+  }
+`;
+
+// Alias for GET_NEWS for specific use case
+
+// Notification Queries
+
+
+export const GET_UNREAD_NOTIFICATIONS = gql`
+  query GetUnreadNotifications {
+    unreadNotifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      readAt
+      createdAt
+      sender {
+        id
+        username
+        firstName
+        lastName
+      }
+      article {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_NOTIFICATION_COUNT = gql`
+  query GetNotificationCount {
+    notificationCount
+  }
+`;
+
+// Subscriptions
+
+
+// Alias for GET_NEWS for specific use case
+export const GET_NEWS_ARTICLE = GET_NEWS;
+
+export const GET_COUNTS_AND_COMMENTS = gql`
+  query GetCountsAndComments($articleId: Int!) {
+    articleLikeCount(articleId: $articleId)
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      updatedAt
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+    }
+    articleCommentCount(articleId: $articleId)
+    isArticleLiked(articleId: $articleId)
+    hasReadArticle(articleId: $articleId)
+  }
+`;
+
+export const GET_COMMENTS_WITH_REPLIES = gql`
+  query GetCommentsWithReplies($articleId: Int!) {
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      likeCount
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+      parent {
+        id
+        author {
+          id
+          username
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        likeCount
+        author {
+          id
+          username
+          firstName
+          lastName
+        }
+        parent {
+          id
+          author {
+            id
+            username
+          }
+        }
+      }
+      likes {
         user {
           id
           username
@@ -315,4 +563,203 @@ export const GET_DASHBOARD_STATS = gql`
     }
   }
 `;
-*/
+
+export const GET_COMMENTS_WITH_LIKE_STATUS = gql`
+  query GetCommentsWithLikeStatus($articleId: Int!) {
+    articleComments(articleId: $articleId) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+export const GET_LATEST_COMMENTS = gql`
+  query GetLatestComments($articleId: Int!, $limit: Int, $offset: Int) {
+    latestArticleComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+
+export const GET_TOP_LIKED_COMMENTS = gql`
+  query GetTopLikedComments($articleId: Int!, $limit: Int, $offset: Int) {
+    topLikedComments(articleId: $articleId, limit: $limit, offset: $offset) {
+      id
+      content
+      createdAt
+      author {
+        id
+        username
+        firstName
+        lastName
+        profile {
+          avatarUrl
+        }
+      }
+      parent {
+        id
+        author {
+          id
+          username
+          profile {
+            avatarUrl
+          }          
+        }
+      }
+      replies {
+        id
+        content
+        createdAt
+        author {
+          id
+          username
+          firstName
+          lastName
+          profile{
+            avatarUrl
+          }
+        }
+        parent {
+          id
+          author {
+            id
+            username
+            profile{
+              avatarUrl
+            }
+          }
+        }
+        commentLikeCount
+        isCommentLiked
+      }
+      commentLikeCount
+      isCommentLiked
+    }
+  }
+`;
+export const GET_USER_COMMENT_HISTORY = gql`
+  query GetUserCommentHistory($userId: Int!, $limit: Int, $offset: Int, $fromDate: Date, $toDate: Date) {
+    userCommentHistory(userId: $userId, limit: $limit, offset: $offset, fromDate: $fromDate, toDate: $toDate) {
+      id
+      content
+      createdAt
+      article {
+        id
+        title
+        slug
+        featuredImageUrl
+      }
+    }
+  }
+`;
+
+export const GET_USER_READING_HISTORY = gql`
+  query GetUserReadingHistory($userId: Int!, $limit: Int, $offset: Int, $fromDate: Date, $toDate: Date) {
+    userReadingHistory(userId: $userId, limit: $limit, offset: $offset, fromDate: $fromDate, toDate: $toDate) {
+      id
+      readAt
+      article {
+        id
+        title
+        slug
+        featuredImageUrl
+      }
+    }
+  }
+`;

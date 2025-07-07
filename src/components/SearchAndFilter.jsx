@@ -25,7 +25,17 @@ export default function SearchAndFilter({
   const [searchTerm, setSearchTerm] = useState(initialFilters.search || '');
   const [selectedCategory, setSelectedCategory] = useState(initialFilters.categoryId ? String(initialFilters.categoryId) : '');
   const [selectedTag, setSelectedTag] = useState(initialFilters.tagId ? String(initialFilters.tagId) : '');
+  const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'newest');
   const [showFilters, setShowFilters] = useState(false);
+
+  const sortOptions = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'title_asc', label: 'Title A-Z' },
+    { value: 'title_desc', label: 'Title Z-A' },
+    { value: 'author_asc', label: 'Author A-Z' },
+    { value: 'author_desc', label: 'Author Z-A' },
+  ];
 
   const handleSearch = () => {
     onSearch(searchTerm);
@@ -33,6 +43,7 @@ export default function SearchAndFilter({
       categoryId: selectedCategory ? parseInt(selectedCategory) : null,
       tagId: selectedTag ? parseInt(selectedTag) : null,
       search: searchTerm || null,
+      sortBy: sortBy,
     });
   };
 
@@ -40,11 +51,13 @@ export default function SearchAndFilter({
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedTag('');
+    setSortBy('newest');
     onSearch('');
     onFilter({
       categoryId: null,
       tagId: null,
       search: null,
+      sortBy: 'newest',
     });
   };
 
@@ -98,6 +111,30 @@ export default function SearchAndFilter({
         {showFilters && (
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <FormControl sx={{ minWidth: 200 }}>
+              <FormLabel>Sort By</FormLabel>
+              <Select
+                value={sortBy}
+                onChange={(event, newValue) => {
+                  setSortBy(newValue);
+                  // Auto-apply filter when changed
+                  onFilter({
+                    categoryId: selectedCategory ? parseInt(selectedCategory) : null,
+                    tagId: selectedTag ? parseInt(selectedTag) : null,
+                    search: searchTerm || null,
+                    sortBy: newValue,
+                  });
+                }}
+                disabled={loading}
+              >
+                {sortOptions.map((option) => (
+                  <Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl sx={{ minWidth: 200 }}>
               <FormLabel>Category</FormLabel>
               <Select
                 placeholder="All Categories"
@@ -109,13 +146,14 @@ export default function SearchAndFilter({
                     categoryId: newValue ? parseInt(newValue) : null,
                     tagId: selectedTag ? parseInt(selectedTag) : null,
                     search: searchTerm || null,
+                    sortBy: sortBy,
                   });
                 }}
                 disabled={loading}
               >
                 <Option value="">All Categories</Option>
                 {categories.map((category) => (
-                  <Option key={category.id} value={category.id}>
+                  <Option key={category.id} value={String(category.id)}>
                     {category.name}
                   </Option>
                 ))}
@@ -134,13 +172,14 @@ export default function SearchAndFilter({
                     categoryId: selectedCategory ? parseInt(selectedCategory) : null,
                     tagId: newValue ? parseInt(newValue) : null,
                     search: searchTerm || null,
+                    sortBy: sortBy,
                   });
                 }}
                 disabled={loading}
               >
                 <Option value="">All Tags</Option>
                 {tags.map((tag) => (
-                  <Option key={tag.id} value={tag.id}>
+                  <Option key={tag.id} value={String(tag.id)}>
                     {tag.name}
                   </Option>
                 ))}
@@ -150,7 +189,7 @@ export default function SearchAndFilter({
         )}
 
         {/* Active Filters Display */}
-        {(searchTerm || selectedCategory || selectedTag) && (
+        {(searchTerm || selectedCategory || selectedTag || sortBy !== 'newest') && (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
               Active filters:
@@ -186,6 +225,17 @@ export default function SearchAndFilter({
                 fontSize: 'sm'
               }}>
                 Tag: {tags.find(t => t.id === selectedTag)?.name}
+              </Box>
+            )}
+            {sortBy !== 'newest' && (
+              <Box sx={{ 
+                px: 1, 
+                py: 0.5, 
+                bgcolor: 'neutral.100', 
+                borderRadius: 'sm',
+                fontSize: 'sm'
+              }}>
+                Sort: {sortOptions.find(s => s.value === sortBy)?.label}
               </Box>
             )}
           </Box>

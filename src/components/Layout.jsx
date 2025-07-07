@@ -1,12 +1,20 @@
 import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, MenuButton, MenuItem, Chip } from '@mui/joy';
 import { useColorScheme } from '@mui/joy/styles';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../core/presentation/hooks/useAuth';
+import { useQuery } from '@apollo/client';
+import { GET_CATEGORIES } from '../graphql/queries';
+import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import NotificationBell from './NotificationBell';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+
+  // Fetch categories for dropdown
+  const { data: categoriesData } = useQuery(GET_CATEGORIES);
+  const categories = categoriesData?.categories || [];
 
   const toggleColorScheme = () => {
     setMode(mode === 'dark' ? 'light' : 'dark');
@@ -76,21 +84,108 @@ export default function Layout({ children }) {
           >
             Home
           </Button>
-          <Button
-            variant="plain"
-            component={Link}
-            to="/news"
-            sx={{ 
-              color: 'text.secondary',
-              '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
-            }}
-          >
-            News
-          </Button>
-
-          {/* Authenticated user additional navigation */}
+          
+          {/* News Dropdown with Categories */}
+          <Dropdown>
+            <MenuButton
+              slots={{ root: Button }}
+              slotProps={{
+                root: {
+                  variant: 'plain',
+                  sx: { 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }
+                }
+              }}
+            >
+              News
+            </MenuButton>
+            <Menu placement="bottom-start" sx={{ zIndex: 1300 }}>
+              <MenuItem onClick={() => navigate('/news')}>
+                🗞️ All News
+              </MenuItem>
+              {categories.length > 0 && (
+                <>
+                  <MenuItem disabled sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+                    BY CATEGORY
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem 
+                      key={category.id}
+                      onClick={() => navigate(`/news?category=${category.slug}`)}
+                    >
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+            </Menu>
+          </Dropdown>
+          
+          {/* History - chỉ hiện khi đăng nhập */}
           {isAuthenticated && (
             <>
+              <Button
+                variant="plain"
+                component={Link}
+                to="/comment-history"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                Comment History
+              </Button>
+              <Button
+                variant="plain"
+                component={Link}
+                to="/reading-history"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                Reading History
+              </Button>
+            </>
+          )}
+          {/* Role-based Article Actions */}
+          {isAuthenticated && (
+            <>
+              {/* Writers can access their articles */}
+              {user?.profile?.role?.toLowerCase() === 'writer' && (
+                <Button
+                  variant="soft"
+                  component={Link}
+                  to="/my-articles"
+                  sx={{ 
+                    color: 'primary.600',
+                    bgcolor: 'primary.100',
+                    '&:hover': { bgcolor: 'primary.200' }
+                  }}
+                >
+                  🪶 My Articles
+                </Button>
+              )}
+              
+              {/* Managers can review articles */}
+              {user?.profile?.role?.toLowerCase() === 'manager' && (
+                <Button
+                  variant="soft"
+                  component={Link}
+                  to="/review"
+                  sx={{ 
+                    color: 'warning.600',
+                    bgcolor: 'warning.100',
+                    '&:hover': { bgcolor: 'warning.200' }
+                  }}
+                >
+                  🔖 Review Articles
+                </Button>
+              )}
+              
+              {/* Additional navigation for authenticated users */}
               <Button
                 variant="plain"
                 component={Link}
@@ -102,7 +197,7 @@ export default function Layout({ children }) {
               >
                 Profile
               </Button>
-              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+              {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
                 <Button
                   variant="plain"
                   component={Link}
@@ -113,6 +208,19 @@ export default function Layout({ children }) {
                   }}
                 >
                   Dashboard
+                </Button>
+              )}
+              {user?.profile?.role?.toLowerCase() === 'admin' && (
+                <Button
+                  variant="plain"
+                  component={Link}
+                  to="/admin"
+                  sx={{ 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }}
+                >
+                  Admin Dashboard
                 </Button>
               )}
             </>
@@ -127,25 +235,30 @@ export default function Layout({ children }) {
               '&:hover': { bgcolor: 'neutral.200' }
             }}
           >
-            {mode === 'dark' ? '🌞' : '🌙'}
+            {mode === 'dark' ? '☀️' : '🌑'}
           </IconButton>
 
           {/* Auth Section */}
           {isAuthenticated ? (
             /* User Profile Dropdown */
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Notification Bell - only for managers and admins */}
+              {user?.profile?.role && ['manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
+                <NotificationBell />
+              )}
+              
               {/* User Role Badge */}
               {user?.profile?.role && (
                 <Chip
                   size="sm"
                   variant="soft"
                   color={
-                    user.profile.role === 'admin' ? 'danger' :
-                    user.profile.role === 'manager' ? 'warning' :
-                    user.profile.role === 'writer' ? 'success' : 'neutral'
+                    user.profile.role.toLowerCase() === 'admin' ? 'danger' :
+                    user.profile.role.toLowerCase() === 'manager' ? 'warning' :
+                    user.profile.role.toLowerCase() === 'writer' ? 'success' : 'neutral'
                   }
                 >
-                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1)}
+                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1).toLowerCase()}
                 </Chip>
               )}
               
@@ -168,11 +281,15 @@ export default function Layout({ children }) {
                 >
                   <Avatar
                     size="sm"
-                    src={user?.profile?.avatarUrl}
+                    src={processImageUrlForDisplay(user?.profile?.avatarUrl)}
                     sx={{ 
                       bgcolor: 'primary.500',
                       color: 'white',
                       fontSize: '0.75rem'
+                    }}
+                    onError={(e) => {
+                      console.log('Avatar load error, falling back to initials:', e.target.src);
+                      e.target.style.display = 'none'; // This will show the initials
                     }}
                   >
                     {getUserInitials()}
@@ -185,9 +302,14 @@ export default function Layout({ children }) {
                   <MenuItem onClick={() => navigate('/profile')}>
                     👤 Profile
                   </MenuItem>
-                  {user?.profile?.role && ['writer', 'manager', 'admin'].includes(user.profile.role) && (
+                  {user?.profile?.role && ['writer', 'manager', 'admin', 'reader'].includes(user.profile.role.toLowerCase()) && (
                     <MenuItem onClick={() => navigate('/dashboard')}>
                       📊 Dashboard
+                    </MenuItem>
+                  )}
+                  {user?.profile?.role?.toLowerCase() === 'admin' && (
+                    <MenuItem onClick={() => navigate('/admin')}>
+                      ⚙️ Admin Dashboard
                     </MenuItem>
                   )}
                   <MenuItem onClick={handleLogout} sx={{ color: 'danger.500' }}>
