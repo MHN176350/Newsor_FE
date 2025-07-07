@@ -163,6 +163,9 @@ export const GET_NEWS = gql`
         profile {
           avatarUrl
         }
+        profile {
+          avatarUrl
+        }
       }
       category {
         id
@@ -175,6 +178,22 @@ export const GET_NEWS = gql`
         slug
       }
     }
+    articleLikeCount(articleId: $id)
+    articleComments(articleId: $id) {
+      id
+      content
+      createdAt
+      updatedAt
+      author {
+        id
+        username
+        firstName
+        lastName
+      }
+    }
+    articleCommentCount(articleId: $id)
+    articleReadCount(articleId: $id)
+    isArticleLiked(articleId: $id)
   }
 `;
 
@@ -438,6 +457,28 @@ export const GET_NOTIFICATIONS = gql`
   }
 `;
 
+
+
+// Subscriptions
+export const NOTIFICATION_SUBSCRIPTION = gql`
+  subscription OnNotificationAdded {
+    notificationAdded {
+      id
+      message
+      notificationType
+      createdAt
+      article {
+        slug
+      }
+    }
+  }
+`;
+
+// Alias for GET_NEWS for specific use case
+
+// Notification Queries
+
+
 export const GET_UNREAD_NOTIFICATIONS = gql`
   query GetUnreadNotifications {
     unreadNotifications {
@@ -470,19 +511,10 @@ export const GET_NOTIFICATION_COUNT = gql`
 `;
 
 // Subscriptions
-export const NOTIFICATION_SUBSCRIPTION = gql`
-  subscription OnNotificationAdded {
-    notificationAdded {
-      id
-      message
-      notificationType
-      createdAt
-      article {
-        slug
-      }
-    }
-  }
-`;
+
+
+// Alias for GET_NEWS for specific use case
+export const GET_NEWS_ARTICLE = GET_NEWS;
 
 export const GET_COUNTS_AND_COMMENTS = gql`
   query GetCountsAndComments($articleId: Int!) {
@@ -721,6 +753,36 @@ export const GET_TOP_LIKED_COMMENTS = gql`
       }
       commentLikeCount
       isCommentLiked
+    }
+  }
+`;
+export const GET_USER_COMMENT_HISTORY = gql`
+  query GetUserCommentHistory($userId: Int!, $limit: Int, $offset: Int, $fromDate: Date, $toDate: Date) {
+    userCommentHistory(userId: $userId, limit: $limit, offset: $offset, fromDate: $fromDate, toDate: $toDate) {
+      id
+      content
+      createdAt
+      article {
+        id
+        title
+        slug
+        featuredImageUrl
+      }
+    }
+  }
+`;
+
+export const GET_USER_READING_HISTORY = gql`
+  query GetUserReadingHistory($userId: Int!, $limit: Int, $offset: Int, $fromDate: Date, $toDate: Date) {
+    userReadingHistory(userId: $userId, limit: $limit, offset: $offset, fromDate: $fromDate, toDate: $toDate) {
+      id
+      readAt
+      article {
+        id
+        title
+        slug
+        featuredImageUrl
+      }
     }
   }
 `;
