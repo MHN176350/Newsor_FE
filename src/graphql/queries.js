@@ -510,11 +510,11 @@ export const GET_COUNTS_AND_COMMENTS = gql`
       }
     }
     articleCommentCount(articleId: $articleId)
+    articleReadCount(articleId: $articleId)
     isArticleLiked(articleId: $articleId)
     hasReadArticle(articleId: $articleId)
   }
-`;
-
+`
 export const GET_COMMENTS_WITH_REPLIES = gql`
   query GetCommentsWithReplies($articleId: Int!) {
     articleComments(articleId: $articleId) {

@@ -112,7 +112,7 @@ export default function NewsDetailPage() {
   const likesCountFromQuery = countsData?.articleLikeCount ?? 0;
   const commentsCount = countsData?.articleCommentCount ?? 0;
   const commentsFromQuery = countsData?.articleComments ?? [];
-  const readsCount = news?.viewCount ?? 0;
+  const readsCount = countsData?.articleReadCount ?? 0;
   const isLikedFromQuery = countsData?.isArticleLiked ?? false;
 
   // Initialize states from query data
