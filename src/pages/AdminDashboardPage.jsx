@@ -7,9 +7,11 @@ import { USER_ROLES, getRoleColor, formatDate } from '../utils/constants';
 import { GET_DASHBOARD_STATS, GET_RECENT_ACTIVITY } from '../graphql/queries';
 import UserManagement from '../components/UserManagement';
 import ContentManagement from '../components/ContentManagement';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // All hooks must be called before early returns
@@ -33,13 +35,13 @@ export default function AdminDashboardPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Access Denied
+          {t('admin.accessDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to access the admin dashboard.
+          {t('admin.signInRequired')}
         </Typography>
         <Button component={Link} to="/login">
-          Sign In
+          {t('auth.login.signIn')}
         </Button>
       </Box>
     );
@@ -50,16 +52,16 @@ export default function AdminDashboardPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-          Access Denied
+          {t('admin.accessDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You don't have permission to access the admin dashboard.
+          {t('admin.noPermission')}
         </Typography>
         <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Your role: {userRole} | Required: admin
+          {t('admin.currentRole')}: {userRole} | {t('admin.requiredRole')}: {t('common.admin')}
         </Typography>
         <Button onClick={() => navigate(-1)}>
-          Go Back
+          {t('common.back')}
         </Button>
       </Box>
     );
@@ -70,14 +72,14 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2, color: 'var(--joy-palette-text-primary)' }}>
-          ⚙️ Admin Dashboard
+          ⚙️ {t('admin.title')}
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-            System Administration & Management
+            {t('admin.subtitle')}
           </Typography>
           <Chip size="sm" color="danger">
-            ADMIN
+            {t('admin.adminChip')}
           </Chip>
         </Stack>
       </Box>
@@ -85,10 +87,10 @@ export default function AdminDashboardPage() {
       {/* Navigation Tabs */}
       <Tabs defaultValue={0} sx={{ mb: 4 }}>
         <TabList>
-          <Tab>System Overview</Tab>
-          <Tab>User Management</Tab>
-          <Tab>Content Management</Tab>
-          <Tab>System Settings</Tab>
+          <Tab>{t('admin.tabs.systemOverview')}</Tab>
+          <Tab>{t('admin.tabs.userManagement')}</Tab>
+          <Tab>{t('admin.tabs.contentManagement')}</Tab>
+          <Tab>{t('admin.tabs.systemSettings')}</Tab>
         </TabList>
 
         {/* System Overview Tab */}
@@ -96,19 +98,19 @@ export default function AdminDashboardPage() {
           {/* System Statistics */}
           <Box sx={{ mb: 4 }}>
             <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-              System Statistics
+              {t('admin.systemStats')}
             </Typography>
 
             {statsLoading ? (
               <Card variant="outlined" sx={{ textAlign: 'center', py: 4 }}>
                 <CircularProgress size="lg" />
                 <Typography level="body1" sx={{ mt: 2 }}>
-                  Loading system statistics...
+                  {t('admin.loadingStats')}
                 </Typography>
               </Card>
             ) : statsError ? (
               <Alert color="danger" sx={{ mb: 3 }}>
-                Error loading system statistics: {statsError.message}
+                {t('admin.statsError')}: {statsError.message}
               </Alert>
             ) : stats ? (
               <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -117,13 +119,13 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-sm" sx={{ color: 'primary.500', mb: 1 }}>
-                        Total Users
+                        {t('admin.stats.totalUsers')}
                       </Typography>
                       <Typography level="h2" sx={{ mb: 1 }}>
                         {stats.totalUsers}
                       </Typography>
                       <Typography level="body-sm" sx={{ color: 'success.500' }}>
-                        +{stats.newUsersThisMonth} this month
+                        +{stats.newUsersThisMonth} {t('admin.stats.thisMonth')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -133,13 +135,13 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-sm" sx={{ color: 'success.500', mb: 1 }}>
-                        Published Articles
+                        {t('admin.stats.publishedArticles')}
                       </Typography>
                       <Typography level="h2" sx={{ mb: 1 }}>
                         {stats.publishedNews}
                       </Typography>
                       <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                        of {stats.totalNews} total
+                        {t('news.of')} {stats.totalNews} {t('admin.stats.total')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -149,13 +151,13 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-sm" sx={{ color: 'warning.500', mb: 1 }}>
-                        Pending Review
+                        {t('admin.stats.pendingReview')}
                       </Typography>
                       <Typography level="h2" sx={{ mb: 1 }}>
                         {stats.pendingNews}
                       </Typography>
                       <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                        {stats.draftNews} drafts
+                        {stats.draftNews} {t('admin.stats.drafts')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -165,13 +167,13 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-sm" sx={{ color: 'neutral.500', mb: 1 }}>
-                        Total Views
+                        {t('admin.stats.totalViews')}
                       </Typography>
                       <Typography level="h2" sx={{ mb: 1 }}>
                         {stats.totalViews.toLocaleString()}
                       </Typography>
                       <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                        {stats.totalLikes} likes
+                        {stats.totalLikes} {t('admin.stats.likes')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -182,29 +184,29 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-md" sx={{ mb: 2 }}>
-                        User Role Distribution
+                        {t('admin.userRoleDistribution')}
                       </Typography>
                       <Stack spacing={2}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">👥 Readers</Typography>
+                          <Typography level="body-sm">👥 {t('admin.roles.readers')}</Typography>
                           <Chip size="sm" color="primary">
                             {stats.totalReaders}
                           </Chip>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">✍️ Writers</Typography>
+                          <Typography level="body-sm">✍️ {t('admin.roles.writers')}</Typography>
                           <Chip size="sm" color="success">
                             {stats.totalWriters}
                           </Chip>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">📊 Managers</Typography>
+                          <Typography level="body-sm">📊 {t('admin.roles.managers')}</Typography>
                           <Chip size="sm" color="warning">
                             {stats.totalManagers}
                           </Chip>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">⚙️ Admins</Typography>
+                          <Typography level="body-sm">⚙️ {t('admin.roles.admins')}</Typography>
                           <Chip size="sm" color="danger">
                             {stats.totalAdmins}
                           </Chip>
@@ -219,25 +221,25 @@ export default function AdminDashboardPage() {
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
                       <Typography level="title-md" sx={{ mb: 2 }}>
-                        Content Overview
+                        {t('admin.contentOverview')}
                       </Typography>
                       <Stack spacing={2}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">📁 Categories</Typography>
+                          <Typography level="body-sm">📁 {t('common.categories')}</Typography>
                           <Typography level="title-sm">{stats.totalCategories}</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">🏷️ Tags</Typography>
+                          <Typography level="body-sm">🏷️ {t('common.tags')}</Typography>
                           <Typography level="title-sm">{stats.totalTags}</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">📰 Articles This Month</Typography>
+                          <Typography level="body-sm">📰 {t('admin.stats.articlesThisMonth')}</Typography>
                           <Chip size="sm" color="primary">
                             {stats.newsThisMonth}
                           </Chip>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography level="body-sm">💬 Total Comments</Typography>
+                          <Typography level="body-sm">💬 {t('admin.stats.totalComments')}</Typography>
                           <Typography level="title-sm">{stats.totalComments}</Typography>
                         </Box>
                       </Stack>
@@ -251,14 +253,14 @@ export default function AdminDashboardPage() {
           {/* Recent System Activity */}
           <Box sx={{ mb: 4 }}>
             <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-              Recent System Activity
+              {t('admin.recentActivity')}
             </Typography>
             
             {activityLoading ? (
               <Card variant="outlined" sx={{ textAlign: 'center', py: 4 }}>
                 <CircularProgress size="lg" />
                 <Typography level="body1" sx={{ mt: 2 }}>
-                  Loading recent activity...
+                  {t('admin.loadingActivity')}
                 </Typography>
               </Card>
             ) : recentActivity.length > 0 ? (
@@ -273,7 +275,7 @@ export default function AdminDashboardPage() {
                               {activity.description}
                             </Typography>
                             <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                              by {activity.user?.firstName || activity.user?.username}
+                              {t('admin.activityBy')} {activity.user?.firstName || activity.user?.username}
                             </Typography>
                           </Box>
                           <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
@@ -290,7 +292,7 @@ export default function AdminDashboardPage() {
               <Card variant="outlined">
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                    No recent activity to display
+                    {t('admin.noActivity')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -311,15 +313,15 @@ export default function AdminDashboardPage() {
         {/* System Settings Tab */}
         <TabPanel value={3} sx={{ px: 0 }}>
           <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            System Settings
+            {t('admin.tabs.systemSettings')}
           </Typography>
           <Card variant="outlined">
             <CardContent>
               <Typography level="body1" sx={{ color: 'text.secondary' }}>
-                System configuration and settings will be available here.
+                {t('admin.settingsPlaceholder')}
               </Typography>
               <Typography level="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                This could include site settings, email configuration, security settings, etc.
+                {t('admin.settingsDescription')}
               </Typography>
             </CardContent>
           </Card>

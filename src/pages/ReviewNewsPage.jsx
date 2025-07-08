@@ -8,6 +8,7 @@ import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 import { SEO } from '../components/index.js';
+import { useTranslation } from 'react-i18next';
 
 export default function ReviewNewsPage() {
   const { slug } = useParams();
@@ -17,7 +18,7 @@ export default function ReviewNewsPage() {
   const [newStatus, setNewStatus] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { t } = useTranslation();
   const { data, loading, error, refetch } = useQuery(GET_NEWS, {
     variables: { slug: slug },
     skip: !slug,
@@ -26,7 +27,7 @@ export default function ReviewNewsPage() {
   const [updateNewsStatus] = useMutation(UPDATE_NEWS_STATUS, {
     onCompleted: (data) => {
       if (data.updateNewsStatus.success) {
-        setMessage('Article status updated successfully!');
+        setMessage(t('review.statusUpdatedSuccess'));
         setReviewComment('');
         setNewStatus('');
         setIsSubmitting(false);
@@ -35,13 +36,13 @@ export default function ReviewNewsPage() {
           navigate('/review');
         }, 2000);
       } else {
-        setMessage(`Error: ${data.updateNewsStatus.errors?.join(', ') || 'Unknown error'}`);
+        setMessage(`${t('common.error')}: ${data.updateNewsStatus.errors?.join(', ') || t('review.unknownError')}`);
         setIsSubmitting(false);
       }
     },
     onError: (error) => {
       console.error('Error updating news status:', error);
-      setMessage('An error occurred while updating the article status.');
+      setMessage(t('review.statusUpdateError'));
       setIsSubmitting(false);
     },
   });
@@ -54,7 +55,7 @@ export default function ReviewNewsPage() {
 
   const handleStatusUpdate = async (status) => {
     if (!news || !reviewComment.trim()) {
-      setMessage('Please provide a review comment.');
+      setMessage(t('common.reviewCommentRequired'));
       return;
     }
 
@@ -71,7 +72,7 @@ export default function ReviewNewsPage() {
       });
     } catch (error) {
       console.error('Error updating status:', error);
-      setMessage('An error occurred while updating the article status.');
+      setMessage(t('review.statusUpdateError'));
       setIsSubmitting(false);
     }
   };
@@ -101,7 +102,7 @@ export default function ReviewNewsPage() {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={4}>
-        <Typography>Loading article for review...</Typography>
+        <Typography>{t('review.loadingArticle')}</Typography>
       </Box>
     );
   }
@@ -109,9 +110,9 @@ export default function ReviewNewsPage() {
   if (error || !news) {
     return (
       <Box textAlign="center" py={4}>
-        <Typography level="h3" sx={{ mb: 2 }}>Article Not Found</Typography>
+        <Typography level="h3" sx={{ mb: 2 }}>{t('review.articleNotFound')}</Typography>
         <Button component={Link} to="/review">
-          Back to Review Queue
+          {t('review.backToReviewQueue')}
         </Button>
       </Box>
     );
@@ -120,12 +121,12 @@ export default function ReviewNewsPage() {
   if (!canReview) {
     return (
       <Box textAlign="center" py={4}>
-        <Typography level="h3" sx={{ mb: 2 }}>Access Denied</Typography>
+        <Typography level="h3" sx={{ mb: 2 }}>{t('review.accessDenied')}</Typography>
         <Typography level="body1" sx={{ mb: 3 }}>
-          You don't have permission to review articles.
+          {t('review.noPermission')}
         </Typography>
         <Button component={Link} to="/news">
-          Back to News
+          {t('review.backToNews')}
         </Button>
       </Box>
     );
@@ -134,8 +135,8 @@ export default function ReviewNewsPage() {
   return (
     <Box>
       <SEO 
-        title={`Review: ${news.title}`}
-        description="Review article for publication"
+        title={`${t('review.title')}: ${news.title}`}
+        description={t('review.title')}
         type="article"
       />
 
@@ -148,12 +149,12 @@ export default function ReviewNewsPage() {
             variant="outlined"
             size="sm"
           >
-            ← Back to Review Queue
+            ← {t('review.backToReviewQueue')}
           </Button>
           
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-              Status:
+              {t('common.status')}:
             </Typography>
             <Chip
               size="sm"
@@ -170,7 +171,7 @@ export default function ReviewNewsPage() {
       {/* Review Status Message */}
       {message && (
         <Alert 
-          color={message.includes('success') ? 'success' : 'danger'} 
+          color={message.includes(t('common.success')) || message.includes(t('review.statusUpdatedSuccess')) ? 'success' : 'danger'} 
           sx={{ mb: 3 }}
           onClose={() => setMessage('')}
         >
@@ -181,11 +182,11 @@ export default function ReviewNewsPage() {
       {/* Article Information Card */}
       <Card variant="outlined" sx={{ mb: 4 }}>
         <CardContent>
-          <Typography level="h4" sx={{ mb: 2 }}>Article Information</Typography>
+          <Typography level="h4" sx={{ mb: 2 }}>{t('review.articleInformation')}</Typography>
           <Stack spacing={2}>
             <Box>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                Author:
+                {t('common.author')}:
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Avatar size="sm" />
@@ -197,7 +198,7 @@ export default function ReviewNewsPage() {
             
             <Box>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                Submitted:
+                {t('common.submitted')}:
               </Typography>
               <Typography level="body1">
                 {formatDate(news.createdAt)}
@@ -206,7 +207,7 @@ export default function ReviewNewsPage() {
 
             <Box>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                Last Updated:
+                {t('common.lastUpdated')}:
               </Typography>
               <Typography level="body1">
                 {formatDate(news.updatedAt)}
@@ -215,17 +216,17 @@ export default function ReviewNewsPage() {
 
             <Box>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                Category:
+                {t('common.category')}:
               </Typography>
               <Chip size="sm" variant="soft">
-                {news.category?.name || 'Uncategorized'}
+                {news.category?.name || t('common.uncategorized')}
               </Chip>
             </Box>
 
             {news.tags && news.tags.length > 0 && (
               <Box>
                 <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 0.5 }}>
-                  Tags:
+                  {t('common.tags')}:
                 </Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {news.tags.map((tag) => (
@@ -250,7 +251,7 @@ export default function ReviewNewsPage() {
           {news.excerpt && (
             <Box sx={{ mb: 3, p: 2, bgcolor: 'background.level1', borderRadius: 'sm' }}>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 1 }}>
-                Excerpt:
+                {t('common.excerpt')}:
               </Typography>
               <Typography level="body1" sx={{ fontStyle: 'italic' }}>
                 {news.excerpt}
@@ -262,7 +263,7 @@ export default function ReviewNewsPage() {
           {news.featuredImageUrl && (
             <Box sx={{ mb: 3 }}>
               <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 1 }}>
-                Featured Image:
+                {t('common.featuredImage')}:
               </Typography>
               <Box
                 component="img"
@@ -279,7 +280,7 @@ export default function ReviewNewsPage() {
           )}
 
           <Typography level="body-sm" sx={{ color: 'text.secondary', mb: 2 }}>
-            Article Content:
+            {t('common.articleContent')}:
           </Typography>
           
           <Box
@@ -328,21 +329,21 @@ export default function ReviewNewsPage() {
       <Card variant="outlined" sx={{ mb: 4 }}>
         <CardContent>
           <Typography level="h4" sx={{ mb: 3 }}>
-            Review Actions
+            {t('review.reviewActions')}
           </Typography>
 
           <FormControl sx={{ mb: 3 }}>
-            <FormLabel>Review Comment (Required)</FormLabel>
+            <FormLabel>{t('review.reviewCommentLabel')}</FormLabel>
             <Textarea
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
-              placeholder="Provide feedback for the author..."
+              placeholder={t('review.reviewCommentPlaceholder')}
               minRows={4}
               maxRows={8}
               disabled={isSubmitting}
             />
             <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
-              This comment will be visible to the author and will help them understand your decision.
+              {t('review.reviewCommentHelper')}
             </Typography>
           </FormControl>
 
@@ -355,7 +356,7 @@ export default function ReviewNewsPage() {
               loading={isSubmitting && newStatus === 'published'}
               startDecorator={!isSubmitting || newStatus !== 'published' ? '✅' : undefined}
             >
-              Approve & Publish
+              {t('review.approveAndPublish')}
             </Button>
             
             <Button
@@ -366,7 +367,7 @@ export default function ReviewNewsPage() {
               loading={isSubmitting && newStatus === 'rejected'}
               startDecorator={!isSubmitting || newStatus !== 'rejected' ? '❌' : undefined}
             >
-              Reject
+              {t('review.reject')}
             </Button>
             
             <Button
@@ -377,7 +378,7 @@ export default function ReviewNewsPage() {
               loading={isSubmitting && newStatus === 'pending'}
               startDecorator={!isSubmitting || newStatus !== 'pending' ? '⏳' : undefined}
             >
-              Request Changes
+              {t('review.requestChanges')}
             </Button>
 
             <Button
@@ -388,15 +389,15 @@ export default function ReviewNewsPage() {
               loading={isSubmitting && newStatus === 'archived'}
               startDecorator={!isSubmitting || newStatus !== 'archived' ? '📦' : undefined}
             >
-              Archive
+              {t('review.archive')}
             </Button>
           </Stack>
 
           <Typography level="body-xs" sx={{ mt: 2, color: 'text.secondary' }}>
-            <strong>Approve & Publish:</strong> Make the article publicly visible<br/>
-            <strong>Reject:</strong> Send back to author with feedback<br/>
-            <strong>Request Changes:</strong> Ask author to revise and resubmit<br/>
-            <strong>Archive:</strong> Remove from public view without rejection
+            <strong>{t('review.approveAndPublish')}:</strong> {t('review.approveDescription')}<br/>
+            <strong>{t('review.reject')}:</strong> {t('review.rejectDescription')}<br/>
+            <strong>{t('review.requestChanges')}:</strong> {t('review.requestChangesDescription')}<br/>
+            <strong>{t('review.archive')}:</strong> {t('review.archiveDescription')}
           </Typography>
         </CardContent>
       </Card>
@@ -406,7 +407,7 @@ export default function ReviewNewsPage() {
         <Card variant="outlined">
           <CardContent>
             <Typography level="h4" sx={{ mb: 3 }}>
-              Review History
+              {t('review.reviewHistory')}
             </Typography>
             <Stack spacing={3}>
               {news.reviewHistory.map((review, index) => (

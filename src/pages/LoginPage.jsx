@@ -2,6 +2,7 @@ import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLab
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const { login, loading } = useAuth();
 
@@ -34,11 +36,11 @@ export default function LoginPage() {
     const errors = {};
     
     if (!formData.username.trim()) {
-      errors.username = 'Username is required';
+      errors.username = t('auth.login.usernameRequired');
     }
     
     if (!formData.password.trim()) {
-      errors.password = 'Password is required';
+      errors.password = t('auth.login.passwordRequired');
     }
     
     setFormErrors(errors);
@@ -65,10 +67,10 @@ export default function LoginPage() {
         // Redirect based on user role (if available in the result)
         navigate('/');
       } else {
-        setError(result.error || 'Invalid username or password');
+        setError(result.error || t('auth.login.error'));
       }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || t('auth.login.failed'));
     }
   };
 
@@ -92,8 +94,11 @@ export default function LoginPage() {
         }}
       >
         <CardContent>
-          <Typography level="h2" textAlign="center" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Sign In
+          <Typography level="h2" textAlign="center" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>
+            {t('auth.login.title')}
+          </Typography>
+          <Typography level="body1" textAlign="center" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
+            {t('auth.login.subtitle')}
           </Typography>
 
           {error && (
@@ -105,26 +110,36 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <Stack spacing={2}>
               <FormControl>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>{t('auth.login.username')}</FormLabel>
                 <Input
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Enter your username"
+                  placeholder={t('auth.login.username')}
                   required
                 />
+                {formErrors.username && (
+                  <Typography level="body-sm" color="danger" sx={{ mt: 0.5 }}>
+                    {formErrors.username}
+                  </Typography>
+                )}
               </FormControl>
 
               <FormControl>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t('auth.login.password')}</FormLabel>
                 <Input
                   name="password"
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.login.password')}
                   required
                 />
+                {formErrors.password && (
+                  <Typography level="body-sm" color="danger" sx={{ mt: 0.5 }}>
+                    {formErrors.password}
+                  </Typography>
+                )}
               </FormControl>
 
               <Button
@@ -133,14 +148,14 @@ export default function LoginPage() {
                 sx={{ mt: 2 }}
                 fullWidth
               >
-                Sign In
+                {t('auth.login.signIn')}
               </Button>
             </Stack>
           </form>
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-              Don't have an account?{' '}
+              {t('auth.login.noAccount')}{' '}
               <Typography
                 component={Link}
                 to="/register"
@@ -151,7 +166,7 @@ export default function LoginPage() {
                   '&:hover': { textDecoration: 'underline' },
                 }}
               >
-                Sign up
+                {t('auth.login.signUp')}
               </Typography>
             </Typography>
           </Box>

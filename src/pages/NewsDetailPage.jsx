@@ -7,10 +7,12 @@ import { CREATE_LIKE_ARTICLE, UPDATE_LIKE_STATUS, CREATE_COMMENT, CREATE_READING
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 export default function NewsDetailPage() {
   const { slug } = useParams();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [comment, setComment] = useState('');
   const [articleId, setArticleId] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
@@ -294,7 +296,7 @@ export default function NewsDetailPage() {
   if (newsLoading || countsLoading) {
     return (
       <Box display="flex" justifyContent="center" py={4}>
-        <Typography>Loading...</Typography>
+        <Typography>{t('common.loading')}</Typography>
       </Box>
     );
   }
@@ -302,9 +304,9 @@ export default function NewsDetailPage() {
   if (newsError || !news) {
     return (
       <Box textAlign="center" py={4}>
-        <Typography level="h3" sx={{ mb: 2 }}>Article Not Found</Typography>
+        <Typography level="h3" sx={{ mb: 2 }}>{t('newsDetail.notFound')}</Typography>
         <Button component={Link} to="/news">
-          Back to News
+          {t('newsDetail.backToNews')}
         </Button>
       </Box>
     );
@@ -324,7 +326,7 @@ export default function NewsDetailPage() {
         size="sm"
         sx={{ mb: 3 }}
       >
-        ← Back to News
+        ← {t('newsDetail.backToNews')}
       </Button>
 
       {/* Article Header */}
@@ -448,10 +450,10 @@ export default function NewsDetailPage() {
               ❤️ {likesCount}
             </Button>
             <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              💬 {commentsCount} Comments
+              💬 {commentsCount} {t('newsDetail.comments')}
             </Typography>
             <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              👁️ {readsCount} Reads
+              👁️ {readsCount} {t('newsDetail.reads')}
             </Typography>
           </Stack>
         </CardContent>
@@ -461,24 +463,24 @@ export default function NewsDetailPage() {
       <Card variant="outlined">
         <CardContent>
           <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Comments ({commentsCount})
+            {t('newsDetail.commentsTitle')} ({commentsCount})
           </Typography>
           {/* Sort Options */}
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-            <Typography level="body2">Sort by:</Typography>
+            <Typography level="body2">{t('newsDetail.sortBy')}:</Typography>
             <Select
               value={sortBy}
               onChange={(e, value) => setSortBy(value)}
               size="sm"
               sx={{ minWidth: 150 }}
             >
-              <Option value="top">Most Liked</Option>
-              <Option value="latest">Latest</Option>
+              <Option value="top">{t('newsDetail.mostLiked')}</Option>
+              <Option value="latest">{t('newsDetail.latest')}</Option>
             </Select>
           </Stack>
           {commentsLoading && (
             <Box display="flex" justifyContent="center" py={2}>
-              <Typography>Loading comments...</Typography>
+              <Typography>{t('newsDetail.loadingComments')}</Typography>
             </Box>
           )}
           {/* Main comment form */}
@@ -488,7 +490,7 @@ export default function NewsDetailPage() {
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Write a comment..."
+                  placeholder={t('newsDetail.commentPlaceholder')}
                   rows={3}
                   style={{
                     width: '100%',
@@ -501,7 +503,7 @@ export default function NewsDetailPage() {
                   }}
                 />
                 <Button type="submit" size="sm" sx={{ alignSelf: 'flex-start' }}>
-                  Post Comment
+                  {t('newsDetail.postComment')}
                 </Button>
               </Stack>
             </form>
@@ -538,7 +540,7 @@ export default function NewsDetailPage() {
 
                       {isAuthenticated && (
                         <Button size="sm" variant="plain" onClick={() => handleReply(comment)}>
-                          Reply
+                          {t('newsDetail.reply')}
                         </Button>
                       )}
                     </Stack>
@@ -552,16 +554,16 @@ export default function NewsDetailPage() {
                       <Stack spacing={2}>
                         <Box sx={{ p: 2, bgcolor: 'var(--joy-palette-neutral-50)', borderRadius: 'sm' }}>
                           <Typography level="body3">
-                            Replying to <strong>{comment.author?.firstName} {comment.author?.lastName}</strong>
+                            {t('newsDetail.replyingTo')} <strong>{comment.author?.firstName} {comment.author?.lastName}</strong>
                             <Button size="sm" variant="plain" onClick={handleCancelReply} sx={{ ml: 2 }}>
-                              Cancel
+                              {t('common.cancel')}
                             </Button>
                           </Typography>
                         </Box>
                         <textarea
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
-                          placeholder={`Reply to ${comment.author?.firstName}...`}
+                          placeholder={t('newsDetail.replyPlaceholder', { name: comment.author?.firstName })}
                           rows={3}
                           style={{
                             width: '100%',
@@ -574,7 +576,7 @@ export default function NewsDetailPage() {
                           }}
                         />
                         <Button type="submit" size="sm" sx={{ alignSelf: 'flex-start' }}>
-                          Post Reply
+                          {t('newsDetail.postReply')}
                         </Button>
                       </Stack>
                     </form>
@@ -613,7 +615,7 @@ export default function NewsDetailPage() {
 
                               {isAuthenticated && (
                                 <Button size="sm" variant="plain" onClick={() => handleReply(reply)}>
-                                  Reply
+                                  {t('newsDetail.reply')}
                                 </Button>
                               )}
                             </Stack>
@@ -627,16 +629,16 @@ export default function NewsDetailPage() {
                               <Stack spacing={2}>
                                 <Box sx={{ p: 2, bgcolor: 'var(--joy-palette-neutral-50)', borderRadius: 'sm' }}>
                                   <Typography level="body3">
-                                    Replying to <strong>{reply.author?.firstName} {reply.author?.lastName}</strong>
+                                    {t('newsDetail.replyingTo')} <strong>{reply.author?.firstName} {reply.author?.lastName}</strong>
                                     <Button size="sm" variant="plain" onClick={handleCancelReply} sx={{ ml: 2 }}>
-                                      Cancel
+                                      {t('common.cancel')}
                                     </Button>
                                   </Typography>
                                 </Box>
                                 <textarea
                                   value={replyText}
                                   onChange={(e) => setReplyText(e.target.value)}
-                                  placeholder={`Reply to ${reply.author?.firstName}...`}
+                                  placeholder={t('newsDetail.replyPlaceholder', { name: reply.author?.firstName })}
                                   rows={3}
                                   style={{
                                     width: '100%',
@@ -649,7 +651,7 @@ export default function NewsDetailPage() {
                                   }}
                                 />
                                 <Button type="submit" size="sm" sx={{ alignSelf: 'flex-start' }}>
-                                  Post Reply
+                                  {t('newsDetail.postReply')}
                                 </Button>
                               </Stack>
                             </form>
@@ -666,7 +668,7 @@ export default function NewsDetailPage() {
                         onClick={() => handleViewMoreReplies(comment.id)}
                         sx={{ mt: 1 }}
                       >
-                        View more replies ({comment.replies.length - (visibleReplies[comment.id] || 0)} remaining)
+                        {t('newsDetail.viewMoreReplies', { count: comment.replies.length - (visibleReplies[comment.id] || 0) })}
                       </Button>
                     )}
                   </Box>
@@ -679,7 +681,7 @@ export default function NewsDetailPage() {
                       variant="plain"
                       onClick={() => handleViewMoreReplies(comment.id)}
                     >
-                      View replies ({comment.replies.length})
+                      {t('newsDetail.viewReplies', { count: comment.replies.length })}
                     </Button>
                   </Box>
                 )}
@@ -690,7 +692,7 @@ export default function NewsDetailPage() {
 
             {rootComments.length === 0 && (
               <Typography level="body2" textAlign="center" sx={{ py: 4, color: 'var(--joy-palette-text-tertiary)' }}>
-                No comments yet. Be the first to comment!
+                {t('newsDetail.noComments')}
               </Typography>
             )}
           </Stack>

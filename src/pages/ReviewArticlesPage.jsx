@@ -18,9 +18,11 @@ import { GET_NEWS_FOR_REVIEW } from '../graphql/queries';
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 
 export default function ReviewArticlesPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { data, loading, error, refetch } = useQuery(GET_NEWS_FOR_REVIEW, {
@@ -34,13 +36,13 @@ export default function ReviewArticlesPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Authentication Required
+          {t('reviewArticles.authRequired')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to access the review dashboard.
+          {t('reviewArticles.signInMessage')}
         </Typography>
         <Button onClick={() => navigate('/login')}>
-          Sign In
+          {t('auth.login.signIn')}
         </Button>
       </Box>
     );
@@ -54,13 +56,13 @@ export default function ReviewArticlesPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Access Denied
+          {t('reviewArticles.accessDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You don't have permission to review articles.
+          {t('reviewArticles.noPermission')}
         </Typography>
         <Button onClick={() => navigate('/')}>
-          Go to Homepage
+          {t('reviewArticles.goHome')}
         </Button>
       </Box>
     );
@@ -69,7 +71,7 @@ export default function ReviewArticlesPage() {
   if (loading) {
     return (
       <Box textAlign="center" py={6}>
-        <Typography level="body1">Loading articles for review...</Typography>
+        <Typography level="body1">{t('reviewArticles.loading')}</Typography>
       </Box>
     );
   }
@@ -77,12 +79,12 @@ export default function ReviewArticlesPage() {
   if (error) {
     return (
       <Box textAlign="center" py={6}>
-        <Typography level="h3" sx={{ mb: 2 }}>Error Loading Articles</Typography>
+        <Typography level="h3" sx={{ mb: 2 }}>{t('reviewArticles.errorTitle')}</Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
           {error.message}
         </Typography>
         <Button onClick={() => refetch()}>
-          Try Again
+          {t('common.tryAgain')}
         </Button>
       </Box>
     );
@@ -108,10 +110,10 @@ export default function ReviewArticlesPage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2 }}>
-          🔖 Review Articles
+          🔖 {t('reviewArticles.title')}
         </Typography>
         <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          Review and moderate articles submitted by writers
+          {t('reviewArticles.subtitle')}
         </Typography>
       </Box>
 
@@ -121,21 +123,21 @@ export default function ReviewArticlesPage() {
           {articles.length === 0 ? (
             <Box textAlign="center" py={4}>
               <Typography level="h4" sx={{ mb: 2 }}>
-                No Articles to Review
+                {t('reviewArticles.noArticles')}
               </Typography>
               <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                All articles have been reviewed. Check back later for new submissions.
+                {t('reviewArticles.noArticlesMessage')}
               </Typography>
             </Box>
           ) : (
             <Table sx={{ '& thead th:nth-child(1)': { width: '40%' } }}>
               <thead>
                 <tr>
-                  <th>Article</th>
-                  <th>Author</th>
-                  <th>Status</th>
-                  <th>Submitted</th>
-                  <th>Actions</th>
+                  <th>{t('reviewArticles.table.article')}</th>
+                  <th>{t('reviewArticles.table.author')}</th>
+                  <th>{t('reviewArticles.table.status')}</th>
+                  <th>{t('reviewArticles.table.submitted')}</th>
+                  <th>{t('reviewArticles.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,7 +202,7 @@ export default function ReviewArticlesPage() {
                           variant="outlined"
                           onClick={() => navigate(`/review/article/${article.slug}`)}
                         >
-                          Review
+                          {t('reviewArticles.actions.review')}
                         </Button>
                         <Button
                           size="sm"
@@ -208,7 +210,7 @@ export default function ReviewArticlesPage() {
                           color="neutral"
                           onClick={() => navigate(`/news/${article.slug}`)}
                         >
-                          Preview
+                          {t('reviewArticles.actions.preview')}
                         </Button>
                       </Stack>
                     </td>
@@ -225,32 +227,32 @@ export default function ReviewArticlesPage() {
         <Card variant="outlined" sx={{ mt: 3 }}>
           <CardContent>
             <Typography level="h4" sx={{ mb: 2 }}>
-              Review Summary
+              {t('reviewArticles.summary.title')}
             </Typography>
             <Stack direction="row" spacing={3}>
               <Box>
                 <Typography level="h3" color="warning">
                   {articles.filter(a => a.status?.toLowerCase() === 'pending').length}
                 </Typography>
-                <Typography level="body-sm">Pending Review</Typography>
+                <Typography level="body-sm">{t('reviewArticles.summary.pending')}</Typography>
               </Box>
               <Box>
                 <Typography level="h3" color="success">
                   {articles.filter(a => a.status?.toLowerCase() === 'published').length}
                 </Typography>
-                <Typography level="body-sm">Published</Typography>
+                <Typography level="body-sm">{t('reviewArticles.summary.published')}</Typography>
               </Box>
               <Box>
                 <Typography level="h3" color="danger">
                   {articles.filter(a => a.status?.toLowerCase() === 'rejected').length}
                 </Typography>
-                <Typography level="body-sm">Rejected</Typography>
+                <Typography level="body-sm">{t('reviewArticles.summary.rejected')}</Typography>
               </Box>
               <Box>
                 <Typography level="h3" color="neutral">
                   {articles.length}
                 </Typography>
-                <Typography level="body-sm">Total Articles</Typography>
+                <Typography level="body-sm">{t('reviewArticles.summary.total')}</Typography>
               </Box>
             </Stack>
           </CardContent>

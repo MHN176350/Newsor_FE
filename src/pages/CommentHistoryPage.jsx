@@ -6,9 +6,11 @@ import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_USER_COMMENT_HISTORY } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
 import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
+import { useTranslation } from 'react-i18next';
 
 export default function CommentHistoryPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9);
   const [filter, setFilter] = useState({ fromDate: '', toDate: '' });
@@ -48,18 +50,18 @@ export default function CommentHistoryPage() {
 
   return (
     <Box>
-      <SEO title="Comment History" description="Your comment history on articles." />
+      <SEO title={t('commentHistory.title')} description={t('commentHistory.description')} />
       <Box sx={{ mb: 4 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Box>
             <Typography level="h1" sx={{ mb: 2 }}>
-              Comment History
+              {t('commentHistory.title')}
             </Typography>
             <Typography level="body1">
-              All your comments on articles
+              {t('commentHistory.subtitle')}
             </Typography>
             <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
-              <Typography level="body2" sx={{ minWidth: 70 }}>From Date</Typography>
+              <Typography level="body2" sx={{ minWidth: 70 }}>{t('commentHistory.fromDate')}</Typography>
               <Input
                 type="date"
                 value={fromDate}
@@ -67,10 +69,10 @@ export default function CommentHistoryPage() {
                 size="sm"
                 variant="outlined"
                 sx={{ minWidth: 150 }}
-                slotProps={{ input: { 'aria-label': 'From date' } }}
-                placeholder="From date"
+                slotProps={{ input: { 'aria-label': t('commentHistory.fromDate') } }}
+                placeholder={t('commentHistory.fromDate')}
               />
-              <Typography level="body2" sx={{ minWidth: 70 }}>To Date</Typography>
+              <Typography level="body2" sx={{ minWidth: 70 }}>{t('commentHistory.toDate')}</Typography>
               <Input
                 type="date"
                 value={toDate}
@@ -78,8 +80,8 @@ export default function CommentHistoryPage() {
                 size="sm"
                 variant="outlined"
                 sx={{ minWidth: 150 }}
-                slotProps={{ input: { 'aria-label': 'To date' } }}
-                placeholder="To date"
+                slotProps={{ input: { 'aria-label': t('commentHistory.toDate') } }}
+                placeholder={t('commentHistory.toDate')}
               />
               <Button
                 variant="solid"
@@ -90,18 +92,18 @@ export default function CommentHistoryPage() {
                   setCurrentPage(1);
                 }}
               >
-                Search
+                {t('common.search')}
               </Button>
             </Stack>
           </Box>
         </Stack>
       </Box>
-      {loading && <LoadingSpinner size="lg" message="Loading comment history..." variant="card" type="comment" />}
+      {loading && <LoadingSpinner size="lg" message={t('commentHistory.loading')} variant="card" type="comment" />}
       {error && (
         <ErrorDisplay
           error={error}
-          title="Unable to load comment history"
-          message="Please check your connection to the backend server."
+          title={t('commentHistory.errorTitle')}
+          message={t('commentHistory.errorMessage')}
           showRefresh={true}
           onRefresh={() => refetch()}
           color="warning"
@@ -112,10 +114,10 @@ export default function CommentHistoryPage() {
         <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
             <Typography level="h4" sx={{ mb: 2 }}>
-              No Comments Found
+              {t('commentHistory.noComments')}
             </Typography>
             <Typography level="body1">
-              You haven't commented on any articles yet.
+              {t('commentHistory.noCommentsMessage')}
             </Typography>
           </CardContent>
         </Card>
@@ -147,7 +149,7 @@ export default function CommentHistoryPage() {
                           }
                         }}
                       >
-                        <span className="view-article-text">View Article: {comment.article.title}</span>
+                        <span className="view-article-text">{t('commentHistory.viewArticle')}: {comment.article.title}</span>
                       </Button>
                     )}
                   </CardContent>
@@ -171,7 +173,11 @@ export default function CommentHistoryPage() {
           )}
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography level="body3">
-              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} comments
+              {t('commentHistory.showing', { 
+                start: startIndex + 1, 
+                end: Math.min(endIndex, totalItems), 
+                total: totalItems 
+              })}
             </Typography>
           </Box>
         </>

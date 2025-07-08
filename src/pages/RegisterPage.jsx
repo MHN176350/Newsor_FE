@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { CREATE_USER } from '../graphql/mutations';
+import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
 
 export default function RegisterPage() {
@@ -18,6 +19,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [createUser, { loading }] = useMutation(CREATE_USER, {
     onCompleted: (data) => {
@@ -27,11 +29,11 @@ export default function RegisterPage() {
           navigate('/login');
         }, 2000);
       } else {
-        setError(data.createUser?.errors?.join(', ') || 'Registration failed');
+        setError(data.createUser?.errors?.join(', ') || t('auth.register.failed'));
       }
     },
     onError: (error) => {
-      setError('Registration failed. Please try again.');
+      setError(t('auth.register.failed'));
     },
   });
 
@@ -56,7 +58,7 @@ export default function RegisterPage() {
     setError('');
     
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('auth.register.passwordMismatch'));
       return;
     }
 
@@ -87,10 +89,10 @@ export default function RegisterPage() {
         <Card sx={{ maxWidth: 400, p: 3, textAlign: 'center' }}>
           <CardContent>
             <Typography level="h3" sx={{ mb: 2, color: 'success.500' }}>
-              Registration Successful!
+              {t('auth.register.success')}
             </Typography>
             <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-              Redirecting to login page...
+              {t('auth.register.redirecting')}
             </Typography>
           </CardContent>
         </Card>
@@ -119,7 +121,7 @@ export default function RegisterPage() {
       >
         <CardContent>
           <Typography level="h2" textAlign="center" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Create Account
+            {t('auth.register.title')}
           </Typography>
 
           {error && (
@@ -132,15 +134,15 @@ export default function RegisterPage() {
             <Stack spacing={3}>
               {/* Profile Image Upload */}
               <FormControl>
-                <FormLabel>Profile Picture (Optional)</FormLabel>
+                <FormLabel>{t('auth.register.profilePicture')}</FormLabel>
                 <ImageUpload
                   variant="avatar"
                   currentImageUrl={avatarUrl}
                   onImageUploaded={handleImageUploaded}
                   onImageRemoved={handleImageRemoved}
                   maxSizeInMB={5}
-                  uploadButtonText="Choose Profile Picture"
-                  removeButtonText="Remove Picture"
+                  uploadButtonText={t('auth.register.choosePicture')}
+                  removeButtonText={t('auth.register.removePicture')}
                   showPreview={true}
                   isRegistration={true}
                 />
@@ -149,71 +151,71 @@ export default function RegisterPage() {
               <Grid container spacing={2}>
                 <Grid xs={12} sm={6}>
                   <FormControl>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>{t('auth.register.firstName')}</FormLabel>
                     <Input
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
-                      placeholder="Enter your first name"
+                      placeholder={t('auth.register.firstName')}
                     />
                   </FormControl>
                 </Grid>
                 <Grid xs={12} sm={6}>
                   <FormControl>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>{t('auth.register.lastName')}</FormLabel>
                     <Input
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
-                      placeholder="Enter your last name"
+                      placeholder={t('auth.register.lastName')}
                     />
                   </FormControl>
                 </Grid>
               </Grid>
 
               <FormControl>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>{t('auth.register.username')}</FormLabel>
                 <Input
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Choose a username"
+                  placeholder={t('auth.register.username')}
                   required
                 />
               </FormControl>
 
               <FormControl>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('auth.register.email')}</FormLabel>
                 <Input
                   name="email"
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="Enter your email"
+                  placeholder={t('auth.register.email')}
                   required
                 />
               </FormControl>
 
               <FormControl>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t('auth.register.password')}</FormLabel>
                 <Input
                   name="password"
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Choose a password"
+                  placeholder={t('auth.register.password')}
                   required
                 />
               </FormControl>
 
               <FormControl>
-                <FormLabel>Confirm Password</FormLabel>
+                <FormLabel>{t('auth.register.confirmPassword')}</FormLabel>
                 <Input
                   name="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  placeholder="Confirm your password"
+                  placeholder={t('auth.register.confirmPassword')}
                   required
                 />
               </FormControl>
@@ -230,13 +232,13 @@ export default function RegisterPage() {
                   }
                 }}
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? t('auth.register.creatingAccount') : t('auth.register.createAccount')}
               </Button>
             </Stack>
           </form>
 
           <Typography textAlign="center" sx={{ mt: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            Already have an account?{' '}
+            {t('auth.register.hasAccount')}{' '}
             <Link 
               to="/login" 
               style={{ 
@@ -244,7 +246,7 @@ export default function RegisterPage() {
                 textDecoration: 'none' 
               }}
             >
-              Sign in
+              {t('auth.register.signIn')}
             </Link>
           </Typography>
         </CardContent>

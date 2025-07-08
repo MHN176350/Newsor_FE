@@ -23,9 +23,11 @@ import TagAutocomplete from '../components/TagAutocomplete';
 import ImageUpload from '../components/ImageUpload';
 import { CREATE_NEWS, UPDATE_NEWS } from '../graphql/mutations';
 import { GET_CATEGORIES, GET_TAGS, GET_NEWS } from '../graphql/queries';
+import { useTranslation } from 'react-i18next';
 
 export default function CreateArticlePage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams(); // id is article id for editing/duplicating
   const location = useLocation();
@@ -66,7 +68,7 @@ export default function CreateArticlePage() {
         // Navigate after successful creation
         navigate('/my-articles', { 
           state: { 
-            message: 'Article created successfully! It has been saved as a draft.' 
+            message: t('createArticle.successCreate') 
           }
         });
       }
@@ -78,7 +80,7 @@ export default function CreateArticlePage() {
         // Navigate after successful update
         navigate('/my-articles', { 
           state: { 
-            message: 'Article updated successfully!' 
+            message: t('createArticle.successUpdate') 
           }
         });
       }
@@ -107,13 +109,13 @@ export default function CreateArticlePage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Authentication Required
+          {t('createArticle.authRequired')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to {isEditing ? 'edit' : isDuplicating ? 'duplicate' : 'create'} articles.
+          {t('createArticle.signInMessage', { action: isEditing ? t('common.edit') : isDuplicating ? t('createArticle.duplicate') : t('common.create') })}
         </Typography>
         <Button onClick={() => navigate('/login')}>
-          Sign In
+          {t('auth.login.signIn')}
         </Button>
       </Box>
     );
@@ -126,16 +128,16 @@ export default function CreateArticlePage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-          Permission Denied
+          {t('createArticle.permissionDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You need writer privileges to {isEditing ? 'edit' : 'create'} articles.
+          {t('createArticle.writerPrivileges', { action: isEditing ? t('common.edit') : t('common.create') })}
         </Typography>
         <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Your current role: {user?.profile?.role || 'Reader'}
+          {t('createArticle.currentRole')}: {user?.profile?.role || t('common.reader')}
         </Typography>
         <Button onClick={() => navigate(-1)}>
-          Go Back
+          {t('common.back')}
         </Button>
       </Box>
     );
@@ -147,7 +149,7 @@ export default function CreateArticlePage() {
       <Box textAlign="center" py={6}>
         <CircularProgress />
         <Typography level="body1" sx={{ mt: 2 }}>
-          Loading article...
+          {t('createArticle.loadingArticle')}
         </Typography>
       </Box>
     );
@@ -160,13 +162,13 @@ export default function CreateArticlePage() {
       return (
         <Box textAlign="center" py={6}>
           <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-            Article Not Found
+            {t('createArticle.articleNotFound')}
           </Typography>
           <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            The article you're trying to edit doesn't exist.
+            {t('createArticle.articleNotFoundMessage')}
           </Typography>
           <Button onClick={() => navigate('/my-articles')}>
-            Back to My Articles
+            {t('createArticle.backToMyArticles')}
           </Button>
         </Box>
       );
@@ -177,13 +179,13 @@ export default function CreateArticlePage() {
       return (
         <Box textAlign="center" py={6}>
           <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-            Permission Denied
+            {t('createArticle.permissionDenied')}
           </Typography>
           <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            You can only edit your own articles.
+            {t('createArticle.canOnlyEditOwn')}
           </Typography>
           <Button onClick={() => navigate('/my-articles')}>
-            Back to My Articles
+            {t('createArticle.backToMyArticles')}
           </Button>
         </Box>
       );
@@ -194,16 +196,16 @@ export default function CreateArticlePage() {
       return (
         <Box textAlign="center" py={6}>
           <Typography level="h3" sx={{ mb: 2, color: 'warning.500' }}>
-            Cannot Edit Article
+            {t('createArticle.cannotEdit')}
           </Typography>
           <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            You can only edit articles that are in draft or rejected status.
+            {t('createArticle.cannotEditMessage')}
           </Typography>
           <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-            Current status: {article.status}
+            {t('createArticle.currentStatus')}: {article.status}
           </Typography>
           <Button onClick={() => navigate('/my-articles')}>
-            Back to My Articles
+            {t('createArticle.backToMyArticles')}
           </Button>
         </Box>
       );
@@ -234,16 +236,16 @@ export default function CreateArticlePage() {
     try {
       // Validate required fields
       if (!formData.title.trim()) {
-        throw new Error('Title is required');
+        throw new Error(t('validation.required'));
       }
       if (!formData.content.trim()) {
-        throw new Error('Content is required');
+        throw new Error(t('createArticle.contentRequired'));
       }
       if (!formData.excerpt.trim()) {
-        throw new Error('Excerpt is required');
+        throw new Error(t('createArticle.excerptRequired'));
       }
       if (!formData.categoryId) {
-        throw new Error('Category is required');
+        throw new Error(t('createArticle.categoryRequired'));
       }
 
       const variables = {
@@ -272,12 +274,12 @@ export default function CreateArticlePage() {
 
       const operation = isEditing ? 'updateNews' : 'createNews';
       if (!data?.[operation]?.success) {
-        setErrors(data?.[operation]?.errors || [`Failed to ${isEditing ? 'update' : isDuplicating ? 'duplicate' : 'create'} article`]);
+        setErrors(data?.[operation]?.errors || [t('createArticle.failedMessage', { action: isEditing ? t('common.update') : isDuplicating ? t('createArticle.duplicate') : t('common.create') })]);
       }
       // Success is handled by onCompleted callback
     } catch (error) {
       console.error(`Error ${isEditing ? 'updating' : isDuplicating ? 'duplicating' : 'creating'} article:`, error);
-      setErrors([error.message || `Failed to ${isEditing ? 'update' : isDuplicating ? 'duplicate' : 'create'} article`]);
+      setErrors([error.message || t('createArticle.failedMessage', { action: isEditing ? t('common.update') : isDuplicating ? t('createArticle.duplicate') : t('common.create') })]);
     } finally {
       setIsSubmitting(false);
     }
@@ -288,10 +290,10 @@ export default function CreateArticlePage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2 }}>
-          ✍️ {isEditing ? 'Edit Article' : isDuplicating ? 'Duplicate Article' : 'Create New Article'}
+          ✍️ {isEditing ? t('createArticle.editTitle') : isDuplicating ? t('createArticle.duplicateTitle') : t('createArticle.createTitle')}
         </Typography>
         <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          {isEditing ? 'Make changes to your article' : isDuplicating ? 'Create a copy of your article' : 'Share your story with the world'}
+          {isEditing ? t('createArticle.editSubtitle') : isDuplicating ? t('createArticle.duplicateSubtitle') : t('createArticle.createSubtitle')}
         </Typography>
       </Box>
 
@@ -315,9 +317,9 @@ export default function CreateArticlePage() {
 
               {/* Title */}
               <FormControl required>
-                <FormLabel>Article Title</FormLabel>
+                <FormLabel>{t('createArticle.titleLabel')}</FormLabel>
                 <Input
-                  placeholder="Enter a compelling title for your article"
+                  placeholder={t('createArticle.titlePlaceholder')}
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   size="lg"
@@ -326,9 +328,9 @@ export default function CreateArticlePage() {
 
               {/* Excerpt */}
               <FormControl required>
-                <FormLabel>Excerpt</FormLabel>
+                <FormLabel>{t('createArticle.excerptLabel')}</FormLabel>
                 <Textarea
-                  placeholder="Write a brief summary of your article (max 300 characters)"
+                  placeholder={t('createArticle.excerptPlaceholder')}
                   value={formData.excerpt}
                   onChange={(e) => handleInputChange('excerpt', e.target.value)}
                   maxRows={3}
@@ -341,12 +343,12 @@ export default function CreateArticlePage() {
 
               {/* Category */}
               <FormControl required>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>{t('createArticle.categoryLabel')}</FormLabel>
                 {categoriesLoading ? (
                   <CircularProgress size="sm" />
                 ) : (
                   <Select
-                    placeholder="Select a category"
+                    placeholder={t('createArticle.categoryPlaceholder')}
                     value={formData.categoryId}
                     onChange={(event, newValue) => handleInputChange('categoryId', newValue)}
                   >
@@ -365,43 +367,43 @@ export default function CreateArticlePage() {
                 selectedTags={formData.tags}
                 onTagsChange={handleTagsChange}
                 loading={tagsLoading}
-                label="Tags (Optional)"
-                placeholder="Type to search or add tags..."
+                label={t('createArticle.tagsLabel')}
+                placeholder={t('createArticle.tagsPlaceholder')}
               />
 
               {/* Featured Image/Thumbnail */}
               <FormControl>
-                <FormLabel>Featured Image (Thumbnail)</FormLabel>
+                <FormLabel>{t('createArticle.featuredImageLabel')}</FormLabel>
                 <ImageUpload
                   variant="thumbnail"
                   currentImageUrl={formData.featuredImage}
                   onImageUploaded={(imageUrl) => handleInputChange('featuredImage', imageUrl)}
                   onImageRemoved={() => handleInputChange('featuredImage', '')}
                   maxSizeInMB={5}
-                  uploadButtonText="Upload Thumbnail"
-                  removeButtonText="Remove Thumbnail"
+                  uploadButtonText={t('createArticle.uploadThumbnail')}
+                  removeButtonText={t('createArticle.removeThumbnail')}
                 />
               </FormControl>
 
               {/* Content */}
               <FormControl required>
-                <FormLabel>Article Content</FormLabel>
+                <FormLabel>{t('createArticle.contentLabel')}</FormLabel>
                 <RichTextEditor
                   content={formData.content}
                   onChange={(content) => handleInputChange('content', content)}
-                  placeholder="Start writing your article here. You can format text, add images, and create rich content..."
+                  placeholder={t('createArticle.contentPlaceholder')}
                 />
               </FormControl>
 
               {/* SEO Fields */}
               <Typography level="h4" sx={{ mt: 2 }}>
-                SEO Settings (Optional)
+                {t('createArticle.seoTitle')}
               </Typography>
 
               <FormControl>
-                <FormLabel>Meta Description</FormLabel>
+                <FormLabel>{t('createArticle.metaDescriptionLabel')}</FormLabel>
                 <Textarea
-                  placeholder="Brief description for search engines (max 160 characters)"
+                  placeholder={t('createArticle.metaDescriptionPlaceholder')}
                   value={formData.metaDescription}
                   onChange={(e) => handleInputChange('metaDescription', e.target.value)}
                   maxRows={2}
@@ -413,9 +415,9 @@ export default function CreateArticlePage() {
               </FormControl>
 
               <FormControl>
-                <FormLabel>Meta Keywords</FormLabel>
+                <FormLabel>{t('createArticle.metaKeywordsLabel')}</FormLabel>
                 <Input
-                  placeholder="Comma-separated keywords (e.g., tech, news, innovation)"
+                  placeholder={t('createArticle.metaKeywordsPlaceholder')}
                   value={formData.metaKeywords}
                   onChange={(e) => handleInputChange('metaKeywords', e.target.value)}
                 />
@@ -428,14 +430,14 @@ export default function CreateArticlePage() {
                   onClick={() => navigate('/my-articles')}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   loading={isSubmitting}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Article' : 'Create Article')}
+                  {isSubmitting ? (isEditing ? t('createArticle.updating') : t('createArticle.creating')) : (isEditing ? t('createArticle.updateButton') : t('createArticle.createButton'))}
                 </Button>
               </Stack>
             </Stack>

@@ -19,7 +19,7 @@ export const NEWS_STATUS = {
 export const API_ENDPOINTS = {
   GRAPHQL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql/` : 'http://192.168.1.36:8000/graphql/',
   REST_BASE: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/` : 'http://192.168.1.36:8000/api/',
-  WS_BASE: import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : 'ws://localhost:8000',
+  WS_BASE: import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : 'ws://192.168.1.36:8000',
 };
 
 // Validation Rules
@@ -32,8 +32,8 @@ export const VALIDATION = {
 
 // Default Values
 export const DEFAULTS = {
-  AVATAR_PLACEHOLDER: '/static/images/default-avatar.svg',
-  NEWS_IMAGE_PLACEHOLDER: '/static/images/default-news.svg',
+  AVATAR_PLACEHOLDER: '/default-avatar.svg',
+  NEWS_IMAGE_PLACEHOLDER: '/default-news.svg',
   ITEMS_PER_PAGE: 10,
 };
 

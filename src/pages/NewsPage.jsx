@@ -8,9 +8,11 @@ import { formatDate, truncateText } from '../utils/constants';
 import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
 import SearchAndFilter from '../components/SearchAndFilter';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 
 export default function NewsPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [searchFilters, setSearchFilters] = useState({
     search: null,
@@ -121,8 +123,8 @@ export default function NewsPage() {
     <Box>
       {/* SEO Meta Tags */}
       <SEO 
-        title="News - Latest Articles & Stories"
-        description="Browse through our collection of latest news articles, stories, and insights from various categories."
+        title={t('news.title')}
+        description={t('news.subtitle')}
         keywords={['news', 'articles', 'stories', 'current events', 'breaking news']}
         type="website"
       />
@@ -131,10 +133,10 @@ export default function NewsPage() {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Box>
             <Typography level="h1" sx={{ mb: 2, color: 'var(--joy-palette-text-primary)' }}>
-              Latest News
+              {t('news.title')}
             </Typography>
             <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-              Stay updated with the latest stories and insights
+              {t('news.subtitle')}
             </Typography>
           </Box>
           {canCreateArticles && (
@@ -144,7 +146,7 @@ export default function NewsPage() {
               variant="solid"
               sx={{ mt: 1 }}
             >
-              ✍️ Create Article
+              {t('news.createArticle')}
             </Button>
           )}
         </Stack>
@@ -194,7 +196,7 @@ export default function NewsPage() {
       {newsLoading && (
         <LoadingSpinner
           size="lg"
-          message="Loading news articles..."
+          message={t('news.loading')}
           variant="card"
           type="news"
         />
@@ -204,8 +206,8 @@ export default function NewsPage() {
       {newsError && (
         <ErrorDisplay
           error={newsError}
-          title="Unable to load news articles"
-          message="Please check your connection to the backend server."
+          title={t('news.error')}
+          message={t('news.checkConnection')}
           showRefresh={true}
           onRefresh={() => refetchNews()}
           color="warning"
@@ -218,10 +220,10 @@ export default function NewsPage() {
         <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
             <Typography level="h4" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
-              No News Found
+              {t('news.noNews')}
             </Typography>
             <Typography level="body1" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              Try different search terms or filters
+              {t('news.tryDifferentFilters')}
             </Typography>
             {canCreateArticles && (
               <Button
@@ -230,7 +232,7 @@ export default function NewsPage() {
                 variant="solid"
                 sx={{ mt: 2 }}
               >
-                Create First Article
+                {t('news.createFirst')}
               </Button>
             )}
           </CardContent>
@@ -292,11 +294,10 @@ export default function NewsPage() {
                       src={processImageUrlForDisplay(news.featuredImageUrl)}
                       alt={news.title}
                       onError={(e) => {
-                        console.error('Failed to load image:', news.featuredImageUrl, 'Processed:', processImageUrlForDisplay(news.featuredImageUrl));
-                        // Try to load a default placeholder or hide the image
+                       
                         e.target.src = '/static/images/default-news.svg';
                         e.target.onerror = () => {
-                          // If default also fails, hide the image completely
+              
                           e.target.style.display = 'none';
                         };
                       }}
@@ -354,7 +355,7 @@ export default function NewsPage() {
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-                      By {news.author?.firstName} {news.author?.lastName}
+                      {t('news.by')} {news.author?.firstName} {news.author?.lastName}
                     </Typography>
                     <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
                       {formatDate(news.publishedAt)}
@@ -390,7 +391,7 @@ export default function NewsPage() {
                       }
                     }}
                   >
-                    Read More
+                    {t('news.readMore')}
                   </Button>
                 </CardContent>
               </Card>
@@ -417,7 +418,7 @@ export default function NewsPage() {
           {/* Results Info */}
           <Box sx={{ textAlign: 'center', mt: 3 }}>
             <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
-              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} articles
+              {t('news.showing')} {startIndex + 1}-{Math.min(endIndex, totalItems)} {t('news.of')} {totalItems} {t('news.articles')}
             </Typography>
           </Box>
         </>

@@ -17,7 +17,6 @@ import ReviewNewsPage from './pages/ReviewNewsPage';
 import ReviewArticlesPage from './pages/ReviewArticlesPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import ImageUploadTestPage from './pages/ImageUploadTestPage';
 import CommentHistoryPage from './pages/CommentHistoryPage';
 import ReadingHistoryPage from './pages/ReadingHistoryPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -63,8 +62,7 @@ function App() {
               <Route path="/reading-history" element={<ReadingHistoryPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               
-              {/* Development/Testing Routes */}
-              <Route path="/test/image-upload" element={<ImageUploadTestPage />} />
+            
               
               {/* 404 Not Found - This should be the last route */}
               <Route path="*" element={<NotFoundPage />} />

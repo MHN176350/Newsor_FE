@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText, API_ENDPOINTS } from '../utils/constants';
+import { useTranslation } from 'react-i18next';
 import SearchAndFilter from '../components/SearchAndFilter';
 
 export default function HomePage() {
@@ -13,6 +14,7 @@ export default function HomePage() {
     tagId: null,
     sortBy: 'newest',
   });
+  const { t } = useTranslation();
 
   const { data: newsData, loading: newsLoading, error: newsError, refetch: refetchNews } = useQuery(GET_PUBLISHED_NEWS, {
     variables: searchFilters,
@@ -91,7 +93,7 @@ export default function HomePage() {
             fontSize: { xs: '2rem', md: '3rem' }
           }}
         >
-          Welcome to Newsor
+          {t('app.welcome')}
         </Typography>
         <Typography 
           level="body-lg" 
@@ -102,7 +104,7 @@ export default function HomePage() {
             mx: 'auto'
           }}
         >
-          Your trusted source for the latest news and stories from around the world
+          {t('app.subtitle')}
         </Typography>
         
         <Stack 
@@ -121,7 +123,7 @@ export default function HomePage() {
               '&:hover': { bgcolor: 'primary.700' }
             }}
           >
-            Read Latest News
+            {t('app.readLatestNews')}
           </Button>
           <Button
             component={Link}
@@ -134,7 +136,7 @@ export default function HomePage() {
               '&:hover': { borderColor: 'primary.400', bgcolor: 'neutral.50' }
             }}
           >
-            Join Our Community
+            {t('app.joinCommunity')}
           </Button>
         </Stack>
       </Box>
@@ -150,7 +152,7 @@ export default function HomePage() {
               fontWeight: 600
             }}
           >
-            Browse by Category
+            {t('app.browseByCategory')}
           </Typography>
           <Stack 
             direction="row" 
@@ -196,7 +198,7 @@ export default function HomePage() {
             fontWeight: 600
           }}
         >
-          Latest News
+          {t('app.latestNews')}
         </Typography>
 
         {/* Search and Filter Component */}
@@ -213,7 +215,7 @@ export default function HomePage() {
           <Card variant="outlined" sx={{ bgcolor: 'background.surface' }}>
             <CardContent sx={{ textAlign: 'center', py: 4 }}>
               <Typography level="body-md" sx={{ color: 'text.secondary' }}>
-                Loading latest news...
+                {t('news.loading')}
               </Typography>
             </CardContent>
           </Card>
@@ -230,10 +232,10 @@ export default function HomePage() {
           >
             <CardContent>
               <Typography level="body-md" sx={{ color: '#92400e' }}>
-                Unable to load news. Make sure your Django GraphQL server is running at {API_ENDPOINTS.GRAPHQL}
+                {t('news.error')} {API_ENDPOINTS.GRAPHQL}
               </Typography>
               <Typography level="body-sm" sx={{ mt: 1, color: '#b45309' }}>
-                Error: {newsError.message}
+                {t('common.error')}: {newsError.message}
               </Typography>
             </CardContent>
           </Card>
@@ -255,10 +257,10 @@ export default function HomePage() {
                   color: 'text.primary' 
                 }}
               >
-                No news articles yet
+                {t('news.noNews')}
               </Typography>
               <Typography level="body-md" sx={{ color: 'text.secondary' }}>
-                Check back later for the latest news and updates, or try registering to become a writer!
+                {t('app.checkBackLater')}
               </Typography>
             </CardContent>
           </Card>
@@ -357,7 +359,7 @@ export default function HomePage() {
                       }}
                     >
                       <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
-                        By {article.author.firstName} {article.author.lastName}
+                        {t('news.by')} {article.author.firstName} {article.author.lastName}
                       </Typography>
                       <Typography level="body-xs" sx={{ color: 'text.tertiary' }}>
                         {new Date(article.publishedAt || article.createdAt).toLocaleDateString()}
@@ -383,7 +385,7 @@ export default function HomePage() {
                 '&:hover': { borderColor: 'primary.400', bgcolor: 'neutral.50' }
               }}
             >
-              View All News Articles
+              {t('app.viewAllNews')}
             </Button>
           </Box>
         )}

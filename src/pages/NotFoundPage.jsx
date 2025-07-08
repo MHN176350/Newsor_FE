@@ -1,8 +1,12 @@
 import { Box, Typography, Button, Card, CardContent, Stack } from '@mui/joy';
 import { Link } from 'react-router-dom';
 import { Home, ArrowBack } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+
 
 export default function NotFoundPage() {
+  const { t } = useTranslation();
+ 
   return (
     <Box 
       sx={{ 
@@ -46,7 +50,7 @@ export default function NotFoundPage() {
               color: 'var(--joy-palette-text-primary)'
             }}
           >
-            Page Not Found
+            {t('error.notFound.title')}
           </Typography>
 
           <Typography 
@@ -58,7 +62,7 @@ export default function NotFoundPage() {
               mx: 'auto'
             }}
           >
-            Sorry, we couldn't find the page you're looking for. The page might have been moved, deleted, or you entered the wrong URL.
+            {t('error.notFound.message')}
           </Typography>
 
           {/* Action Buttons */}
@@ -76,7 +80,7 @@ export default function NotFoundPage() {
               startDecorator={<Home />}
               sx={{ minWidth: 140 }}
             >
-              Go Home
+              {t('error.notFound.goHome')}
             </Button>
             
             <Button
@@ -86,7 +90,7 @@ export default function NotFoundPage() {
               onClick={() => window.history.back()}
               sx={{ minWidth: 140 }}
             >
-              Go Back
+              {t('error.notFound.goBack')}
             </Button>
           </Stack>
 
@@ -99,7 +103,7 @@ export default function NotFoundPage() {
                 mb: 2,
               }}
             >
-              Need help? Try these popular pages:
+              {t('error.notFound.needHelp')}
             </Typography>
             
             <Stack 
@@ -122,7 +126,7 @@ export default function NotFoundPage() {
                   },
                 }}
               >
-                Browse News
+                {t('navigation.news')}
               </Button>
               
               <Button
@@ -138,7 +142,7 @@ export default function NotFoundPage() {
                   },
                 }}
               >
-                Profile
+                {t('navigation.profile')}
               </Button>
               
               <Button
@@ -154,7 +158,7 @@ export default function NotFoundPage() {
                   },
                 }}
               >
-                Write Article
+                {t('article.create.title')}
               </Button>
             </Stack>
           </Box>

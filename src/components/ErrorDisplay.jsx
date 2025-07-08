@@ -1,5 +1,6 @@
 import { Alert, Button, Box, Typography, Card, CardContent } from '@mui/joy';
 import { Refresh } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 export default function ErrorDisplay({
   error,
@@ -11,7 +12,8 @@ export default function ErrorDisplay({
   size = 'md',
   variant = 'default'
 }) {
-  const errorMessage = error?.message || message || 'Something went wrong';
+  const { t } = useTranslation();
+  const errorMessage = error?.message || message || t('common.error');
 
   if (variant === 'card') {
     return (
@@ -30,7 +32,7 @@ export default function ErrorDisplay({
               startDecorator={<Refresh />}
               onClick={onRefresh}
             >
-              Try Again
+              {t('common.tryAgain')}
             </Button>
           )}
         </CardContent>
@@ -52,7 +54,7 @@ export default function ErrorDisplay({
             startDecorator={<Refresh />}
             onClick={onRefresh}
           >
-            Try Again
+            {t('common.tryAgain')}
           </Button>
         ) : null
       }

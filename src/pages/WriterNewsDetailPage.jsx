@@ -26,9 +26,11 @@ import TagAutocomplete from '../components/TagAutocomplete';
 import ImageUpload from '../components/ImageUpload';
 import { UPDATE_NEWS } from '../graphql/mutations';
 import { GET_CATEGORIES, GET_TAGS, GET_NEWS_ARTICLE } from '../graphql/queries';
+import { useTranslation } from 'react-i18next';
 
 export default function WriterNewsDetailPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -75,36 +77,36 @@ export default function WriterNewsDetailPage() {
     const newErrors = [];
     
     if (!formData.title.trim()) {
-      newErrors.push('Title is required');
+      newErrors.push(t('validation.required', { field: t('writerDetail.titleLabel') }));
     } else if (formData.title.trim().length < 5) {
-      newErrors.push('Title must be at least 5 characters long');
+      newErrors.push(t('writerDetail.validation.titleMinLength'));
     }
     
     if (!formData.content || formData.content.trim() === '' || formData.content === '<p></p>') {
-      newErrors.push('Article content is required');
+      newErrors.push(t('writerDetail.validation.contentRequired'));
     }
     
     if (!formData.excerpt.trim()) {
-      newErrors.push('Excerpt is required');
+      newErrors.push(t('validation.required', { field: t('writerDetail.excerptLabel') }));
     } else if (formData.excerpt.trim().length < 10) {
-      newErrors.push('Excerpt must be at least 10 characters long');
+      newErrors.push(t('writerDetail.validation.excerptMinLength'));
     }
     
     if (!formData.categoryId) {
-      newErrors.push('Category is required');
+      newErrors.push(t('validation.required', { field: t('common.category') }));
     }
     
     setErrors(newErrors);
     return newErrors.length === 0;
-  }, [formData.title, formData.content, formData.excerpt, formData.categoryId]);
+  }, [formData.title, formData.content, formData.excerpt, formData.categoryId, t]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
-      toast.error('Please fix the errors before submitting');
+      toast.error(t('writerDetail.validation.fixErrors'));
       return;
     }
 
-    if (!window.confirm('This will submit your article for review. You won\'t be able to edit it until it\'s reviewed. Continue?')) {
+    if (!window.confirm(t('writerDetail.confirmSubmit'))) {
       return;
     }
 
@@ -126,30 +128,30 @@ export default function WriterNewsDetailPage() {
       });
 
       if (data?.updateNews?.success) {
-        toast.success('Article updated and submitted for review successfully!');
+        toast.success(t('writerDetail.success'));
         navigate('/my-articles', { 
-          state: { message: 'Article updated and submitted for review!' }
+          state: { message: t('writerDetail.successState') }
         });
       } else {
-        const errorMessage = data?.updateNews?.errors?.join(', ') || 'Failed to update article';
+        const errorMessage = data?.updateNews?.errors?.join(', ') || t('writerDetail.updateFailed');
         toast.error(errorMessage);
         setErrors([errorMessage]);
       }
     } catch (error) {
       console.error('Update error:', error);
-      toast.error('An error occurred while updating the article');
-      setErrors(['An error occurred while updating the article']);
+      toast.error(t('writerDetail.updateError'));
+      setErrors([t('writerDetail.updateError')]);
     } finally {
       setIsSubmitting(false);
     }
-  }, [validateForm, updateNews, id, formData, navigate]);
+  }, [validateForm, updateNews, id, formData, navigate, t]);
 
   const handleCancel = useCallback(() => {
-    if (hasChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+    if (hasChanges && !window.confirm(t('writerDetail.confirmLeave'))) {
       return;
     }
     navigate('/my-articles');
-  }, [hasChanges, navigate]);
+  }, [hasChanges, navigate, t]);
 
   const getWordCount = useCallback((content) => {
     const text = content?.replace(/<[^>]*>/g, '') || '';
@@ -197,13 +199,13 @@ export default function WriterNewsDetailPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Authentication Required
+          {t('writerDetail.authRequired')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to edit articles.
+          {t('writerDetail.signInMessage')}
         </Typography>
         <Button onClick={() => navigate('/login')}>
-          Sign In
+          {t('auth.login.signIn')}
         </Button>
       </Box>
     );
@@ -213,13 +215,13 @@ export default function WriterNewsDetailPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-          Permission Denied
+          {t('writerDetail.permissionDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You need writer privileges to edit articles.
+          {t('writerDetail.writerPrivileges')}
         </Typography>
         <Button onClick={() => navigate('/my-articles')}>
-          Back to My Articles
+          {t('writerDetail.backToMyArticles')}
         </Button>
       </Box>
     );
@@ -230,7 +232,7 @@ export default function WriterNewsDetailPage() {
       <Box textAlign="center" py={6}>
         <CircularProgress />
         <Typography level="body1" sx={{ mt: 2 }}>
-          Loading article...
+          {t('writerDetail.loadingArticle')}
         </Typography>
       </Box>
     );
@@ -240,13 +242,13 @@ export default function WriterNewsDetailPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-          Article Not Found
+          {t('writerDetail.articleNotFound')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          The article you're looking for doesn't exist or you don't have permission to edit it.
+          {t('writerDetail.articleNotFoundMessage')}
         </Typography>
         <Button onClick={() => navigate('/my-articles')}>
-          Back to My Articles
+          {t('writerDetail.backToMyArticles')}
         </Button>
       </Box>
     );
@@ -256,16 +258,16 @@ export default function WriterNewsDetailPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'warning.500' }}>
-          Cannot Edit This Article
+          {t('writerDetail.cannotEdit')}
         </Typography>
         <Typography level="body1" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
-          Only articles with "Draft" or "Rejected" status can be edited.
+          {t('writerDetail.cannotEditMessage')}
         </Typography>
         <Typography level="body2" sx={{ mb: 3 }}>
-          Current status: <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
+          {t('writerDetail.currentStatus')}: <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
         </Typography>
         <Button onClick={() => navigate('/my-articles')}>
-          Back to My Articles
+          {t('writerDetail.backToMyArticles')}
         </Button>
       </Box>
     );
@@ -277,22 +279,22 @@ export default function WriterNewsDetailPage() {
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box>
           <Typography level="h1" sx={{ mb: 1 }}>
-            ✏️ Edit Article
+            ✏️ {t('writerDetail.title')}
           </Typography>
           <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)', mb: 2 }}>
-            Make your changes and submit for review
+            {t('writerDetail.subtitle')}
           </Typography>
           <Box display="flex" gap={2} alignItems="center">
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography level="body-sm">Status:</Typography>
+              <Typography level="body-sm">{t('common.status')}:</Typography>
               <Chip size="sm" color={getStatusColor(article.status)}>{article.status}</Chip>
             </Box>
             <Typography level="body-sm" color="neutral">
-              Created: {new Date(article.createdAt).toLocaleDateString()}
+              {t('writerDetail.created')}: {new Date(article.createdAt).toLocaleDateString()}
             </Typography>
             {wordCount > 0 && (
               <Typography level="body-sm" color="neutral">
-                {wordCount} words • {readingTime} min read
+                {wordCount} {t('writerDetail.words')} • {readingTime} {t('writerDetail.minRead')}
               </Typography>
             )}
           </Box>
@@ -303,7 +305,7 @@ export default function WriterNewsDetailPage() {
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="solid"
@@ -311,7 +313,7 @@ export default function WriterNewsDetailPage() {
             loading={isSubmitting}
             color="success"
           >
-            {isSubmitting ? 'Submitting...' : 'Save & Submit for Review'}
+            {isSubmitting ? t('writerDetail.submitting') : t('writerDetail.saveAndSubmit')}
           </Button>
         </Box>
       </Box>
@@ -320,7 +322,7 @@ export default function WriterNewsDetailPage() {
       {errors.length > 0 && (
         <Alert color="danger" sx={{ mb: 3 }}>
           <Box>
-            <Typography level="title-sm">Please fix the following errors:</Typography>
+            <Typography level="title-sm">{t('writerDetail.fixErrors')}:</Typography>
             <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
               {errors.map((error, index) => (
                 <li key={index}>{error}</li>
@@ -333,7 +335,7 @@ export default function WriterNewsDetailPage() {
       {/* Unsaved changes warning */}
       {hasChanges && (
         <Alert color="warning" sx={{ mb: 3 }}>
-          You have unsaved changes
+          {t('writerDetail.unsavedChanges')}
         </Alert>
       )}
 
@@ -345,45 +347,45 @@ export default function WriterNewsDetailPage() {
               <Stack spacing={3}>
                 {/* Title */}
                 <FormControl required>
-                  <FormLabel>Article Title</FormLabel>
+                  <FormLabel>{t('writerDetail.titleLabel')}</FormLabel>
                   <Input
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="Enter a compelling article title"
+                    placeholder={t('writerDetail.titlePlaceholder')}
                     error={Boolean(errors?.some(err => err.includes('Title')))}
                   />
                   <Typography level="body-xs" sx={{ textAlign: 'right', mt: 0.5 }}>
-                    {formData.title.length}/100 characters
+                    {formData.title.length}/100 {t('writerDetail.characters')}
                   </Typography>
                 </FormControl>
 
                 {/* Excerpt */}
                 <FormControl required>
-                  <FormLabel>Article Excerpt</FormLabel>
+                  <FormLabel>{t('writerDetail.excerptLabel')}</FormLabel>
                   <Textarea
                     value={formData.excerpt}
                     onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                    placeholder="Brief summary of your article (shown in article previews)"
+                    placeholder={t('writerDetail.excerptPlaceholder')}
                     minRows={3}
                     maxRows={5}
                     error={Boolean(errors?.some(err => err.includes('Excerpt')))}
                   />
                   <Typography level="body-xs" sx={{ textAlign: 'right', mt: 0.5 }}>
-                    {formData.excerpt.length}/300 characters
+                    {formData.excerpt.length}/300 {t('writerDetail.characters')}
                   </Typography>
                 </FormControl>
 
                 {/* Content */}
                 <FormControl required>
-                  <FormLabel>Article Content</FormLabel>
+                  <FormLabel>{t('writerDetail.contentLabel')}</FormLabel>
                   <RichTextEditor
                     content={formData.content}
                     onChange={(content) => handleInputChange('content', content)}
-                    placeholder="Write your article content here. Use the toolbar to format text, add images, and create rich content..."
+                    placeholder={t('writerDetail.contentPlaceholder')}
                   />
                   {wordCount > 0 && (
                     <Typography level="body-xs" sx={{ mt: 1 }}>
-                      {wordCount} words • Estimated reading time: {readingTime} minutes
+                      {wordCount} {t('writerDetail.words')} • {t('writerDetail.estimatedReading')}: {readingTime} {t('writerDetail.minutes')}
                     </Typography>
                   )}
                 </FormControl>

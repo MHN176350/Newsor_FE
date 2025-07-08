@@ -5,12 +5,15 @@ import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useQuery } from '@apollo/client';
 import { GET_CATEGORIES } from '../graphql/queries';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 import NotificationBell from './NotificationBell';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Layout({ children }) {
   const { mode, setMode } = useColorScheme();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { t } = useTranslation();
 
   // Fetch categories for dropdown
   const { data: categoriesData } = useQuery(GET_CATEGORIES);
@@ -68,7 +71,7 @@ export default function Layout({ children }) {
             '&:hover': { color: 'primary.600' }
           }}
         >
-          📰 Newsor
+          📰 {t('app.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -82,7 +85,7 @@ export default function Layout({ children }) {
               '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
             }}
           >
-            Home
+            {t('navigation.home')}
           </Button>
           
           {/* News Dropdown with Categories */}
@@ -99,16 +102,16 @@ export default function Layout({ children }) {
                 }
               }}
             >
-              News
+              {t('navigation.news')}
             </MenuButton>
             <Menu placement="bottom-start" sx={{ zIndex: 1300 }}>
               <MenuItem onClick={() => navigate('/news')}>
-                🗞️ All News
+                🗞️ {t('news.title')}
               </MenuItem>
               {categories.length > 0 && (
                 <>
                   <MenuItem disabled sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
-                    BY CATEGORY
+                    {t('categories.all').toUpperCase()}
                   </MenuItem>
                   {categories.map((category) => (
                     <MenuItem 
@@ -135,7 +138,7 @@ export default function Layout({ children }) {
                   '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                 }}
               >
-                Comment History
+                💬 {t('navigation.commentHistory')}
               </Button>
               <Button
                 variant="plain"
@@ -146,7 +149,7 @@ export default function Layout({ children }) {
                   '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                 }}
               >
-                Reading History
+                📖 {t('navigation.readingHistory')}
               </Button>
             </>
           )}
@@ -165,7 +168,7 @@ export default function Layout({ children }) {
                     '&:hover': { bgcolor: 'primary.200' }
                   }}
                 >
-                  🪶 My Articles
+                  🪶 {t('navigation.myArticles')}
                 </Button>
               )}
               
@@ -181,7 +184,7 @@ export default function Layout({ children }) {
                     '&:hover': { bgcolor: 'warning.200' }
                   }}
                 >
-                  🔖 Review Articles
+                  🔖 {t('navigation.reviewArticles')}
                 </Button>
               )}
               
@@ -195,7 +198,7 @@ export default function Layout({ children }) {
                   '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                 }}
               >
-                Profile
+                {t('navigation.profile')}
               </Button>
               {user?.profile?.role?.toLowerCase() === 'admin' && (
                 <Button
@@ -207,11 +210,14 @@ export default function Layout({ children }) {
                     '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                   }}
                 >
-                  Admin Dashboard
+                  {t('navigation.adminDashboard')}
                 </Button>
               )}
             </>
           )}
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* Theme Toggle */}
           <IconButton
@@ -287,15 +293,15 @@ export default function Layout({ children }) {
                 </MenuButton>
                 <Menu placement="bottom-end" sx={{ zIndex: 1300 }}>
                   <MenuItem onClick={() => navigate('/profile')}>
-                    👤 Profile
+                    👤 {t('navigation.profile')}
                   </MenuItem>
                   {user?.profile?.role?.toLowerCase() === 'admin' && (
                     <MenuItem onClick={() => navigate('/admin')}>
-                      ⚙️ Admin Dashboard
+                      ⚙️ {t('navigation.adminDashboard')}
                     </MenuItem>
                   )}
                   <MenuItem onClick={handleLogout} sx={{ color: 'danger.500' }}>
-                    🚪 Logout
+                    🚪 {t('navigation.logout')}
                   </MenuItem>
                 </Menu>
               </Dropdown>
@@ -313,7 +319,7 @@ export default function Layout({ children }) {
                   '&:hover': { borderColor: 'primary.400', bgcolor: 'neutral.50' }
                 }}
               >
-                Login
+                {t('navigation.login')}
               </Button>
               <Button
                 variant="solid"
@@ -324,7 +330,7 @@ export default function Layout({ children }) {
                   '&:hover': { bgcolor: 'primary.700' }
                 }}
               >
-                Register
+                {t('navigation.register')}
               </Button>
             </>
           )}
@@ -359,7 +365,7 @@ export default function Layout({ children }) {
         }}
       >
         <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-          © 2025 Newsor. Built with React, Vite, Joy UI & GraphQL.
+          {t('footer.copyright')}
         </Typography>
       </Sheet>
     </Box>

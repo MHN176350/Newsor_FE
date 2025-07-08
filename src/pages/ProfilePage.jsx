@@ -6,9 +6,11 @@ import { useMutation } from '@apollo/client';
 import { CHANGE_PASSWORD } from '../graphql/mutations';
 import ImageUpload from '../components/ImageUpload';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, updateProfile, updateAvatar, loading, error } = useAuth();
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -28,7 +30,7 @@ export default function ProfilePage() {
   const [changePassword, { loading: passwordLoading }] = useMutation(CHANGE_PASSWORD, {
     onCompleted: (data) => {
       if (data.changePassword.success) {
-        setPasswordMessage('Password changed successfully!');
+        setPasswordMessage(t('auth.profile.changePasswordSuccess'));
         setPasswordData({
           currentPassword: '',
           newPassword: '',
@@ -39,11 +41,11 @@ export default function ProfilePage() {
           setPasswordMessage('');
         }, 2000);
       } else {
-        setPasswordMessage(data.changePassword.errors?.join(', ') || 'Failed to change password');
+        setPasswordMessage(data.changePassword.errors?.join(', ') || t('auth.profile.changePasswordFailed'));
       }
     },
     onError: (error) => {
-      setPasswordMessage('An error occurred while changing password.');
+      setPasswordMessage(t('auth.profile.changePasswordError'));
       console.error('Password change error:', error);
     },
   });
@@ -72,13 +74,13 @@ export default function ProfilePage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Access Denied
+          {t('auth.profile.accessDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to view your profile.
+          {t('auth.profile.signInPrompt')}
         </Typography>
         <Button component={Link} to="/login">
-          Sign In
+          {t('auth.profile.signIn')}
         </Button>
       </Box>
     );
@@ -104,17 +106,17 @@ export default function ProfilePage() {
 
     // Validation
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      setPasswordMessage('All fields are required.');
+      setPasswordMessage(t('auth.profile.allFieldsRequired'));
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordMessage('New passwords do not match.');
+      setPasswordMessage(t('auth.profile.passwordsMismatch'));
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      setPasswordMessage('New password must be at least 8 characters long.');
+      setPasswordMessage(t('auth.profile.passwordMinLength'));
       return;
     }
 
@@ -126,7 +128,7 @@ export default function ProfilePage() {
         },
       });
     } catch (err) {
-      setPasswordMessage('Failed to change password. Please try again.');
+      setPasswordMessage(t('auth.profile.changePasswordFailed') + '. ' + t('auth.profile.tryAgain'));
       console.error('Password change error:', err);
     }
   };
@@ -145,9 +147,9 @@ export default function ProfilePage() {
     try {
       // Update the user data with the new avatar
       await updateAvatar(profile);
-      setMessage('Avatar updated successfully!');
+      setMessage(t('auth.profile.avatarUpdated'));
     } catch (err) {
-      setMessage('Failed to update avatar. Please try again.');
+      setMessage(t('auth.profile.avatarUpdateFailed'));
       console.error('Avatar update error:', err);
     }
   };
@@ -164,13 +166,13 @@ export default function ProfilePage() {
       });
 
       if (result.success) {
-        setMessage('Profile updated successfully!');
+        setMessage(t('auth.profile.profileUpdated'));
         setEditing(false);
       } else {
-        setMessage(result.errors?.join(', ') || 'Update failed');
+        setMessage(result.errors?.join(', ') || t('auth.profile.updateFailed'));
       }
     } catch (err) {
-      setMessage('Failed to update profile. Please try again.');
+      setMessage(t('auth.profile.profileUpdateFailed'));
       console.error('Profile update error:', err);
     }
   };
@@ -199,10 +201,10 @@ export default function ProfilePage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography level="h1" sx={{ mb: 2, color: 'var(--joy-palette-text-primary)' }}>
-          Profile
+          {t('auth.profile.title')}
         </Typography>
         <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-          Manage your personal information and preferences
+          {t('auth.profile.subtitle')}
         </Typography>
       </Box>
 
@@ -219,8 +221,8 @@ export default function ProfilePage() {
                     currentImageUrl={user?.profile?.avatarUrl}
                     onImageUploaded={handleAvatarUploaded}
                     maxSizeInMB={2}
-                    uploadButtonText="Update Avatar"
-                    removeButtonText="Remove Avatar"
+                    uploadButtonText={t('auth.profile.updateAvatar')}
+                    removeButtonText={t('auth.profile.removeAvatar')}
                   />
                 ) : (
                   <Avatar
@@ -265,7 +267,7 @@ export default function ProfilePage() {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography level="h3" sx={{ color: 'var(--joy-palette-text-primary)' }}>
-                  Profile Information
+                  {t('auth.profile.profileInformation')}
                 </Typography>
                 {!editing ? (
                   <Button
@@ -273,7 +275,7 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => setEditing(true)}
                   >
-                    Edit Profile
+                    {t('auth.profile.editProfile')}
                   </Button>
                 ) : (
                   <Stack direction="row" spacing={1}>
@@ -283,7 +285,7 @@ export default function ProfilePage() {
                       onClick={handleCancel}
                       disabled={loading}
                     >
-                      Cancel
+                      {t('auth.profile.cancel')}
                     </Button>
                     <Button
                       size="sm"
@@ -291,7 +293,7 @@ export default function ProfilePage() {
                       form="profile-form"
                       loading={loading}
                     >
-                      Save
+                      {t('auth.profile.save')}
                     </Button>
                   </Stack>
                 )}
@@ -305,7 +307,7 @@ export default function ProfilePage() {
 
               {editing && (
                 <Alert color="primary" variant="soft" sx={{ mb: 3 }}>
-                  💡 Tip: Click "Edit Profile" to update your profile picture and information
+                  {t('auth.profile.updateTip')}
                 </Alert>
               )}
 
@@ -314,28 +316,28 @@ export default function ProfilePage() {
                   <Grid container spacing={2}>
                     <Grid xs={12} sm={6}>
                       <FormControl>
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t('auth.profile.firstName')}</FormLabel>
                         <Input
                           value={user?.firstName || ''}
                           disabled
-                          placeholder="Not provided"
+                          placeholder={t('auth.profile.notProvided')}
                         />
                       </FormControl>
                     </Grid>
                     <Grid xs={12} sm={6}>
                       <FormControl>
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t('auth.profile.lastName')}</FormLabel>
                         <Input
                           value={user?.lastName || ''}
                           disabled
-                          placeholder="Not provided"
+                          placeholder={t('auth.profile.notProvided')}
                         />
                       </FormControl>
                     </Grid>
                   </Grid>
 
                   <FormControl>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('auth.profile.email')}</FormLabel>
                     <Input
                       value={user?.email || ''}
                       disabled
@@ -344,22 +346,22 @@ export default function ProfilePage() {
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('auth.profile.phone')}</FormLabel>
                     <Input
                       name="phone"
-                      value={editing ? (formData.phone || '') : (formData.phone || 'Not provided')}
+                      value={editing ? (formData.phone || '') : (formData.phone || t('auth.profile.notProvided'))}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder={editing ? "Enter your phone number" : ""}
+                      placeholder={editing ? t('auth.profile.enterPhone') : ""}
                     />
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Date of Birth</FormLabel>
+                    <FormLabel>{t('auth.profile.dateOfBirth')}</FormLabel>
                     <Input
                       name="dateOfBirth"
                       type={editing ? "date" : "text"}
-                      value={editing ? (formData.dateOfBirth || '') : (formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'Not provided')}
+                      value={editing ? (formData.dateOfBirth || '') : (formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : t('auth.profile.notProvided'))}
                       onChange={handleChange}
                       disabled={!editing}
                       placeholder={editing ? "" : ""}
@@ -367,13 +369,13 @@ export default function ProfilePage() {
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>{t('auth.profile.bio')}</FormLabel>
                     <textarea
                       name="bio"
-                      value={editing ? (formData.bio || '') : (formData.bio || 'No bio provided')}
+                      value={editing ? (formData.bio || '') : (formData.bio || t('auth.profile.noBioProvided'))}
                       onChange={handleChange}
                       disabled={!editing}
-                      placeholder={editing ? "Tell us about yourself..." : ""}
+                      placeholder={editing ? t('auth.profile.tellAboutYourself') : ""}
                       rows={4}
                       style={{
                         width: '100%',
@@ -398,16 +400,16 @@ export default function ProfilePage() {
       <Card variant="outlined" sx={{ mt: 4 }}>
         <CardContent>
           <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-            Account Settings
+            {t('auth.profile.accountSettings')}
           </Typography>
           <Stack spacing={2}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1 }}>
               <Box>
                 <Typography level="body1" sx={{ color: 'var(--joy-palette-text-primary)' }}>
-                  Change Password
+                  {t('auth.profile.changePassword')}
                 </Typography>
                 <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  Update your password to keep your account secure
+                  {t('auth.profile.changePasswordDesc')}
                 </Typography>
               </Box>
               <Button 
@@ -415,33 +417,33 @@ export default function ProfilePage() {
                 size="sm"
                 onClick={() => setShowPasswordModal(true)}
               >
-                Change
+                {t('auth.profile.change')}
               </Button>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1 }}>
               <Box>
                 <Typography level="body1" sx={{ color: 'var(--joy-palette-text-primary)' }}>
-                  Email Notifications
+                  {t('auth.profile.emailNotifications')}
                 </Typography>
                 <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  Control how you receive notifications
+                  {t('auth.profile.emailNotificationsDesc')}
                 </Typography>
               </Box>
               <Button variant="outlined" size="sm">
-                Manage
+                {t('auth.profile.manage')}
               </Button>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1 }}>
               <Box>
                 <Typography level="body1" sx={{ color: 'danger.500' }}>
-                  Delete Account
+                  {t('auth.profile.deleteAccount')}
                 </Typography>
                 <Typography level="body2" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  Permanently delete your account and all data
+                  {t('auth.profile.deleteAccountDesc')}
                 </Typography>
               </Box>
               <Button variant="outlined" color="danger" size="sm">
-                Delete
+                {t('auth.profile.delete')}
               </Button>
             </Box>
           </Stack>

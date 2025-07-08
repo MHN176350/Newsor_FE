@@ -7,9 +7,11 @@ import { GET_USER_READING_HISTORY } from '../graphql/queries';
 import { formatDate } from '../utils/constants';
 import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 
 export default function ReadingHistoryPage() {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6);
     const [filter, setFilter] = useState({ fromDate: '', toDate: '' });
@@ -49,18 +51,18 @@ export default function ReadingHistoryPage() {
 
     return (
         <Box>
-            <SEO title="Reading History" description="Your article reading history." />
+            <SEO title={t('readingHistory.title')} description={t('readingHistory.description')} />
             <Box sx={{ mb: 4 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                     <Box>
                         <Typography level="h1" sx={{ mb: 2 }}>
-                            Reading History
+                            {t('readingHistory.title')}
                         </Typography>
                         <Typography level="body1">
-                            All articles you have read
+                            {t('readingHistory.subtitle')}
                         </Typography>
                         <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
-                            <Typography level="body2" sx={{ minWidth: 70 }}>From Date</Typography>
+                            <Typography level="body2" sx={{ minWidth: 70 }}>{t('readingHistory.fromDate')}</Typography>
                             <Input
                                 type="date"
                                 value={fromDate}
@@ -68,10 +70,10 @@ export default function ReadingHistoryPage() {
                                 size="sm"
                                 variant="outlined"
                                 sx={{ minWidth: 150 }}
-                                slotProps={{ input: { 'aria-label': 'From date' } }}
-                                placeholder="From date"
+                                slotProps={{ input: { 'aria-label': t('readingHistory.fromDate') } }}
+                                placeholder={t('readingHistory.fromDate')}
                             />
-                            <Typography level="body2" sx={{ minWidth: 70 }}>To Date</Typography>
+                            <Typography level="body2" sx={{ minWidth: 70 }}>{t('readingHistory.toDate')}</Typography>
                             <Input
                                 type="date"
                                 value={toDate}
@@ -79,8 +81,8 @@ export default function ReadingHistoryPage() {
                                 size="sm"
                                 variant="outlined"
                                 sx={{ minWidth: 150 }}
-                                slotProps={{ input: { 'aria-label': 'To date' } }}
-                                placeholder="To date"
+                                slotProps={{ input: { 'aria-label': t('readingHistory.toDate') } }}
+                                placeholder={t('readingHistory.toDate')}
                             />
                             <Button
                                 variant="solid"
@@ -91,18 +93,18 @@ export default function ReadingHistoryPage() {
                                     setCurrentPage(1);
                                 }}
                             >
-                                Search
+                                {t('common.search')}
                             </Button>
                         </Stack>
                     </Box>
                 </Stack>
             </Box>
-            {loading && <LoadingSpinner size="lg" message="Loading reading history..." variant="card" type="news" />}
+            {loading && <LoadingSpinner size="lg" message={t('readingHistory.loading')} variant="card" type="news" />}
             {error && (
                 <ErrorDisplay
                     error={error}
-                    title="Unable to load reading history"
-                    message="Please check your connection to the backend server."
+                    title={t('readingHistory.errorTitle')}
+                    message={t('readingHistory.errorMessage')}
                     showRefresh={true}
                     onRefresh={() => refetch()}
                     color="warning"
@@ -113,10 +115,10 @@ export default function ReadingHistoryPage() {
                 <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
                     <CardContent>
                         <Typography level="h4" sx={{ mb: 2 }}>
-                            No Reading History
+                            {t('readingHistory.noHistory')}
                         </Typography>
                         <Typography level="body1">
-                            You haven't read any articles yet.
+                            {t('readingHistory.noHistoryMessage')}
                         </Typography>
                     </CardContent>
                 </Card>
@@ -141,7 +143,7 @@ export default function ReadingHistoryPage() {
                                             {item.article?.title}
                                         </Typography>
                                         <Typography level="body2" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
-                                            Read at: {formatDate(item.readAt)}
+                                            {t('readingHistory.readAt')}: {formatDate(item.readAt)}
                                         </Typography>
                                         <Button
                                             component={Link}
@@ -157,7 +159,7 @@ export default function ReadingHistoryPage() {
                                             }}
                                             disabled={!item.article?.slug}
                                         >
-                                            <span className="view-article-text">View Article</span>
+                                            <span className="view-article-text">{t('readingHistory.viewArticle')}</span>
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -180,7 +182,11 @@ export default function ReadingHistoryPage() {
                     )}
                     <Box sx={{ textAlign: 'center', mt: 3 }}>
                         <Typography level="body3">
-                            Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} articles
+                            {t('readingHistory.showing', { 
+                                start: startIndex + 1, 
+                                end: Math.min(endIndex, totalItems), 
+                                total: totalItems 
+                            })}
                         </Typography>
                     </Box>
                 </>

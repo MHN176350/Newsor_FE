@@ -22,9 +22,11 @@ import {
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_MY_NEWS } from '../graphql/queries';
 import { UPDATE_NEWS_STATUS, SUBMIT_NEWS_FOR_REVIEW } from '../graphql/mutations';
+import { useTranslation } from 'react-i18next';
 
 export default function MyArticlesPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -47,13 +49,13 @@ export default function MyArticlesPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2 }}>
-          Authentication Required
+          {t('myArticles.authRequired')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Please sign in to view your articles.
+          {t('myArticles.signInMessage')}
         </Typography>
         <Button onClick={() => navigate('/login')}>
-          Sign In
+          {t('auth.login.signIn')}
         </Button>
       </Box>
     );
@@ -66,16 +68,16 @@ export default function MyArticlesPage() {
     return (
       <Box textAlign="center" py={6}>
         <Typography level="h3" sx={{ mb: 2, color: 'danger.500' }}>
-          Permission Denied
+          {t('myArticles.permissionDenied')}
         </Typography>
         <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          You need writer privileges to create articles.
+          {t('myArticles.writerPrivileges')}
         </Typography>
         <Typography level="body2" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-          Your current role: {user?.profile?.role || 'Reader'}
+          {t('myArticles.currentRole')}: {user?.profile?.role || t('common.reader')}
         </Typography>
         <Button onClick={() => navigate(-1)}>
-          Go Back
+          {t('common.back')}
         </Button>
       </Box>
     );
@@ -136,8 +138,8 @@ export default function MyArticlesPage() {
 
   const getStatusAction = (status) => {
     switch (status?.toLowerCase()) {
-      case 'draft': return 'Submit for Review';
-      case 'rejected': return 'Resubmit';
+      case 'draft': return t('myArticles.submitForReview');
+      case 'rejected': return t('myArticles.resubmit');
       case 'published': return null; // No action needed
       case 'pending': return null; // No action needed
       default: return null;
@@ -159,7 +161,7 @@ export default function MyArticlesPage() {
       <Box textAlign="center" py={6}>
         <CircularProgress />
         <Typography level="body1" sx={{ mt: 2 }}>
-          Loading your articles...
+          {t('myArticles.loading')}
         </Typography>
       </Box>
     );
@@ -180,10 +182,10 @@ export default function MyArticlesPage() {
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography level="h1" sx={{ mb: 1 }}>
-            📝 My Articles
+            📝 {t('myArticles.title')}
           </Typography>
           <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-            Manage your articles and create new content
+            {t('myArticles.subtitle')}
           </Typography>
         </Box>
         <Button
@@ -195,7 +197,7 @@ export default function MyArticlesPage() {
             '&:hover': { bgcolor: 'primary.700' }
           }}
         >
-          ✍️ Create New Article
+          ✍️ {t('myArticles.createNew')}
         </Button>
       </Box>
 
@@ -205,28 +207,28 @@ export default function MyArticlesPage() {
           {articles.length === 0 ? (
             <Box textAlign="center" py={6}>
               <Typography level="h4" sx={{ mb: 2 }}>
-                No Articles Yet
+                {t('myArticles.noArticles')}
               </Typography>
               <Typography level="body1" sx={{ mb: 3, color: 'var(--joy-palette-text-secondary)' }}>
-                Start writing your first article to share your thoughts with the world!
+                {t('myArticles.firstArticleMessage')}
               </Typography>
               <Button
                 variant="solid"
                 onClick={() => navigate('/articles/create')}
               >
-                Create Your First Article
+                {t('myArticles.createFirst')}
               </Button>
             </Box>
           ) : (
             <Table>
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th style={{ width: 80 }}>Status</th>
-                  <th style={{ width: 100 }}>Category</th>
-                  <th style={{ width: 150 }}>Created</th>
-                  <th style={{ width: 150 }}>Last Updated</th>
-                  <th style={{ minWidth: 260 }}>Actions</th>
+                  <th>{t('myArticles.table.title')}</th>
+                  <th style={{ width: 80 }}>{t('myArticles.table.status')}</th>
+                  <th style={{ width: 100 }}>{t('myArticles.table.category')}</th>
+                  <th style={{ width: 150 }}>{t('myArticles.table.created')}</th>
+                  <th style={{ width: 150 }}>{t('myArticles.table.updated')}</th>
+                  <th style={{ minWidth: 260 }}>{t('myArticles.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,7 +277,7 @@ export default function MyArticlesPage() {
                           onClick={() => navigate(`/writer/articles/${article.id}`)}
                           sx={{ minWidth: 'auto', px: 1 }}
                         >
-                          Details
+                          {t('myArticles.actions.details')}
                         </Button>
 
                         {/* View Public Button - only for published articles */}
@@ -287,7 +289,7 @@ export default function MyArticlesPage() {
                             onClick={() => navigate(`/news/${article.slug}`)}
                             sx={{ minWidth: 'auto', px: 1 }}
                           >
-                            View Public
+                            {t('myArticles.actions.viewPublic')}
                           </Button>
                         )}
 
@@ -300,7 +302,7 @@ export default function MyArticlesPage() {
                             onClick={() => navigate(`/articles/edit/${article.id}`)}
                             sx={{ minWidth: 'auto', px: 1 }}
                           >
-                            ✏️ Edit
+                            ✏️ {t('common.edit')}
                           </Button>
                         )}
 
@@ -312,7 +314,7 @@ export default function MyArticlesPage() {
                           onClick={() => navigate(`/articles/duplicate/${article.id}`)}
                           sx={{ minWidth: 'auto', px: 1 }}
                         >
-                          📋 Duplicate
+                          📋 {t('myArticles.actions.duplicate')}
                         </Button>
 
                         {/* Submit/Resubmit Button - for draft and rejected articles */}
@@ -330,7 +332,7 @@ export default function MyArticlesPage() {
                               fontWeight: 'md'
                             }}
                           >
-                            {article.status?.toLowerCase() === 'rejected' ? 'Resubmit' : 'Submit for Review'}
+                            {article.status?.toLowerCase() === 'rejected' ? t('myArticles.resubmit') : t('myArticles.submitForReview')}
                           </Button>
                         )}
                       </Stack>
@@ -348,12 +350,11 @@ export default function MyArticlesPage() {
         <ModalDialog sx={{ width: 400 }}>
           <ModalClose />
           <Typography level="h4" sx={{ mb: 2 }}>
-            Submit Article for Review
+            {t('myArticles.modal.title')}
           </Typography>
 
           <Typography level="body-sm" sx={{ mb: 3 }}>
-            Are you sure you want to submit "{selectedArticle?.title}" for review?
-            Once submitted, you won't be able to edit it until it's reviewed.
+            {t('myArticles.modal.message', { title: selectedArticle?.title })}
           </Typography>
 
           <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
@@ -361,14 +362,14 @@ export default function MyArticlesPage() {
               variant="plain"
               onClick={() => setShowSubmitModal(false)}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="solid"
               color="success"
               onClick={() => handleStatusUpdate('draft')}
             >
-              Submit for Review
+              {t('myArticles.submitForReview')}
             </Button>
           </Stack>
         </ModalDialog>
