@@ -4,18 +4,12 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8000
-      - VITE_GRAPHQL_URL=http://localhost:8000/graphql
-    networks:
-      - newsor-network
+      - "3000:80"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
