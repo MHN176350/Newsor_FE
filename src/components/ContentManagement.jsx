@@ -48,7 +48,7 @@ export default function ContentManagement() {
   const [modalEntity, setModalEntity] = useState(''); // 'category', 'tag', 'news'
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({});
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(null);
 
   // Archive tab state for search/filter/paging
   const [archiveFilters, setArchiveFilters] = useState({
@@ -89,7 +89,7 @@ export default function ContentManagement() {
     setModalType(type);
     setModalEntity(entity);
     setSelectedItem(item);
-    setMessage('');
+    setMessage(null);
 
     if (type === 'edit' && item) {
       if (entity === 'category') {
@@ -110,7 +110,7 @@ export default function ContentManagement() {
     setModalEntity('');
     setSelectedItem(null);
     setFormData({});
-    setMessage('');
+    setMessage(null);
   };
 
   const handleToggleTag = async (tag) => {
@@ -122,15 +122,15 @@ export default function ContentManagement() {
       if (result.data?.toggleTag?.success) {
         await refetchTags();
         const newStatus = result.data.toggleTag.tag.isActive ? 'activated' : 'deactivated';
-        setMessage(`Tag "${tag.name}" ${newStatus} successfully!`);
+        setMessage( {type: 'success', text: `Tag "${tag.name}" ${newStatus} successfully!`});
         // Clear message after 3 seconds
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage(`Failed to toggle tag: ${result.data?.toggleTag?.errors?.join(', ') || 'Unknown error'}`);
+        setMessage({type: 'error', text:`Failed to toggle tag: ${result.data?.toggleTag?.errors?.join(', ') || 'Unknown error'}`});
       }
     } catch (error) {
       console.error('Toggle tag error:', error);
-      setMessage('An error occurred while toggling the tag.');
+      setMessage({type: 'error', text: 'An error occurred while toggling the tag.'});
     }
   };
 
@@ -145,7 +145,7 @@ export default function ContentManagement() {
           });
           if (result.data?.createCategory?.success) {
             await refetchCategories();
-            setMessage('Category created successfully!');
+            setMessage({type: 'success', text:'Category created successfully!'});
           }
         } else if (modalType === 'edit') {
           result = await updateCategory({
@@ -157,7 +157,7 @@ export default function ContentManagement() {
           });
           if (result.data?.updateCategory?.success) {
             await refetchCategories();
-            setMessage('Category updated successfully!');
+            setMessage({type: 'success', text:'Category updated successfully!'});
           }
         } else if (modalType === 'delete') {
           result = await deleteCategory({
@@ -165,7 +165,7 @@ export default function ContentManagement() {
           });
           if (result.data?.deleteCategory?.success) {
             await refetchCategories();
-            setMessage('Category deleted successfully!');
+            setMessage({type: 'success', text:'Category deleted successfully!'});
           }
         }
       } else if (modalEntity === 'tag') {
@@ -176,7 +176,7 @@ export default function ContentManagement() {
           });
           if (result.data?.createTag?.success) {
             await refetchTags();
-            setMessage('Tag created successfully!');
+            setMessage({type: 'success', text:'Tag created successfully!'});
           }
         } else if (modalType === 'edit') {
           result = await updateTag({
@@ -187,7 +187,7 @@ export default function ContentManagement() {
           });
           if (result.data?.updateTag?.success) {
             await refetchTags();
-            setMessage('Tag updated successfully!');
+            setMessage({type: 'success', text:'Tag updated successfully!'});
           }
         } else if (modalType === 'toggle') {
           result = await toggleTag({
@@ -196,7 +196,7 @@ export default function ContentManagement() {
           if (result.data?.toggleTag?.success) {
             await refetchTags();
             const newStatus = result.data.toggleTag.tag.isActive ? 'activated' : 'deactivated';
-            setMessage(`Tag ${newStatus} successfully!`);
+            setMessage({type: 'success', text:`Tag ${newStatus} successfully!`});
           }
         }
       } else if (modalEntity === 'news') {
@@ -210,7 +210,7 @@ export default function ContentManagement() {
           });
           if (result.data?.updateNewsStatus?.success) {
             await refetchNews();
-            setMessage('Article archived successfully!');
+            setMessage({type: 'success', text:'Article archived successfully!'});
           }
         } else if (modalType === 'unarchive') {
           result = await updateNewsStatus({
@@ -222,35 +222,35 @@ export default function ContentManagement() {
           });
           if (result.data?.updateNewsStatus?.success) {
             await refetchNews();
-            setMessage('Article restored successfully!');
+            setMessage({type: 'success', text:'Article restored successfully!'});
           }
-        } else if (modalType === 'delete') {
-          // For now, we'll set status to 'deleted' instead of actually deleting
-          result = await updateNewsStatus({
-            variables: {
-              id: parseInt(selectedItem.id),
-              status: 'deleted',
-              reviewComment: 'Permanently deleted by admin'
-            }
-          });
-          if (result.data?.updateNewsStatus?.success) {
-            await refetchNews();
-            setMessage('Article deleted successfully!');
-          }
+        // } else if (modalType === 'delete') {
+        //   // For now, we'll set status to 'deleted' instead of actually deleting
+        //   result = await updateNewsStatus({
+        //     variables: {
+        //       id: parseInt(selectedItem.id),
+        //       status: 'deleted',
+        //       reviewComment: 'Permanently deleted by admin'
+        //     }
+        //   });
+        //   if (result.data?.updateNewsStatus?.success) {
+        //     await refetchNews();
+        //     setMessage({type: 'success', text:'Article deleted successfully!'});
+        //   }
         }
       }
 
       if (result?.data) {
         const errorField = Object.values(result.data)[0];
         if (errorField?.errors?.length > 0) {
-          setMessage(errorField.errors.join(', '));
+          setMessage({type: 'error', text:errorField.errors.join(', ')});
         } else {
           setTimeout(() => handleCloseModal(), 1500);
         }
       }
     } catch (error) {
       console.error('Operation error:', error);
-      setMessage('An error occurred. Please try again.');
+      setMessage({type: 'error', text:'An error occurred. Please try again.'});
     }
   };
 
@@ -503,11 +503,11 @@ export default function ContentManagement() {
             {/* Success/Error Message Display */}
             {message && (
               <Alert
-                color={message.includes(t('contentManagement.success')) ? 'success' : 'danger'}
+                color={message.type==='success' ? 'success' : 'danger'}
                 sx={{ mb: 3 }}
-                onClose={() => setMessage('')}
+                onClose={() => setMessage(null)}
               >
-                {message}
+                {message.text}
               </Alert>
             )}
 
@@ -572,7 +572,7 @@ export default function ContentManagement() {
                         </Typography>
                         {!tag.isActive && (
                           <Typography level="body-xs" sx={{ color: 'warning.500', mt: 1, fontStyle: 'italic' }}>
-                            {t('contentManagement.tagToggleWarning')}
+                            {/* {t('contentManagement.tagToggleWarning')} */}
                           </Typography>
                         )}
                       </CardContent>
@@ -830,10 +830,10 @@ export default function ContentManagement() {
 
           {message && (
             <Alert
-              color={message.includes(t('contentManagement.success')) ? 'success' : 'danger'}
+              color={message.type==='success' ? 'success' : 'danger'}
               sx={{ mb: 2 }}
             >
-              {message}
+              {message.text}
             </Alert>
           )}
 
@@ -883,7 +883,7 @@ export default function ContentManagement() {
             )}
 
             {/* Delete News Confirm */}
-            {modalType === 'delete' && modalEntity === 'news' && (
+            {/* {modalType === 'delete' && modalEntity === 'news' && (
               <Alert color="danger">
                 <Typography level="body-sm">
                   {t('contentManagement.deleteArticleConfirm', { title: selectedItem?.title })}
@@ -892,7 +892,7 @@ export default function ContentManagement() {
                   {t('contentManagement.deleteArticleDesc')}
                 </Typography>
               </Alert>
-            )}
+            )} */}
 
             {/* Archive News Confirm */}
             {modalType === 'archive' && modalEntity === 'news' && (

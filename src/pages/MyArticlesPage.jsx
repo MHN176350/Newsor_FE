@@ -23,6 +23,8 @@ import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_MY_NEWS } from '../graphql/queries';
 import { UPDATE_NEWS_STATUS, SUBMIT_NEWS_FOR_REVIEW } from '../graphql/mutations';
 import { useTranslation } from 'react-i18next';
+import SearchAndFilter from '../components/SearchAndFilter';
+import Pagination from '../components/Pagination';
 
 export default function MyArticlesPage() {
   const { user, isAuthenticated } = useAuth();
@@ -31,6 +33,16 @@ export default function MyArticlesPage() {
   const location = useLocation();
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Archive tab state for search/filter/paging
+  const [searchFilters, setSearchFilters] = useState({
+    search: '',
+    categoryId: '',
+    tagId: '',
+    sortBy: 'newest',
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // GraphQL hooks
   const { data: articlesData, loading: articlesLoading, refetch } = useQuery(GET_MY_NEWS);
@@ -169,6 +181,62 @@ export default function MyArticlesPage() {
 
   const articles = articlesData?.myNews || [];
 
+  // Filtering and sorting logic for published/archived news
+  const filterAndSortNews = (newsList) => {
+    let filtered = [...newsList];
+    // Search by title
+    if (searchFilters.search) {
+      filtered = filtered.filter(n => n.title?.toLowerCase().includes(searchFilters.search.toLowerCase()));
+    }
+    // Filter by category
+    if (searchFilters.categoryId) {
+      filtered = filtered.filter(n => n.category?.id?.toString() === searchFilters.categoryId.toString());
+    }
+    // Filter by tag (if tags are available on news)
+    if (searchFilters.tagId) {
+      filtered = filtered.filter(n => n.tags?.some(tag => tag.id?.toString() === searchFilters.tagId.toString()));
+    }
+    // Sort
+    switch (searchFilters.sortBy) {
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case 'title_asc':
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'title_desc':
+        filtered.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'newest':
+      default:
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+    }
+    return filtered;
+  };
+
+  // Article
+  const filteredArticle = filterAndSortNews(articles);
+  const articleTotal = filteredArticle.length;
+  const articleTotalPages = Math.ceil(articleTotal / itemsPerPage);
+  const articleStart = (currentPage - 1) * itemsPerPage;
+  const articleEnd = articleStart + itemsPerPage;
+  const archivedPageNews = filteredArticle.slice(articleStart, articleEnd);
+
+  // Handlers
+  const handleSearch = (searchTerm) => {
+    setSearchFilters(prev => ({ ...prev, search: searchTerm }));
+    setCurrentPage(1);
+  };
+  const handleFilter = (filters) => {
+    setSearchFilters(filters);
+    setCurrentPage(1);
+  };
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <Box>
       {/* Success Message */}
@@ -200,11 +268,20 @@ export default function MyArticlesPage() {
           ✍️ {t('myArticles.createNew')}
         </Button>
       </Box>
-
+      {/* Search and Filter for Archive */}
+      {/* <SearchAndFilter
+        onSearch={handleSearch}
+        onFilter={handleFilter}
+        categories={categories}
+        tags={tags}
+        loading={articlesLoading}
+        initialFilters={searchFilters}
+      /> */}
+      {/* Published Articles Table with Paging */}
       {/* Articles Table */}
       <Card variant="outlined">
         <CardContent>
-          {articles.length === 0 ? (
+          {articleTotal === 0 ? (
             <Box textAlign="center" py={6}>
               <Typography level="h4" sx={{ mb: 2 }}>
                 {t('myArticles.noArticles')}
@@ -220,127 +297,150 @@ export default function MyArticlesPage() {
               </Button>
             </Box>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <th>{t('myArticles.table.title')}</th>
-                  <th style={{ width: 80 }}>{t('myArticles.table.status')}</th>
-                  <th style={{ width: 100 }}>{t('myArticles.table.category')}</th>
-                  <th style={{ width: 150 }}>{t('myArticles.table.created')}</th>
-                  <th style={{ width: 150 }}>{t('myArticles.table.updated')}</th>
-                  <th style={{ minWidth: 260 }}>{t('myArticles.table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((article) => (
-                  <tr key={article.id}>
-                    <td>
-                      <Typography level="body-sm" sx={{ color: 'text.secondary', fontWeight: 'md' }}>
-                        {article.title}
-                      </Typography>
-                      <Typography level="body-xs" sx={{ mt: 0.5 }}>
-                        {article.excerpt?.substring(0, 100)}...
-                      </Typography>
-                    </td>
-                    <td>
-                      <Chip
-                        size="sm"
-                        variant="soft"
-                        color={getStatusColor(article.status)}
-                        sx={{ minWidth: 60, justifyContent: 'center' }}
-                      >
-                        {article.status}
-                      </Chip>
-                    </td>
-                    <td>
-                      <Typography level="body-sm" sx={{ minWidth: 60, maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {article.category?.name}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
-                        {formatDate(article.createdAt)}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
-                        {formatDate(article.updatedAt)}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', minWidth: 280, gap: 0.5 }}>
-                        {/* Details Button - always visible */}
-                        <Button
+            <>
+              <Table>
+                <thead>
+                  <tr>
+                    <th>{t('myArticles.table.title')}</th>
+                    <th style={{ width: 80 }}>{t('myArticles.table.status')}</th>
+                    <th style={{ width: 100 }}>{t('myArticles.table.category')}</th>
+                    <th style={{ width: 150 }}>{t('myArticles.table.created')}</th>
+                    <th style={{ width: 150 }}>{t('myArticles.table.updated')}</th>
+                    <th style={{ minWidth: 260 }}>{t('myArticles.table.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedPageNews.map((article) => (
+                    <tr key={article.id}>
+                      <td>
+                        <Typography level="body-sm" sx={{ color: 'text.secondary', fontWeight: 'md' }}>
+                          {article.title}
+                        </Typography>
+                        <Typography level="body-xs" sx={{ mt: 0.5 }}>
+                          {article.excerpt?.substring(0, 100)}...
+                        </Typography>
+                      </td>
+                      <td>
+                        <Chip
                           size="sm"
-                          variant="outlined"
-                          color="neutral"
-                          onClick={() => navigate(`/writer/articles/${article.id}`)}
-                          sx={{ minWidth: 'auto', px: 1 }}
+                          variant="soft"
+                          color={getStatusColor(article.status)}
+                          sx={{ minWidth: 60, justifyContent: 'center' }}
                         >
-                          {t('myArticles.actions.details')}
-                        </Button>
-
-                        {/* View Public Button - only for published articles */}
-                        {article.status?.toLowerCase() === 'published' && (
-                          <Button
-                            size="sm"
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => navigate(`/news/${article.slug}`)}
-                            sx={{ minWidth: 'auto', px: 1 }}
-                          >
-                            {t('myArticles.actions.viewPublic')}
-                          </Button>
-                        )}
-
-                        {/* Edit Button - only for draft and rejected articles */}
-                        {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                          {article.status}
+                        </Chip>
+                      </td>
+                      <td>
+                        <Typography level="body-sm" sx={{ minWidth: 60, maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {article.category?.name}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
+                          {formatDate(article.createdAt)}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Typography level="body-sm" sx={{ minWidth: 130, whiteSpace: 'nowrap' }}>
+                          {formatDate(article.updatedAt)}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', minWidth: 280, gap: 0.5 }}>
+                          {/* Details Button - always visible */}
                           <Button
                             size="sm"
                             variant="outlined"
                             color="neutral"
-                            onClick={() => navigate(`/articles/edit/${article.id}`)}
+                            onClick={() => navigate(`/writer/articles/${article.id}`)}
                             sx={{ minWidth: 'auto', px: 1 }}
                           >
-                            ✏️ {t('common.edit')}
+                            {t('myArticles.actions.details')}
                           </Button>
-                        )}
 
-                        {/* Duplicate Button - always visible */}
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          color="neutral"
-                          onClick={() => navigate(`/articles/duplicate/${article.id}`)}
-                          sx={{ minWidth: 'auto', px: 1 }}
-                        >
-                          📋 {t('myArticles.actions.duplicate')}
-                        </Button>
+                          {/* View Public Button - only for published articles */}
+                          {article.status?.toLowerCase() === 'published' && (
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => navigate(`/news/${article.slug}`)}
+                              sx={{ minWidth: 'auto', px: 1 }}
+                            >
+                              {t('myArticles.actions.viewPublic')}
+                            </Button>
+                          )}
 
-                        {/* Submit/Resubmit Button - for draft and rejected articles */}
-                        {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                          {/* Edit Button - only for draft and rejected articles */}
+                          {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="neutral"
+                              onClick={() => navigate(`/articles/edit/${article.id}`)}
+                              sx={{ minWidth: 'auto', px: 1 }}
+                            >
+                              ✏️ {t('common.edit')}
+                            </Button>
+                          )}
+
+                          {/* Duplicate Button - always visible */}
                           <Button
                             size="sm"
-                            variant="solid"
-                            color="success"
-                            onClick={() => handleSubmitForReview(article)}
-                            sx={{
-                              minWidth: 'auto',
-                              px: 1.5,
-                              fontSize: '0.8rem',
-                              whiteSpace: 'nowrap',
-                              fontWeight: 'md'
-                            }}
+                            variant="outlined"
+                            color="neutral"
+                            onClick={() => navigate(`/articles/duplicate/${article.id}`)}
+                            sx={{ minWidth: 'auto', px: 1 }}
                           >
-                            {article.status?.toLowerCase() === 'rejected' ? t('myArticles.resubmit') : t('myArticles.submitForReview')}
+                            📋 {t('myArticles.actions.duplicate')}
                           </Button>
-                        )}
-                      </Stack>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+
+                          {/* Submit/Resubmit Button - for draft and rejected articles */}
+                          {['draft', 'rejected'].includes(article.status?.toLowerCase()) && (
+                            <Button
+                              size="sm"
+                              variant="solid"
+                              color="success"
+                              onClick={() => handleSubmitForReview(article)}
+                              sx={{
+                                minWidth: 'auto',
+                                px: 1.5,
+                                fontSize: '0.8rem',
+                                whiteSpace: 'nowrap',
+                                fontWeight: 'md'
+                              }}
+                            >
+                              {article.status?.toLowerCase() === 'rejected' ? t('myArticles.resubmit') : t('myArticles.submitForReview')}
+                            </Button>
+                          )}
+                        </Stack>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              {/* Pagination for Published */}
+              {articleTotalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={articleTotalPages}
+                    onPageChange={handlePageChange}
+                    showFirstLast={true}
+                    showPrevNext={true}
+                    maxButtons={5}
+                    size="md"
+                    variant="outlined"
+                  />
+                </Box>
+              )}
+              {/* Results Info */}
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+                  {t('news.showing')} {articleStart + 1}-{Math.min(articleEnd, articleTotal)} {t('news.of')} {articleTotal} {t('news.articles')}
+                </Typography>
+              </Box>
+            </>
           )}
         </CardContent>
       </Card>

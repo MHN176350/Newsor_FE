@@ -141,7 +141,7 @@ export default function ReviewArticlesPage() {
             </Box>
           ) : (
             <>
-              <Table sx={{ '& thead th:nth-child(1)': { width: '40%' } }}>
+              <Table sx={{ '& thead th:nth-of-type(1)': { width: '40%' } }}>
                 <thead>
                   <tr>
                     <th>{t('reviewArticles.table.article')}</th>
