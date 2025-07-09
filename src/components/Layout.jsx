@@ -173,7 +173,7 @@ export default function Layout({ children }) {
               )}
               
               {/* Managers can review articles */}
-              {user?.profile?.role?.toLowerCase() === 'manager' && (
+              {['manager', 'admin'].includes(user?.profile?.role?.toLowerCase()) && (
                 <Button
                   variant="soft"
                   component={Link}
@@ -189,7 +189,7 @@ export default function Layout({ children }) {
               )}
               
               {/* Additional navigation for authenticated users */}
-              <Button
+              {/* <Button
                 variant="plain"
                 component={Link}
                 to="/profile"
@@ -199,7 +199,7 @@ export default function Layout({ children }) {
                 }}
               >
                 {t('navigation.profile')}
-              </Button>
+              </Button> */}
               {user?.profile?.role?.toLowerCase() === 'admin' && (
                 <Button
                   variant="plain"
@@ -290,6 +290,7 @@ export default function Layout({ children }) {
                   <Typography level="body-sm" sx={{ fontWeight: 'md', color: 'text.primary' }}>
                     {getUserDisplayName()}
                   </Typography>
+                  <span style={{fontSize: '1.1em', color: '#888', marginLeft: '-4px' }}>▾</span>
                 </MenuButton>
                 <Menu placement="bottom-end" sx={{ zIndex: 1300 }}>
                   <MenuItem onClick={() => navigate('/profile')}>

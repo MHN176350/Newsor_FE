@@ -1,15 +1,15 @@
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Button, 
-  Grid, 
-  Stack, 
-  Chip, 
-  Table, 
-  Input, 
-  FormControl, 
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  Grid,
+  Stack,
+  Chip,
+  Table,
+  Input,
+  FormControl,
   FormLabel,
   Modal,
   ModalDialog,
@@ -26,9 +26,9 @@ import {
 import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_CATEGORIES, GET_ADMIN_TAGS, GET_NEWS_LIST } from '../graphql/queries';
-import { 
-  CREATE_CATEGORY, 
-  UPDATE_CATEGORY, 
+import {
+  CREATE_CATEGORY,
+  UPDATE_CATEGORY,
   DELETE_CATEGORY,
   CREATE_TAG,
   UPDATE_TAG,
@@ -36,8 +36,12 @@ import {
   TOGGLE_TAG,
   UPDATE_NEWS_STATUS
 } from '../graphql/mutations';
+import { useTranslation } from 'react-i18next';
+import SearchAndFilter from './SearchAndFilter';
+import Pagination from './Pagination';
 
 export default function ContentManagement() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('categories');
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
@@ -45,6 +49,16 @@ export default function ContentManagement() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState('');
+
+  // Archive tab state for search/filter/paging
+  const [archiveFilters, setArchiveFilters] = useState({
+    search: '',
+    categoryId: '',
+    tagId: '',
+    sortBy: 'newest',
+  });
+  const [archivePage, setArchivePage] = useState(1);
+  const archivePerPage = 10;
 
   // GraphQL hooks
   const { data: categoriesData, loading: categoriesLoading, refetch: refetchCategories } = useQuery(GET_CATEGORIES);
@@ -66,19 +80,17 @@ export default function ContentManagement() {
   const allNews = newsData?.newsList || [];
 
   // Debug logging
-  console.log('Categories data:', categories);
-  console.log('Tags data:', tags);
+
 
   // Filter published news for archiving and archived news for display
-  const publishedNews = allNews.filter(news => news.status === 'published');
-  const archivedNews = allNews.filter(news => news.status === 'archived');
-
+  const publishedNews = allNews.filter(news => news.status?.toLowerCase() === 'published');
+  const archivedNews = allNews.filter(news => news.status?.toLowerCase() === 'archived');
   const handleOpenModal = (type, entity, item = null) => {
     setModalType(type);
     setModalEntity(entity);
     setSelectedItem(item);
     setMessage('');
-    
+
     if (type === 'edit' && item) {
       if (entity === 'category') {
         setFormData({ name: item.name, description: item.description || '' });
@@ -88,7 +100,7 @@ export default function ContentManagement() {
     } else {
       setFormData({});
     }
-    
+
     setShowModal(true);
   };
 
@@ -106,7 +118,7 @@ export default function ContentManagement() {
       const result = await toggleTag({
         variables: { id: parseInt(tag.id) }
       });
-      
+
       if (result.data?.toggleTag?.success) {
         await refetchTags();
         const newStatus = result.data.toggleTag.tag.isActive ? 'activated' : 'deactivated';
@@ -125,7 +137,7 @@ export default function ContentManagement() {
   const handleSubmit = async () => {
     try {
       let result;
-      
+
       if (modalEntity === 'category') {
         if (modalType === 'create') {
           result = await createCategory({
@@ -137,10 +149,10 @@ export default function ContentManagement() {
           }
         } else if (modalType === 'edit') {
           result = await updateCategory({
-            variables: { 
-              id: parseInt(selectedItem.id), 
-              name: formData.name, 
-              description: formData.description 
+            variables: {
+              id: parseInt(selectedItem.id),
+              name: formData.name,
+              description: formData.description
             }
           });
           if (result.data?.updateCategory?.success) {
@@ -168,8 +180,8 @@ export default function ContentManagement() {
           }
         } else if (modalType === 'edit') {
           result = await updateTag({
-            variables: { 
-              id: parseInt(selectedItem.id), 
+            variables: {
+              id: parseInt(selectedItem.id),
               name: formData.name
             }
           });
@@ -190,8 +202,8 @@ export default function ContentManagement() {
       } else if (modalEntity === 'news') {
         if (modalType === 'archive') {
           result = await updateNewsStatus({
-            variables: { 
-              id: parseInt(selectedItem.id), 
+            variables: {
+              id: parseInt(selectedItem.id),
               status: 'archived',
               reviewComment: 'Archived by admin'
             }
@@ -202,8 +214,8 @@ export default function ContentManagement() {
           }
         } else if (modalType === 'unarchive') {
           result = await updateNewsStatus({
-            variables: { 
-              id: parseInt(selectedItem.id), 
+            variables: {
+              id: parseInt(selectedItem.id),
               status: 'published',
               reviewComment: 'Restored from archive by admin'
             }
@@ -215,8 +227,8 @@ export default function ContentManagement() {
         } else if (modalType === 'delete') {
           // For now, we'll set status to 'deleted' instead of actually deleting
           result = await updateNewsStatus({
-            variables: { 
-              id: parseInt(selectedItem.id), 
+            variables: {
+              id: parseInt(selectedItem.id),
               status: 'deleted',
               reviewComment: 'Permanently deleted by admin'
             }
@@ -244,14 +256,14 @@ export default function ContentManagement() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    
+
     try {
       const date = new Date(dateString);
       // Check if date is valid
       if (isNaN(date.getTime())) {
         return 'Invalid Date';
       }
-      
+
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -274,10 +286,88 @@ export default function ContentManagement() {
     }
   };
 
+  // Filtering and sorting logic for published/archived news
+  const filterAndSortNews = (newsList) => {
+    let filtered = [...newsList];
+    // Search by title
+    if (archiveFilters.search) {
+      filtered = filtered.filter(n => n.title?.toLowerCase().includes(archiveFilters.search.toLowerCase()));
+    }
+    // Filter by category
+    if (archiveFilters.categoryId) {
+      filtered = filtered.filter(n => n.category?.id?.toString() === archiveFilters.categoryId.toString());
+    }
+    // Filter by tag (if tags are available on news)
+    if (archiveFilters.tagId) {
+      filtered = filtered.filter(n => n.tags?.some(tag => tag.id?.toString() === archiveFilters.tagId.toString()));
+    }
+    // Sort
+    switch (archiveFilters.sortBy) {
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case 'title_asc':
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'title_desc':
+        filtered.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'author_asc':
+        filtered.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return aName.localeCompare(bName);
+        });
+        break;
+      case 'author_desc':
+        filtered.sort((a, b) => {
+          const aName = `${a.author?.firstName || ''} ${a.author?.lastName || ''}`.trim();
+          const bName = `${b.author?.firstName || ''} ${b.author?.lastName || ''}`.trim();
+          return bName.localeCompare(aName);
+        });
+        break;
+      case 'newest':
+      default:
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+    }
+    return filtered;
+  };
+
+  // Published
+  const filteredPublished = filterAndSortNews(publishedNews);
+  const publishedTotal = filteredPublished.length;
+  const publishedTotalPages = Math.ceil(publishedTotal / archivePerPage);
+  const publishedStart = (archivePage - 1) * archivePerPage;
+  const publishedEnd = publishedStart + archivePerPage;
+  const publishedPageNews = filteredPublished.slice(publishedStart, publishedEnd);
+
+  // Archived
+  const filteredArchived = filterAndSortNews(archivedNews);
+  const archivedTotal = filteredArchived.length;
+  const archivedTotalPages = Math.ceil(archivedTotal / archivePerPage);
+  const archivedStart = (archivePage - 1) * archivePerPage;
+  const archivedEnd = archivedStart + archivePerPage;
+  const archivedPageNews = filteredArchived.slice(archivedStart, archivedEnd);
+
+  // Handlers
+  const handleArchiveSearch = (searchTerm) => {
+    setArchiveFilters(prev => ({ ...prev, search: searchTerm }));
+    setArchivePage(1);
+  };
+  const handleArchiveFilter = (filters) => {
+    setArchiveFilters(filters);
+    setArchivePage(1);
+  };
+  const handleArchivePageChange = (page) => {
+    setArchivePage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <Box>
       <Typography level="h3" sx={{ mb: 3, color: 'var(--joy-palette-text-primary)' }}>
-        Content Management
+        {t('contentManagement.title')}
       </Typography>
 
       {/* Tab Navigation */}
@@ -287,21 +377,21 @@ export default function ContentManagement() {
           size="sm"
           onClick={() => setActiveTab('categories')}
         >
-          📁 Categories
+          {t('contentManagement.categoriesTab')}
         </Button>
         <Button
           variant={activeTab === 'tags' ? 'solid' : 'outlined'}
           size="sm"
           onClick={() => setActiveTab('tags')}
         >
-          🏷️ Tags
+          {t('contentManagement.tagsTab')}
         </Button>
         <Button
           variant={activeTab === 'archive' ? 'solid' : 'outlined'}
           size="sm"
           onClick={() => setActiveTab('archive')}
         >
-          📦 Archive News
+          {t('contentManagement.archiveTab')}
         </Button>
       </Stack>
 
@@ -310,13 +400,13 @@ export default function ContentManagement() {
         <Card variant="outlined">
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography level="h4">Categories ({categories.length})</Typography>
+              <Typography level="h4">{t('contentManagement.categories')} ({categories.length})</Typography>
               <Button
                 variant="solid"
                 size="sm"
                 onClick={() => handleOpenModal('create', 'category')}
               >
-                 Add Category
+                {t('contentManagement.addCategory')}
               </Button>
             </Box>
 
@@ -327,18 +417,18 @@ export default function ContentManagement() {
             ) : categories.length === 0 ? (
               <Box textAlign="center" py={4}>
                 <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  No categories found
+                  {t('contentManagement.noCategories')}
                 </Typography>
               </Box>
             ) : (
               <Table>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Articles</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th>{t('contentManagement.tableTitle')}</th>
+                    <th>{t('contentManagement.categoryDescription')}</th>
+                    <th>{t('contentManagement.categoryArticles')}</th>
+                    <th>{t('contentManagement.categoryCreated')}</th>
+                    <th>{t('contentManagement.categoryActions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -354,7 +444,7 @@ export default function ContentManagement() {
                       </td>
                       <td>
                         <Typography level="body-sm">
-                          {category.description || 'No description'}
+                          {category.description || t('contentManagement.noDescription')}
                         </Typography>
                       </td>
                       <td>
@@ -374,7 +464,7 @@ export default function ContentManagement() {
                             variant="outlined"
                             onClick={() => handleOpenModal('edit', 'category', category)}
                           >
-                            Edit
+                            {t('contentManagement.edit')}
                           </Button>
                           <Button
                             size="sm"
@@ -382,7 +472,7 @@ export default function ContentManagement() {
                             color="danger"
                             onClick={() => handleOpenModal('delete', 'category', category)}
                           >
-                            Delete
+                            {t('contentManagement.delete')}
                           </Button>
                         </Stack>
                       </td>
@@ -400,20 +490,20 @@ export default function ContentManagement() {
         <Card variant="outlined">
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography level="h4">Tags ({tags.length})</Typography>
+              <Typography level="h4">{t('contentManagement.tags')} ({tags.length})</Typography>
               <Button
                 variant="solid"
                 size="sm"
                 onClick={() => handleOpenModal('create', 'tag')}
               >
-                ➕ Add Tag
+                {t('contentManagement.addTag')}
               </Button>
             </Box>
 
             {/* Success/Error Message Display */}
             {message && (
-              <Alert 
-                color={message.includes('successfully') ? 'success' : 'danger'} 
+              <Alert
+                color={message.includes(t('contentManagement.success')) ? 'success' : 'danger'}
                 sx={{ mb: 3 }}
                 onClose={() => setMessage('')}
               >
@@ -428,15 +518,15 @@ export default function ContentManagement() {
             ) : tags.length === 0 ? (
               <Box textAlign="center" py={4}>
                 <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  No tags found
+                  {t('contentManagement.noTags')}
                 </Typography>
               </Box>
             ) : (
               <Grid container spacing={2}>
                 {tags.map((tag) => (
                   <Grid key={tag.id} xs={12} sm={6} md={4}>
-                    <Card 
-                      variant="soft" 
+                    <Card
+                      variant="soft"
                       size="sm"
                       sx={{
                         opacity: tag.isActive ? 1 : 0.6,
@@ -449,13 +539,13 @@ export default function ContentManagement() {
                             <Typography level="body-md" sx={{ fontWeight: 'md' }}>
                               #{tag.name}
                             </Typography>
-                            <Chip 
-                              size="sm" 
-                              variant="soft" 
+                            <Chip
+                              size="sm"
+                              variant="soft"
                               color={tag.isActive ? 'success' : 'neutral'}
                               sx={{ mt: 0.5 }}
                             >
-                              {tag.isActive ? 'Active' : 'Inactive'}
+                              {tag.isActive ? t('contentManagement.tagActive') : t('contentManagement.tagInactive')}
                             </Chip>
                           </Box>
                           <Stack direction="row" spacing={0.5} alignItems="center">
@@ -478,11 +568,11 @@ export default function ContentManagement() {
                           /{tag.slug}
                         </Typography>
                         <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 1 }}>
-                          Created: {formatDate(tag.createdAt)}
+                          {t('contentManagement.tagCreated')}: {formatDate(tag.createdAt)}
                         </Typography>
                         {!tag.isActive && (
                           <Typography level="body-xs" sx={{ color: 'warning.500', mt: 1, fontStyle: 'italic' }}>
-                            ⚠️ Articles with this tag are archived
+                            {t('contentManagement.tagToggleWarning')}
                           </Typography>
                         )}
                       </CardContent>
@@ -495,206 +585,252 @@ export default function ContentManagement() {
         </Card>
       )}
 
-      {/* Archive News Tab */}
+      {/* Archive Tab */}
       {activeTab === 'archive' && (
         <Box>
-          {/* Published Articles Section */}
+          {/* Search and Filter for Archive */}
+          <SearchAndFilter
+            onSearch={handleArchiveSearch}
+            onFilter={handleArchiveFilter}
+            categories={categories}
+            tags={tags}
+            loading={newsLoading}
+            initialFilters={archiveFilters}
+          />
+          {/* Published Articles Table with Paging */}
           <Card variant="outlined" sx={{ mb: 4 }}>
             <CardContent>
               <Box sx={{ mb: 3 }}>
                 <Typography level="h4" sx={{ mb: 1 }}>
-                  📰 Published Articles ({publishedNews.length})
+                  {t('contentManagement.publishedArticles')} ({publishedTotal})
                 </Typography>
                 <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  Articles that can be archived to remove from public view
+                  {t('contentManagement.publishedArticlesDesc')}
                 </Typography>
               </Box>
-
               {newsLoading ? (
                 <Box textAlign="center" py={4}>
                   <CircularProgress />
                 </Box>
-              ) : publishedNews.length === 0 ? (
+              ) : publishedTotal === 0 ? (
                 <Box textAlign="center" py={4}>
                   <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                    No published articles to archive
+                    {t('contentManagement.noPublishedArticles')}
                   </Typography>
                 </Box>
               ) : (
-                <Table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Author</th>
-                      <th>Category</th>
-                      <th>Published</th>
-                      <th>Views</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {publishedNews.map((article) => (
-                      <tr key={article.id}>
-                        <td>
-                          <Typography level="body-sm" sx={{ fontWeight: 'md' }}>
-                            {article.title}
-                          </Typography>
-                          <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                            {article.excerpt?.substring(0, 80)}...
-                          </Typography>
-                        </td>
-                        <td>
-                          <Typography level="body-sm">
-                            {article.author?.firstName} {article.author?.lastName}
-                          </Typography>
-                        </td>
-                        <td>
-                          <Chip size="sm" variant="soft">
-                            {article.category?.name || 'Uncategorized'}
-                          </Chip>
-                        </td>
-                        <td>
-                          <Typography level="body-sm">
-                            {formatDate(article.publishedAt || article.createdAt)}
-                          </Typography>
-                        </td>
-                        <td>
-                          <Typography level="body-sm">
-                            {article.viewCount || 0}
-                          </Typography>
-                        </td>
-                        <td>
-                          <Button
-                            size="sm"
-                            variant="outlined"
-                            color="warning"
-                            onClick={() => handleOpenModal('archive', 'news', article)}
-                          >
-                            📦 Archive
-                          </Button>
-                        </td>
+                <>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <th>{t('contentManagement.tableTitle')}</th>
+                        <th>{t('contentManagement.tableAuthor')}</th>
+                        <th>{t('contentManagement.tableCategory')}</th>
+                        <th>{t('contentManagement.tablePublished')}</th>
+                        <th>{t('contentManagement.tableActions')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                    </thead>
+                    <tbody>
+                      {publishedPageNews.map((article) => (
+                        <tr key={article.id}>
+                          <td>
+                            <Typography level="body-sm" sx={{ fontWeight: 'md' }}>
+                              {article.title}
+                            </Typography>
+                            <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                              {article.excerpt?.substring(0, 80)}...
+                            </Typography>
+                          </td>
+                          <td>
+                            <Typography level="body-sm">
+                              {article.author?.firstName} {article.author?.lastName}
+                            </Typography>
+                          </td>
+                          <td>
+                            <Chip size="sm" variant="soft">
+                              {article.category?.name || t('contentManagement.noDescription')}
+                            </Chip>
+                          </td>
+                          <td>
+                            <Typography level="body-sm">
+                              {formatDate(article.publishedAt || article.createdAt)}
+                            </Typography>
+                          </td>
+                          <td>
+                            <Button
+                              size="sm"
+                              variant="outlined"
+                              color="warning"
+                              onClick={() => handleOpenModal('archive', 'news', article)}
+                            >
+                              {t('contentManagement.archive')}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                  {/* Pagination for Published */}
+                  {publishedTotalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                      <Pagination
+                        currentPage={archivePage}
+                        totalPages={publishedTotalPages}
+                        onPageChange={handleArchivePageChange}
+                        showFirstLast={true}
+                        showPrevNext={true}
+                        maxButtons={5}
+                        size="md"
+                        variant="outlined"
+                      />
+                    </Box>
+                  )}
+                  {/* Results Info */}
+                  <Box sx={{ textAlign: 'center', mt: 2 }}>
+                    <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+                      {t('news.showing')} {publishedStart + 1}-{Math.min(publishedEnd, publishedTotal)} {t('news.of')} {publishedTotal} {t('news.articles')}
+                    </Typography>
+                  </Box>
+                </>
               )}
             </CardContent>
           </Card>
-
-          {/* Archived Articles Section */}
+          {/* Archived Articles Table with Paging */}
           <Card variant="outlined">
             <CardContent>
               <Box sx={{ mb: 3 }}>
                 <Typography level="h4" sx={{ mb: 1 }}>
-                  📦 Archived Articles ({archivedNews.length})
+                  {t('contentManagement.archivedArticles')} ({archivedTotal})
                 </Typography>
                 <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                  Articles that have been archived and are hidden from public view
+                  {t('contentManagement.archivedArticlesDesc')}
                 </Typography>
               </Box>
-
               {newsLoading ? (
                 <Box textAlign="center" py={4}>
                   <CircularProgress />
                 </Box>
-              ) : archivedNews.length === 0 ? (
+              ) : archivedTotal === 0 ? (
                 <Box textAlign="center" py={4}>
                   <Typography level="body1" sx={{ color: 'var(--joy-palette-text-secondary)' }}>
-                    No archived articles
+                    {t('contentManagement.noArchivedArticles')}
                   </Typography>
                   <Typography level="body-sm" sx={{ color: 'var(--joy-palette-text-tertiary)', mt: 1 }}>
-                    Articles will appear here when they are archived
+                    {t('contentManagement.archivedArticlesHint')}
                   </Typography>
                 </Box>
               ) : (
-                <Table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Author</th>
-                      <th>Category</th>
-                      <th>Archived Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {archivedNews.map((article) => (
-                      <tr key={article.id}>
-                        <td>
-                          <Typography level="body-sm" sx={{ fontWeight: 'md', opacity: 0.7 }}>
-                            {article.title}
-                          </Typography>
-                          <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                            {article.excerpt?.substring(0, 80)}...
-                          </Typography>
-                        </td>
-                        <td>
-                          <Typography level="body-sm">
-                            {article.author?.firstName} {article.author?.lastName}
-                          </Typography>
-                        </td>
-                        <td>
-                          <Chip size="sm" variant="soft" color="neutral">
-                            {article.category?.name || 'Uncategorized'}
-                          </Chip>
-                        </td>
-                        <td>
-                          <Typography level="body-sm">
-                            {formatDate(article.updatedAt || article.createdAt)}
-                          </Typography>
-                        </td>
-                        <td>
-                          <Chip size="sm" variant="soft" color="neutral">
-                            Archived
-                          </Chip>
-                        </td>
-                        <td>
-                          <Stack direction="row" spacing={1}>
-                            <Button
-                              size="sm"
-                              variant="outlined"
-                              color="success"
-                              onClick={() => handleOpenModal('unarchive', 'news', article)}
-                            >
-                              📤 Restore
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outlined"
-                              color="danger"
-                              onClick={() => handleOpenModal('delete', 'news', article)}
-                            >
-                              🗑️ Delete
-                            </Button>
-                          </Stack>
-                        </td>
+                <>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <th>{t('contentManagement.tableTitle')}</th>
+                        <th>{t('contentManagement.tableAuthor')}</th>
+                        <th>{t('contentManagement.tableCategory')}</th>
+                        <th>{t('contentManagement.archivedDate')}</th>
+                        <th>{t('contentManagement.status')}</th>
+                        <th>{t('contentManagement.tableActions')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                    </thead>
+                    <tbody>
+                      {archivedPageNews.map((article) => (
+                        <tr key={article.id}>
+                          <td>
+                            <Typography level="body-sm" sx={{ fontWeight: 'md', opacity: 0.7 }}>
+                              {article.title}
+                            </Typography>
+                            <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                              {article.excerpt?.substring(0, 80)}...
+                            </Typography>
+                          </td>
+                          <td>
+                            <Typography level="body-sm">
+                              {article.author?.firstName} {article.author?.lastName}
+                            </Typography>
+                          </td>
+                          <td>
+                            <Chip size="sm" variant="soft" color="neutral">
+                              {article.category?.name || t('contentManagement.noDescription')}
+                            </Chip>
+                          </td>
+                          <td>
+                            <Typography level="body-sm">
+                              {formatDate(article.updatedAt || article.createdAt)}
+                            </Typography>
+                          </td>
+                          <td>
+                            <Chip size="sm" variant="soft" color="neutral">
+                              {t('contentManagement.archived')}
+                            </Chip>
+                          </td>
+                          <td>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="sm"
+                                variant="outlined"
+                                color="success"
+                                onClick={() => handleOpenModal('unarchive', 'news', article)}
+                              >
+                                {t('contentManagement.restore')}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outlined"
+                                color="danger"
+                                onClick={() => handleOpenModal('delete', 'news', article)}
+                              >
+                                {t('contentManagement.deleteArticle')}
+                              </Button>
+                            </Stack>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                  {/* Pagination for Archived */}
+                  {archivedTotalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                      <Pagination
+                        currentPage={archivePage}
+                        totalPages={archivedTotalPages}
+                        onPageChange={handleArchivePageChange}
+                        showFirstLast={true}
+                        showPrevNext={true}
+                        maxButtons={5}
+                        size="md"
+                        variant="outlined"
+                      />
+                    </Box>
+                  )}
+                  {/* Results Info */}
+                  <Box sx={{ textAlign: 'center', mt: 2 }}>
+                    <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+                      {t('news.showing')} {archivedStart + 1}-{Math.min(archivedEnd, archivedTotal)} {t('news.of')} {archivedTotal} {t('news.articles')}
+                    </Typography>
+                  </Box>
+                </>
               )}
             </CardContent>
           </Card>
         </Box>
       )}
 
-      {/* Action Modal */}
+      {/* Modal */}
       <Modal open={showModal} onClose={handleCloseModal}>
         <ModalDialog sx={{ width: 500 }}>
           <ModalClose />
           <Typography level="h4" sx={{ mb: 2 }}>
-            {modalType === 'create' && `Create ${modalEntity}`}
-            {modalType === 'edit' && `Edit ${modalEntity}`}
-            {modalType === 'delete' && modalEntity === 'news' && 'Delete Article'}
-            {modalType === 'delete' && modalEntity !== 'news' && `Delete ${modalEntity}`}
-            {modalType === 'archive' && 'Archive Article'}
-            {modalType === 'unarchive' && 'Restore Article'}
+            {modalType === 'create' && `${t('contentManagement.create')} ${modalEntity}`}
+            {modalType === 'edit' && `${t('contentManagement.update')} ${modalEntity}`}
+            {modalType === 'delete' && modalEntity === 'news' && t('contentManagement.deleteArticle')}
+            {modalType === 'delete' && modalEntity !== 'news' && `${t('contentManagement.delete')} ${modalEntity}`}
+            {modalType === 'archive' && t('contentManagement.archive') + ' Article'}
+            {modalType === 'unarchive' && t('contentManagement.restore') + ' Article'}
           </Typography>
 
           {message && (
-            <Alert 
-              color={message.includes('success') ? 'success' : 'danger'} 
+            <Alert
+              color={message.includes(t('contentManagement.success')) ? 'success' : 'danger'}
               sx={{ mb: 2 }}
             >
               {message}
@@ -702,114 +838,114 @@ export default function ContentManagement() {
           )}
 
           <Stack spacing={3}>
-            {/* Create/Edit Forms */}
+            {/* Category Form */}
             {(modalType === 'create' || modalType === 'edit') && modalEntity === 'category' && (
               <>
                 <FormControl>
-                  <FormLabel>Category Name</FormLabel>
+                  <FormLabel>{t('contentManagement.categoryName')}</FormLabel>
                   <Input
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter category name"
+                    placeholder={t('contentManagement.categoryName')}
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t('contentManagement.categoryDescription')}</FormLabel>
                   <Textarea
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Enter category description"
+                    placeholder={t('contentManagement.categoryDescriptionPlaceholder')}
                     minRows={3}
                   />
                 </FormControl>
               </>
             )}
 
+            {/* Tag Form */}
             {(modalType === 'create' || modalType === 'edit') && modalEntity === 'tag' && (
               <FormControl>
-                <FormLabel>Tag Name</FormLabel>
+                <FormLabel>{t('contentManagement.tagName')}</FormLabel>
                 <Input
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter tag name"
+                  placeholder={t('contentManagement.tagName')}
                 />
               </FormControl>
             )}
 
-            {/* Delete Confirmation */}
+            {/* Delete Category/Tag Confirm */}
             {modalType === 'delete' && modalEntity !== 'news' && (
               <Alert color="warning">
                 <Typography level="body-sm">
-                  Are you sure you want to delete "{selectedItem?.name}"? This action cannot be undone.
+                  {t('contentManagement.deleteCategoryConfirm', { name: selectedItem?.name })}
                 </Typography>
               </Alert>
             )}
 
-            {/* Delete News Confirmation */}
+            {/* Delete News Confirm */}
             {modalType === 'delete' && modalEntity === 'news' && (
               <Alert color="danger">
                 <Typography level="body-sm">
-                  Are you sure you want to permanently delete "{selectedItem?.title}"? This action cannot be undone.
+                  {t('contentManagement.deleteArticleConfirm', { title: selectedItem?.title })}
                 </Typography>
                 <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
-                  This will permanently remove the article from the system.
+                  {t('contentManagement.deleteArticleDesc')}
                 </Typography>
               </Alert>
             )}
 
-            {/* Archive Confirmation */}
+            {/* Archive News Confirm */}
             {modalType === 'archive' && modalEntity === 'news' && (
               <Alert color="warning">
                 <Typography level="body-sm">
-                  Are you sure you want to archive "{selectedItem?.title}"? This will remove it from public view.
+                  {t('contentManagement.archiveArticleConfirm', { title: selectedItem?.title })}
                 </Typography>
                 <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
-                  You can restore it later if needed.
+                  {t('contentManagement.archiveArticleDesc')}
                 </Typography>
               </Alert>
             )}
 
-            {/* Unarchive Confirmation */}
+            {/* Unarchive News Confirm */}
             {modalType === 'unarchive' && modalEntity === 'news' && (
               <Alert color="success">
                 <Typography level="body-sm">
-                  Restore "{selectedItem?.title}" and make it publicly visible again?
+                  {t('contentManagement.restoreArticleConfirm', { title: selectedItem?.title })}
                 </Typography>
                 <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
-                  This will publish the article and make it visible to readers.
+                  {t('contentManagement.restoreArticleDesc')}
                 </Typography>
               </Alert>
             )}
 
-            {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
               <Button
                 variant="plain"
                 onClick={handleCloseModal}
               >
-                Cancel
+                {t('contentManagement.cancel')}
               </Button>
               <Button
                 variant="solid"
                 color={
-                  modalType === 'delete' ? 'danger' : 
-                  modalType === 'archive' ? 'warning' : 
-                  modalType === 'unarchive' ? 'success' : 
-                  'primary'
+                  modalType === 'delete' ? 'danger' :
+                    modalType === 'archive' ? 'warning' :
+                      modalType === 'unarchive' ? 'success' :
+                        'primary'
                 }
                 onClick={handleSubmit}
                 disabled={
-                  (modalType === 'create' || modalType === 'edit') && 
+                  (modalType === 'create' || modalType === 'edit') &&
                   modalEntity === 'category' && !formData.name ||
-                  (modalType === 'create' || modalType === 'edit') && 
+                  (modalType === 'create' || modalType === 'edit') &&
                   modalEntity === 'tag' && !formData.name
                 }
               >
-                {modalType === 'create' && 'Create'}
-                {modalType === 'edit' && 'Update'}
-                {modalType === 'delete' && 'Delete'}
-                {modalType === 'archive' && 'Archive'}
-                {modalType === 'unarchive' && 'Restore'}
+                {modalType === 'create' && t('contentManagement.create')}
+                {modalType === 'edit' && t('contentManagement.update')}
+                {modalType === 'delete' && t('contentManagement.delete')}
+                {modalType === 'archive' && t('contentManagement.archive')}
+                {modalType === 'unarchive' && t('contentManagement.restore')}
               </Button>
             </Stack>
           </Stack>

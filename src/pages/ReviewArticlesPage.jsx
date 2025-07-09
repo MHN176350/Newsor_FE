@@ -19,6 +19,7 @@ import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 import { useTranslation } from 'react-i18next';
+import Pagination from '../components/Pagination';
 
 export default function ReviewArticlesPage() {
   const { user, isAuthenticated } = useAuth();
@@ -30,6 +31,15 @@ export default function ReviewArticlesPage() {
   });
 
   const articles = data?.newsForReview || [];
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const totalItems = articles.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentArticles = articles.slice(startIndex, endIndex);
 
   // Check authentication
   if (!isAuthenticated) {
@@ -130,94 +140,117 @@ export default function ReviewArticlesPage() {
               </Typography>
             </Box>
           ) : (
-            <Table sx={{ '& thead th:nth-child(1)': { width: '40%' } }}>
-              <thead>
-                <tr>
-                  <th>{t('reviewArticles.table.article')}</th>
-                  <th>{t('reviewArticles.table.author')}</th>
-                  <th>{t('reviewArticles.table.status')}</th>
-                  <th>{t('reviewArticles.table.submitted')}</th>
-                  <th>{t('reviewArticles.table.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((article) => (
-                  <tr key={article.id}>
-                    <td>
-                      <Box display="flex" gap={2} alignItems="flex-start">
-                        {article.featuredImageUrl && (
-                          <img
-                            src={processImageUrlForDisplay(article.featuredImageUrl)}
-                            alt={article.title}
-                            style={{
-                              width: 80,
-                              height: 60,
-                              objectFit: 'cover',
-                              borderRadius: 8,
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <Box>
-                          <Typography level="title-sm" sx={{ mb: 1 }}>
-                            {article.title}
-                          </Typography>
-                          <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                            {article.excerpt}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </td>
-                    <td>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Avatar size="sm">
-                          {article.author.firstName?.charAt(0) || article.author.username?.charAt(0) || 'U'}
-                        </Avatar>
-                        <Box>
-                          <Typography level="body-sm">
-                            {`${article.author.firstName || ''} ${article.author.lastName || ''}`.trim() || 
-                             article.author.username}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </td>
-                    <td>
-                      <Chip
-                        variant="soft"
-                        color={getStatusColor(article.status)}
-                        size="sm"
-                      >
-                        {article.status}
-                      </Chip>
-                    </td>
-                    <td>
-                      <Typography level="body-sm">
-                        {formatDate(article.createdAt)}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          size="sm"
-                          variant="outlined"
-                          onClick={() => navigate(`/review/article/${article.slug}`)}
-                        >
-                          {t('reviewArticles.actions.review')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="plain"
-                          color="neutral"
-                          onClick={() => navigate(`/news/${article.slug}`)}
-                        >
-                          {t('reviewArticles.actions.preview')}
-                        </Button>
-                      </Stack>
-                    </td>
+            <>
+              <Table sx={{ '& thead th:nth-child(1)': { width: '40%' } }}>
+                <thead>
+                  <tr>
+                    <th>{t('reviewArticles.table.article')}</th>
+                    <th>{t('reviewArticles.table.author')}</th>
+                    <th>{t('reviewArticles.table.status')}</th>
+                    <th>{t('reviewArticles.table.submitted')}</th>
+                    <th>{t('reviewArticles.table.actions')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {currentArticles.map((article) => (
+                    <tr key={article.id}>
+                      <td>
+                        <Box display="flex" gap={2} alignItems="flex-start">
+                          {article.featuredImageUrl && (
+                            <img
+                              src={processImageUrlForDisplay(article.featuredImageUrl)}
+                              alt={article.title}
+                              style={{
+                                width: 80,
+                                height: 60,
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          <Box>
+                            <Typography level="title-sm" sx={{ mb: 1 }}>
+                              {article.title}
+                            </Typography>
+                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                              {article.excerpt}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </td>
+                      <td>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Avatar size="sm">
+                            {article.author.firstName?.charAt(0) || article.author.username?.charAt(0) || 'U'}
+                          </Avatar>
+                          <Box>
+                            <Typography level="body-sm">
+                              {`${article.author.firstName || ''} ${article.author.lastName || ''}`.trim() || 
+                               article.author.username}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </td>
+                      <td>
+                        <Chip
+                          variant="soft"
+                          color={getStatusColor(article.status)}
+                          size="sm"
+                        >
+                          {article.status}
+                        </Chip>
+                      </td>
+                      <td>
+                        <Typography level="body-sm">
+                          {formatDate(article.createdAt)}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            size="sm"
+                            variant="outlined"
+                            onClick={() => navigate(`/review/article/${article.slug}`)}
+                          >
+                            {t('reviewArticles.actions.review')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => navigate(`/news/${article.slug}`)}
+                          >
+                            {t('reviewArticles.actions.preview')}
+                          </Button>
+                        </Stack>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    showFirstLast={true}
+                    showPrevNext={true}
+                    maxButtons={5}
+                    size="md"
+                    variant="outlined"
+                  />
+                </Box>
+              )}
+              {/* Results Info */}
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Typography level="body3" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+                  {t('news.showing')} {startIndex + 1}-{Math.min(endIndex, totalItems)} {t('news.of')} {totalItems} {t('news.articles')}
+                </Typography>
+              </Box>
+            </>
           )}
         </CardContent>
       </Card>

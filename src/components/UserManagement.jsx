@@ -20,8 +20,10 @@ import { useQuery, useMutation } from '@apollo/client';
 import { GET_USERS } from '../graphql/queries';
 import { CHANGE_USER_ROLE } from '../graphql/mutations';
 import { getRoleColor, USER_ROLES } from '../utils/constants';
+import { useTranslation } from 'react-i18next';
 
 export default function UserManagement() {
+  const { t } = useTranslation();
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +34,7 @@ export default function UserManagement() {
   const [changeUserRole, { loading: changing }] = useMutation(CHANGE_USER_ROLE, {
     onCompleted: (data) => {
       if (data.changeUserRole.success) {
-        setSuccessMessage('User role updated successfully!');
+        setSuccessMessage(t('userManagement.successUpdate'));
         setShowModal(false);
         setSelectedUser(null);
         setNewRole('');
@@ -40,11 +42,11 @@ export default function UserManagement() {
         // Clear success message after 3 seconds
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        setErrorMessage(data.changeUserRole.errors?.join(', ') || 'Failed to update user role');
+        setErrorMessage(data.changeUserRole.errors?.join(', ') || t('userManagement.failedUpdate'));
       }
     },
     onError: (error) => {
-      setErrorMessage('Error updating user role: ' + error.message);
+      setErrorMessage(t('userManagement.errorUpdate') + ': ' + error.message);
     },
   });
 
@@ -74,9 +76,9 @@ export default function UserManagement() {
   };
 
   const roleOptions = [
-    { value: USER_ROLES.READER, label: 'Reader', color: 'primary' },
-    { value: USER_ROLES.WRITER, label: 'Writer', color: 'success' },
-    { value: USER_ROLES.MANAGER, label: 'Manager', color: 'warning' },
+    { value: USER_ROLES.READER, label: t('userManagement.roles.reader'), color: 'primary' },
+    { value: USER_ROLES.WRITER, label: t('userManagement.roles.writer'), color: 'success' },
+    { value: USER_ROLES.MANAGER, label: t('userManagement.roles.manager'), color: 'warning' },
     // Admin role is excluded from the dropdown for security reasons
     // Only super admins should be able to create other admins through backend
   ];
@@ -92,7 +94,7 @@ export default function UserManagement() {
   if (error) {
     return (
       <Alert color="danger">
-        Error loading users: {error.message}
+        {t('userManagement.errorLoadingUsers')}: {error.message}
       </Alert>
     );
   }
@@ -100,15 +102,15 @@ export default function UserManagement() {
   return (
     <Box>
       <Typography level="h3" sx={{ mb: 3 }}>
-        User Management
+        {t('userManagement.title')}
       </Typography>
 
       <Box sx={{ mb: 3, p: 2, bgcolor: 'background.level1', borderRadius: 'md' }}>
         <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-          Total Users: {users.length} | Manageable Users: {nonAdminUsers.length}
+          {t('userManagement.totalUsers', { total: users.length, manageable: nonAdminUsers.length })}
         </Typography>
         <Typography level="body-xs" sx={{ color: 'text.tertiary', mt: 0.5 }}>
-          Admin users are not shown in the role management table for security reasons.
+          {t('userManagement.adminNotShown')}
         </Typography>
       </Box>
 
@@ -129,21 +131,21 @@ export default function UserManagement() {
           {nonAdminUsers.length === 0 ? (
             <Box textAlign="center" py={4}>
               <Typography level="body1" sx={{ color: 'text.secondary' }}>
-                No manageable users found.
+                {t('userManagement.noUsers')}
               </Typography>
               <Typography level="body-sm" sx={{ color: 'text.tertiary', mt: 1 }}>
-                All users are either administrators or there are no users in the system.
+                {t('userManagement.noUsersSub')}
               </Typography>
             </Box>
           ) : (
             <Table>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Current Role</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>{t('userManagement.table.user')}</th>
+                  <th>{t('userManagement.table.email')}</th>
+                  <th>{t('userManagement.table.currentRole')}</th>
+                  <th>{t('userManagement.table.status')}</th>
+                  <th>{t('userManagement.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,7 +182,7 @@ export default function UserManagement() {
                         size="sm" 
                         color={user.isActive ? 'success' : 'neutral'}
                       >
-                        {user.isActive ? 'Active' : 'Inactive'}
+                        {user.isActive ? t('userManagement.active') : t('userManagement.inactive')}
                       </Chip>
                     </td>
                     <td>
@@ -189,7 +191,7 @@ export default function UserManagement() {
                         variant="outlined"
                         onClick={() => handleRoleChange(user)}
                       >
-                        Change Role
+                        {t('userManagement.changeRole')}
                       </Button>
                     </td>
                   </tr>
@@ -205,23 +207,23 @@ export default function UserManagement() {
         <ModalDialog sx={{ minWidth: 400 }}>
           <ModalClose />
           <Typography level="h4" sx={{ mb: 2 }}>
-            Change User Role
+            {t('userManagement.changeRoleTitle')}
           </Typography>
           
           {selectedUser && (
             <Stack spacing={3}>
               <Box>
                 <Typography level="body-sm" sx={{ mb: 1 }}>
-                  User: <strong>{selectedUser.firstName} {selectedUser.lastName} (@{selectedUser.username})</strong>
+                  {t('userManagement.userLabel', { name: `${selectedUser.firstName} ${selectedUser.lastName}`.trim(), username: selectedUser.username })}
                 </Typography>
                 <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                  Current Role: {selectedUser.profile?.role || USER_ROLES.READER}
+                  {t('userManagement.currentRoleLabel', { role: selectedUser.profile?.role || USER_ROLES.READER })}
                 </Typography>
               </Box>
 
               <Box>
                 <Typography level="body-sm" sx={{ mb: 1 }}>
-                  New Role:
+                  {t('userManagement.newRoleLabel')}
                 </Typography>
                 <Select
                   value={newRole}
@@ -246,13 +248,13 @@ export default function UserManagement() {
                   onClick={() => setShowModal(false)}
                   disabled={changing}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   onClick={handleConfirmRoleChange}
                   loading={changing}
                 >
-                  Update Role
+                  {t('userManagement.updateRole')}
                 </Button>
               </Box>
             </Stack>

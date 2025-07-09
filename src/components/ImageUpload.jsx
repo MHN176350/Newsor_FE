@@ -12,6 +12,7 @@ import {
 import { PhotoCamera, Upload, Delete } from '@mui/icons-material';
 import { container } from '../core/container.js';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Reusable image upload component
@@ -35,6 +36,7 @@ export default function ImageUpload({
   const fileInputRef = useRef(null);
   
   const imageService = container.imageService;
+  const { t } = useTranslation();
 
   // Determine what URL to show for preview
   const previewUrl = useMemo(() => {
@@ -260,10 +262,10 @@ export default function ImageUpload({
 
       {/* Helper Text */}
       <Typography level="body-xs" sx={{ textAlign: 'center', color: 'text.secondary' }}>
-        {variant === 'avatar' && 'Recommended: Square image, max 2MB'}
-        {variant === 'banner' && 'Recommended: 3:1 aspect ratio, max 5MB'}
-        {variant === 'thumbnail' && 'Recommended: 4:3 aspect ratio, high quality processing (max 1600x1200px)'}
-        {variant === 'standard' && `Max size: ${maxSizeInMB}MB`}
+        {variant === 'avatar' && t('imageUpload.helper.avatar', 'Recommended: Square image, max 2MB')}
+        {variant === 'banner' && t('imageUpload.helper.banner', 'Recommended: 3:1 aspect ratio, max 5MB')}
+        {variant === 'thumbnail' && t('imageUpload.helper.thumbnail', 'Recommended: 4:3 aspect ratio, high quality processing (max 1600x1200px)')}
+        {variant === 'standard' && t('imageUpload.helper.standard', `Max size: ${maxSizeInMB}MB`)}
       </Typography>
     </Stack>
   );
