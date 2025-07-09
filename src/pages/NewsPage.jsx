@@ -295,7 +295,7 @@ export default function NewsPage() {
                       alt={news.title}
                       onError={(e) => {
                        
-                        e.target.src = '/static/images/default-news.svg';
+                        e.target.src = '/default-news.svg';
                         e.target.onerror = () => {
               
                           e.target.style.display = 'none';

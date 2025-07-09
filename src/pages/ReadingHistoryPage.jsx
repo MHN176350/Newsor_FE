@@ -135,7 +135,7 @@ export default function ReadingHistoryPage() {
                                             src={processImageUrlForDisplay(item.article.featuredImageUrl)}
                                             alt={item.article.title}
                                             sx={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--joy-radius-sm) var(--joy-radius-sm) 0 0' }}
-                                            onError={e => { e.target.src = '/static/images/default-news.svg'; }}
+                                            onError={e => { e.target.src = '/default-news.svg'; }}
                                         />
                                     )}
                                     <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>

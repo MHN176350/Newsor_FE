@@ -138,7 +138,7 @@ export default function Layout({ children }) {
                   '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                 }}
               >
-                💬 {t('navigation.commentHistory')}
+                 {t('navigation.commentHistory')}
               </Button>
               <Button
                 variant="plain"
@@ -149,7 +149,7 @@ export default function Layout({ children }) {
                   '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
                 }}
               >
-                📖 {t('navigation.readingHistory')}
+                 {t('navigation.readingHistory')}
               </Button>
             </>
           )}
@@ -220,7 +220,7 @@ export default function Layout({ children }) {
           <LanguageSwitcher />
 
           {/* Theme Toggle */}
-          <IconButton
+          {/* <IconButton
             onClick={toggleColorScheme}
             sx={{ 
               borderRadius: '50%',
@@ -229,7 +229,7 @@ export default function Layout({ children }) {
             }}
           >
             {mode === 'dark' ? '☀️' : '🌑'}
-          </IconButton>
+          </IconButton> */}
 
           {/* Auth Section */}
           {isAuthenticated ? (
