@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { Navigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -13,8 +14,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
+
   const { login, loading } = useAuth();
+
+
+  // Redirect if user is already authenticated
+  const { user, isAuthenticated } = useAuth();
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,7 +30,7 @@ export default function LoginPage() {
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear field error when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -34,22 +42,22 @@ export default function LoginPage() {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.username.trim()) {
       errors.username = t('auth.login.usernameRequired');
     }
-    
+
     if (!formData.password.trim()) {
       errors.password = t('auth.login.passwordRequired');
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }

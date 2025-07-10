@@ -5,8 +5,12 @@ import { useMutation } from '@apollo/client';
 import { CREATE_USER } from '../graphql/mutations';
 import { useTranslation } from 'react-i18next';
 import ImageUpload from '../components/ImageUpload';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../core/presentation/hooks/useAuth';
 
 export default function RegisterPage() {
+  const { user, isAuthenticated } = useAuth();
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,6 +24,8 @@ export default function RegisterPage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+
 
   const [createUser, { loading }] = useMutation(CREATE_USER, {
     onCompleted: (data) => {
@@ -37,6 +43,11 @@ export default function RegisterPage() {
     },
   });
 
+  // Redirect if user is already authenticated
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  };
+  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -56,7 +67,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError(t('auth.register.passwordMismatch'));
       return;
@@ -239,11 +250,11 @@ export default function RegisterPage() {
 
           <Typography textAlign="center" sx={{ mt: 3, color: 'var(--joy-palette-text-secondary)' }}>
             {t('auth.register.hasAccount')}{' '}
-            <Link 
-              to="/login" 
-              style={{ 
-                color: 'var(--joy-palette-primary-700)', 
-                textDecoration: 'none' 
+            <Link
+              to="/login"
+              style={{
+                color: 'var(--joy-palette-primary-700)',
+                textDecoration: 'none'
               }}
             >
               {t('auth.register.signIn')}

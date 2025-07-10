@@ -773,14 +773,14 @@ export default function ContentManagement() {
                               >
                                 {t('contentManagement.restore')}
                               </Button>
-                              <Button
+                              {/* <Button
                                 size="sm"
                                 variant="outlined"
                                 color="danger"
                                 onClick={() => handleOpenModal('delete', 'news', article)}
                               >
                                 {t('contentManagement.deleteArticle')}
-                              </Button>
+                              </Button> */}
                             </Stack>
                           </td>
                         </tr>
