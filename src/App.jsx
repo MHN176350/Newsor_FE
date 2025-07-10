@@ -19,6 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CommentHistoryPage from './pages/CommentHistoryPage';
 import ReadingHistoryPage from './pages/ReadingHistoryPage';
+import EvolusoftHomePage from './pages/EvolusoftHomePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Initialize the Clean Architecture container
@@ -30,44 +31,43 @@ function App() {
     <ApolloProvider client={apolloClient}>
       <ThemeProvider>
         <Router>
-          <Layout>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              
-              {/* News/Articles Public Routes */}
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/news/:slug" element={<NewsDetailPage />} />
-              
-              {/* Writer/Author Routes */}
-              <Route path="/my-articles" element={<MyArticlesPage />} />
-              <Route path="/articles/create" element={<CreateArticlePage />} />
-              <Route path="/articles/edit/:id" element={<CreateArticlePage />} />
-              <Route path="/articles/duplicate/:id" element={<CreateArticlePage />} />
-              <Route path="/writer/articles/:id" element={<WriterNewsDetailPage />} />
-              
-              {/* Editor/Manager Routes */}
-              <Route path="/review" element={<ReviewArticlesPage />} />
-              <Route path="/review/articles" element={<ReviewArticlesPage />} />
-              <Route path="/review/article/:slug" element={<ReviewNewsPage />} />
-              
-              {/* User Profile */}
-              <Route path="/profile" element={<ProfilePage />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboardPage />} />
-              <Route path="/comment-history" element={<CommentHistoryPage />} />
-              <Route path="/reading-history" element={<ReadingHistoryPage />} />
-              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-              
+          <Routes>
+            {/* EvoluSoft Homepage - No Layout wrapper */}
+            <Route path="/evolusoft" element={<EvolusoftHomePage />} />
+            <Route path="/" element={<EvolusoftHomePage />} />
             
-              
-              {/* 404 Not Found - This should be the last route */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Layout>
+            {/* All other routes use Layout */}
+            <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+            <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
+            
+            {/* News/Articles Public Routes */}
+            <Route path="/news" element={<Layout><NewsPage /></Layout>} />
+            <Route path="/news/:slug" element={<Layout><NewsDetailPage /></Layout>} />
+            
+            {/* Writer/Author Routes */}
+            <Route path="/my-articles" element={<Layout><MyArticlesPage /></Layout>} />
+            <Route path="/articles/create" element={<Layout><CreateArticlePage /></Layout>} />
+            <Route path="/articles/edit/:id" element={<Layout><CreateArticlePage /></Layout>} />
+            <Route path="/articles/duplicate/:id" element={<Layout><CreateArticlePage /></Layout>} />
+            <Route path="/writer/articles/:id" element={<Layout><WriterNewsDetailPage /></Layout>} />
+            
+            {/* Editor/Manager Routes */}
+            <Route path="/review" element={<Layout><ReviewArticlesPage /></Layout>} />
+            <Route path="/review/articles" element={<Layout><ReviewArticlesPage /></Layout>} />
+            <Route path="/review/article/:slug" element={<Layout><ReviewNewsPage /></Layout>} />
+            
+            {/* User Profile */}
+            <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<Layout><AdminDashboardPage /></Layout>} />
+            <Route path="/comment-history" element={<Layout><CommentHistoryPage /></Layout>} />
+            <Route path="/reading-history" element={<Layout><ReadingHistoryPage /></Layout>} />
+            <Route path="/admin/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
+            
+            {/* 404 Not Found */}
+            <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+          </Routes>
         </Router>
         <Toaster position="top-right" />
       </ThemeProvider>

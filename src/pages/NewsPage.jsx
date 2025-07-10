@@ -5,7 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_PUBLISHED_NEWS, GET_CATEGORIES, GET_TAGS } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
-import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
+import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.jsx';
 import SearchAndFilter from '../components/SearchAndFilter';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
 import { useTranslation } from 'react-i18next';

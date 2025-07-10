@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { GET_USER_COMMENT_HISTORY } from '../graphql/queries';
 import { formatDate, truncateText } from '../utils/constants';
-import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.js';
+import { SEO, LoadingSpinner, ErrorDisplay, Pagination } from '../components/index.jsx';
 import { useTranslation } from 'react-i18next';
 
 export default function CommentHistoryPage() {

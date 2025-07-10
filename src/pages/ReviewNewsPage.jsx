@@ -7,7 +7,7 @@ import { UPDATE_NEWS_STATUS } from '../graphql/mutations';
 import { formatDate } from '../utils/constants';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { processImageUrlForDisplay } from '../utils/cloudinaryUtils';
-import { SEO } from '../components/index.js';
+import { SEO } from '../components/index.jsx';
 import { useTranslation } from 'react-i18next';
 
 export default function ReviewNewsPage() {

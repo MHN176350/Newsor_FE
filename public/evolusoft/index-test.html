@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Organization Chart</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+
+    .tree ul {
+      padding-top: 20px; 
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .tree li {
+      list-style-type: none;
+      text-align: center;
+      position: relative;
+      padding: 20px 5px 0 5px;
+    }
+
+    .tree li::before, .tree li::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 50%;
+      border-top: 1px solid #ccc;
+      width: 50%;
+      height: 20px;
+    }
+
+    .tree li::after {
+      right: auto;
+      left: 50%;
+      border-left: 1px solid #ccc;
+    }
+
+    .tree li:only-child::before, .tree li:only-child::after {
+      display: none;
+    }
+
+    .tree li:only-child {
+      padding-top: 0;
+    }
+
+    .tree li:first-child::before, .tree li:last-child::after {
+      border: none;
+    }
+
+    .tree li:last-child::before {
+      border-right: 1px solid #ccc;
+      border-radius: 0 5px 0 0;
+    }
+
+    .tree li:first-child::after {
+      border-radius: 5px 0 0 0;
+    }
+
+    .tree .node {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background-color: #2c5094; /* default: president */
+      color: white;
+      font-weight: bold;
+      min-width: 150px;
+    }
+
+    .ceo { background-color: #2c5094; }
+    .division { background-color: #0071c5; }
+    .department { background-color: #c29100; }
+
+  </style>
+</head>
+<body>
+
+<div class="tree">
+  <ul>
+    <li>
+      <div class="node ceo">President</div>
+      <ul>
+        <li>
+          <div class="node ceo">CEO / CTO</div>
+          <ul>
+            <!-- Business Division -->
+            <li>
+              <div class="node division">Business Division</div>
+              <ul>
+                <li><div class="node department">Project Department</div></li>
+                <li><div class="node department">Marketing Department</div></li>
+              </ul>
+            </li>
+            <!-- Office Division -->
+            <li>
+              <div class="node division">Office Division</div>
+              <ul>
+                <li><div class="node department">HR Department</div></li>
+                <li><div class="node department">Finance Department</div></li>
+              </ul>
+            </li>
+            <!-- Technology Division -->
+            <li>
+              <div class="node division">Technology Division</div>
+              <ul>
+                <li><div class="node department">Development Department</div></li>
+                <li><div class="node department">Testing Department</div></li>
+                <li><div class="node department">Customer Support Department</div></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+</body>
+</html>

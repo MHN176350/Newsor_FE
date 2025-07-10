@@ -17,9 +17,9 @@ export const NEWS_STATUS = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  GRAPHQL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql/` : 'http://192.168.1.36:8000/graphql/',
-  REST_BASE: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/` : 'http://192.168.1.36:8000/api/',
-  WS_BASE: import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : 'ws://192.168.1.36:8000',
+  GRAPHQL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql/` : 'http://localhost:8000/graphql/',
+  REST_BASE: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/` : 'http://localhost:8000/api/',
+  WS_BASE: import.meta.env.VITE_WS_URL ? import.meta.env.VITE_WS_URL : 'ws://localhost:8000',
 };
 
 // Validation Rules
