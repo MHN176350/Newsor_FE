@@ -103,7 +103,7 @@ const Login = () => {
                   name="password"
                   rules={[
                     { required: true, message: t('auth.login.password') + ' is required!' },
-                    { min: 6, message: t('auth.login.password') + ' must be at least 6 characters!' }
+                    { min: 0, message: t('auth.login.password') + ' must be at least 6 characters!' }
                   ]}
                 >
                   <Input.Password
