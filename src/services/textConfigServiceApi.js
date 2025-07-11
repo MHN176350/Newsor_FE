@@ -1,8 +1,7 @@
-// Service for managing EvoluSoft homepage text configuration via API (Frontend)
+// Service for managing EvoluSoft homepage text configuration via Django API (Frontend)
 class TextConfigService {
   constructor() {
-    this.apiUrl = 'http://localhost:8080/api/config';
-    this.storageKey = 'evolusoftTexts'; // Keep for backward compatibility
+    this.apiUrl = 'http://localhost:8000/api/text-config';
     this.defaultTexts = {
       // Hero Section
       pageSlogan: 'Innovate together, Succeed Together',
@@ -85,30 +84,16 @@ class TextConfigService {
     };
   }
 
-  // Get all text configurations from API
+  // Get all text configurations from Django API
   async getTexts() {
     try {
       const response = await fetch(this.apiUrl);
       if (response.ok) {
-        const texts = await response.json();
-        return { ...this.defaultTexts, ...texts };
+        const result = await response.json();
+        return result.data || this.defaultTexts;
       } else {
-        return this.getTextsFromStorage();
+        return this.defaultTexts;
       }
-    } catch (error) {
-      return this.getTextsFromStorage();
-    }
-  }
-
-  // Fallback to localStorage
-  getTextsFromStorage() {
-    try {
-      const saved = localStorage.getItem(this.storageKey);
-      if (saved) {
-        const parsedTexts = JSON.parse(saved);
-        return { ...this.defaultTexts, ...parsedTexts };
-      }
-      return this.defaultTexts;
     } catch (error) {
       return this.defaultTexts;
     }
@@ -120,12 +105,22 @@ class TextConfigService {
     return this.defaultTexts[key] || '';
   }
 
-  // Save text configurations to API (frontend doesn't usually save, but kept for compatibility)
+  // Save text configurations to Django API (frontend doesn't usually save, but kept for compatibility)
   async saveTexts(texts) {
     try {
-      // Save to localStorage as backup
-      localStorage.setItem(this.storageKey, JSON.stringify(texts));
-      return true;
+      const response = await fetch(`${this.apiUrl}/update/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(texts),
+      });
+
+      if (response.ok) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       return false;
     }
@@ -134,17 +129,19 @@ class TextConfigService {
   // Reset to default texts
   async resetTexts() {
     try {
-      localStorage.removeItem(this.storageKey);
-      return true;
+      const response = await fetch(`${this.apiUrl}/reset/`, {
+        method: 'POST',
+      });
+      return response.ok;
     } catch (error) {
       return false;
     }
   }
 
-  // Check if API server is available
+  // Check if Django API server is available
   async checkApiHealth() {
     try {
-      const response = await fetch('http://localhost:8080/api/health');
+      const response = await fetch('http://localhost:8000/api/health/');
       return response.ok;
     } catch (error) {
       return false;
@@ -167,5 +164,6 @@ class TextConfigService {
   }
 }
 
-export const textConfigService = new TextConfigService();
+const textConfigService = new TextConfigService();
+export { textConfigService };
 export default textConfigService;

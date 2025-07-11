@@ -1,4 +1,4 @@
-import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack } from '@mui/joy';
+import { Box, Typography, Card, CardContent, Button, Input, FormControl, FormLabel, Alert, Stack, Checkbox } from '@mui/joy';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
@@ -12,6 +12,7 @@ export default function LoginPage() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -67,7 +68,8 @@ export default function LoginPage() {
 
       const result = await login({
         username: formData.username,
-        password: formData.password
+        password: formData.password,
+        rememberMe: rememberMe
       });
 
       if (result.success) {
@@ -149,6 +151,13 @@ export default function LoginPage() {
                   </Typography>
                 )}
               </FormControl>
+
+              <Checkbox
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+                label={t('auth.login.rememberMe', { defaultValue: 'Remember me' })}
+                sx={{ alignSelf: 'flex-start' }}
+              />
 
               <Button
                 type="submit"

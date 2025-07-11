@@ -14,17 +14,6 @@ const EvolusoftHomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isContentVisible, setIsContentVisible] = useState(true); // Always show content
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
-
-  // Manual refresh function for debugging
-  const refreshTexts = () => {
-    window.location.reload();
-  };
-
-  // Add debugging to see when texts change
-  useEffect(() => {
-    console.log('Texts updated in EvolusoftHomePage:', getText('pageSlogan'));
-  }, [getText]);
 
   useEffect(() => {
     // Add body class for styling
@@ -153,55 +142,6 @@ const EvolusoftHomePage = () => {
           <a className="btn-getstarted" href="#about">Get started</a>
         </div>
       </header>
-
-      {/* Debug Panel for Development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          right: '20px',
-          zIndex: 9999,
-          backgroundColor: '#333',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          fontSize: '12px'
-        }}>
-          <button 
-            onClick={refreshTexts}
-            style={{
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              padding: '5px 10px',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              marginRight: '5px'
-            }}
-          >
-            🔄 Refresh Texts
-          </button>
-          <button 
-            onClick={() => setShowDebugPanel(!showDebugPanel)}
-            style={{
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              padding: '5px 10px',
-              borderRadius: '3px',
-              cursor: 'pointer'
-            }}
-          >
-            {showDebugPanel ? '🙈 Hide Debug' : '👁 Show Debug'}
-          </button>
-          {showDebugPanel && (
-            <div style={{ marginTop: '10px', fontSize: '10px' }}>
-              <div>Current slogan: {getText('pageSlogan', 'Loading...')}</div>
-              <div>Loading: {textLoading ? 'Yes' : 'No'}</div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Main Content */}
       <main className="main">
@@ -594,7 +534,7 @@ const EvolusoftHomePage = () => {
                     <i className="bi bi-geo-alt"></i>
                   </div>
                   <h3>Headquarters</h3>
-                  <p>{getText('headquartersAddress', '16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam')}{/*Can Change(Headquarters Address)*/}</p>
+                  <p>{getText('contactAddress', '16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam')}{/*Can Change(Headquarters Address)*/}</p>
                 </div>
               </div>
 
@@ -604,8 +544,8 @@ const EvolusoftHomePage = () => {
                     <i className="bi bi-telephone"></i>
                   </div>
                   <h3>Contact number</h3>
-                  <p>Phone (hotline): {getText('hotlineNumber', '(024) 73046618')}{/*Can Change(Hotline Number)*/}<br />
-                    Email: {getText('supportEmail', 'support@evolusoft.vn')}{/*Can Change(Support Email)*/}</p>
+                  <p>Phone (hotline): {getText('contactPhone', '(024) 73046618')}{/*Can Change(Hotline Number)*/}<br />
+                    Email: {getText('contactEmail', 'support@evolusoft.vn')}{/*Can Change(Support Email)*/}</p>
                 </div>
               </div>
 
@@ -615,8 +555,8 @@ const EvolusoftHomePage = () => {
                     <i className="bi bi-clock"></i>
                   </div>
                   <h3>Working time</h3>
-                  <p>Monday - Friday: {getText('workingHoursAM', '8:00 - 17:00')}{/*Can Change(Working Hours AM)*/}<br />
-                     Saturday: {getText('workingHoursPM', '8:00 - 12:00')}{/*Can Change(Working Hours PM)*/}</p>
+                  <p>Monday - Friday: {getText('workingHoursWeekday', '8:00 - 17:00')}{/*Can Change(Working Hours Weekday)*/}<br />
+                     Saturday: {getText('workingHoursWeekend', '8:00 - 12:00')}{/*Can Change(Working Hours Weekend)*/}</p>
                 </div>
               </div>
             </div>
@@ -729,10 +669,10 @@ const EvolusoftHomePage = () => {
                 <span className="sitename">EvoluSoft Technology Company Limited</span>
               </a>
               <div className="footer-contact pt-3">
-                <p>{getText('headquartersAddress', '16, BT4-3, Vinaconex 3 - Trung Van').split(',')[0]}</p>
-                <p>{getText('headquartersAddress', '16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam').split(',').slice(1).join(',').trim()}</p>
-                <p className="mt-3"><strong>Phone (hotline):</strong> <span>{getText('hotlineNumber', '(024) 73046618')}</span></p>
-                <p><strong>Email:</strong> <span>{getText('supportEmail', 'support@evolusoft.vn')}</span></p>
+                <p>{getText('contactAddress', '16, BT4-3, Vinaconex 3 - Trung Van').split(',')[0]}</p>
+                <p>{getText('contactAddress', '16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam').split(',').slice(1).join(',').trim()}</p>
+                <p className="mt-3"><strong>Phone (hotline):</strong> <span>{getText('contactPhone', '(024) 73046618')}</span></p>
+                <p><strong>Email:</strong> <span>{getText('contactEmail', 'support@evolusoft.vn')}</span></p>
               </div>
             </div>
 

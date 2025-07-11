@@ -22,8 +22,10 @@ export class AuthService {
 
   async login(credentials) {
     try {
+      const { rememberMe, ...loginCredentials } = credentials;
+      
       // This would typically call a login mutation
-      const response = await this.userRepository.login(credentials);
+      const response = await this.userRepository.login(loginCredentials);
       
       if (response.success) {
         // Store authentication tokens
@@ -35,8 +37,15 @@ export class AuthService {
         // Store user data directly from login response
         this.currentUser = response.user;
         
-        // Also save user to storage for persistence
+        // Save user to storage for persistence
         this.storageService.setItem('currentUser', response.user);
+        
+        // If remember me is enabled, store additional persistence flag
+        if (rememberMe) {
+          this.storageService.setItem('rememberMe', true);
+        } else {
+          this.storageService.removeItem('rememberMe');
+        }
         
         // Notify listeners of auth state change
         this.notifyAuthChange();
@@ -54,9 +63,15 @@ export class AuthService {
   }
 
   async logout() {
+    const rememberMe = this.storageService.getItem('rememberMe');
+    
     this.tokenService.clearTokens();
-    this.storageService.removeItem('currentUser');
     this.currentUser = null;
+    
+    // Only clear user data if remember me is not enabled
+    if (!rememberMe) {
+      this.storageService.removeItem('currentUser');
+    }
     
     // Notify listeners of auth state change
     this.notifyAuthChange();
