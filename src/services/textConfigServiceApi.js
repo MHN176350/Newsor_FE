@@ -1,7 +1,7 @@
 // Service for managing EvoluSoft homepage text configuration via Django API (Frontend)
 class TextConfigService {
   constructor() {
-    this.apiUrl = 'http://localhost:8000/api/text-config';
+    this.apiUrl = 'http://192.168.1.36:8000/api/text-config';
     this.defaultTexts = {
       // Hero Section
       pageSlogan: 'Innovate together, Succeed Together',
@@ -141,7 +141,7 @@ class TextConfigService {
   // Check if Django API server is available
   async checkApiHealth() {
     try {
-      const response = await fetch('http://localhost:8000/api/health/');
+      const response = await fetch('http://192.168.1.36:8000/api/health/');
       return response.ok;
     } catch (error) {
       return false;
