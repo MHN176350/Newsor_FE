@@ -76,14 +76,14 @@ export default function NotificationBell() {
   };
 
   const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'article_submitted':
+    switch (type?.trim()) {
+      case 'ARTICLE_SUBMITTED':
         return '📝';
-      case 'article_approved':
+      case 'ARTICLE_APPROVED':
         return '✅';
-      case 'article_rejected':
+      case 'ARTICLE_REJECTED':
         return '❌';
-      case 'article_published':
+      case 'ARTICLE_PUBLISHED':
         return '🚀';
       default:
         return '📢';
