@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useMutation } from '@apollo/client';
+import { CREATE_CONTACT } from '../graphql/queries';
 import './EvolusoftHomePage.css';
 import { useEditableText } from '../hooks/useEditableText';
 
@@ -8,12 +10,46 @@ const EvolusoftHomePage = () => {
     name: '',
     email: '',
     phone: '',
-    subject: '',
-    message: ''
+    request_service: '',
+    request_content: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isContentVisible, setIsContentVisible] = useState(true); // Always show content
+
+  // Contact creation mutation
+  const [createContact, { loading: submittingContact }] = useMutation(CREATE_CONTACT, {
+    onCompleted: (data) => {
+      if (data.createContact.success) {
+        setMessage({ 
+          type: 'success', 
+          text: 'Thank you for reaching out! Your message has been received and our team will contact you shortly.' 
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          request_service: '',
+          request_content: ''
+        });
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: data.createContact.errors?.join(', ') || 'We apologize, but there was an issue processing your request. Please try again or contact us directly.' 
+        });
+      }
+      setIsLoading(false);
+    },
+    onError: (error) => {
+      setMessage({ 
+        type: 'error', 
+        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.' 
+      });
+      setIsLoading(false);
+    }
+  });
 
   useEffect(() => {
     // Add body class for styling
@@ -65,7 +101,7 @@ const EvolusoftHomePage = () => {
           window.AOS.init();
         }
       } catch (error) {
-        console.warn('Some scripts failed to load:', error);
+        // Silently handle script loading failures to avoid affecting user experience
       }
     };
 
@@ -90,28 +126,33 @@ const EvolusoftHomePage = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setMessage({ 
-        type: 'success', 
-        text: 'Your request has been sent to us. Thank you!' 
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.request_service || !formData.request_content) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Please complete all required fields to submit your request.' 
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Submit contact form via GraphQL
+      await createContact({
+        variables: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          requestService: formData.request_service,
+          requestContent: formData.request_content
+        }
       });
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
-      });
+      // Success handling is done in the mutation's onCompleted callback
     } catch (error) {
       setMessage({ 
         type: 'error', 
-        text: 'There was an error sending your message. Please try again.' 
+        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.' 
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -614,9 +655,9 @@ const EvolusoftHomePage = () => {
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-list"></i></span>
                           <select 
-                            name="subject" 
+                            name="request_service" 
                             className="form-control"
-                            value={formData.subject}
+                            value={formData.request_service}
                             onChange={handleInputChange}
                             required
                           >
@@ -634,10 +675,10 @@ const EvolusoftHomePage = () => {
                           <span className="input-group-text"><i className="bi bi-chat-dots"></i></span>
                           <textarea 
                             className="form-control" 
-                            name="message" 
+                            name="request_content" 
                             rows="6" 
                             placeholder="Nội dung yêu cầu*"
-                            value={formData.message}
+                            value={formData.request_content}
                             onChange={handleInputChange}
                             required
                           ></textarea>

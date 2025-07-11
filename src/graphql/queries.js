@@ -763,3 +763,35 @@ export const GET_USER_READING_HISTORY = gql`
     }
   }
 `;
+
+// Contact management
+export const CREATE_CONTACT = gql`
+  mutation CreateContact(
+    $name: String!
+    $email: String!
+    $phone: String
+    $requestService: String!
+    $requestContent: String!
+  ) {
+    createContact(
+      name: $name
+      email: $email
+      phone: $phone
+      requestService: $requestService
+      requestContent: $requestContent
+    ) {
+      success
+      contact {
+        id
+        name
+        email
+        phone
+        requestService
+        requestContent
+        status
+        createdAt
+      }
+      errors
+    }
+  }
+`;
