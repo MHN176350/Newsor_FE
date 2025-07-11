@@ -236,7 +236,7 @@ export default function Layout({ children }) {
             /* User Profile Dropdown */
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* Notification Bell - only for managers and admins */}
-              {user?.profile?.role && ['manager', 'admin'].includes(user.profile.role.toLowerCase()) && (
+              {user?.profile?.role && ['manager', 'admin', 'writer'].includes(user.profile.role.toLowerCase()) && (
                 <NotificationBell />
               )}
               
