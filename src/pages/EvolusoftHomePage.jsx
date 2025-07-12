@@ -3,6 +3,10 @@ import { useMutation } from '@apollo/client';
 import { CREATE_CONTACT } from '../graphql/queries';
 import './EvolusoftHomePage.css';
 import { useEditableText } from '../hooks/useEditableText';
+import { useQuery } from '@apollo/client';
+import { GET_CATEGORIES } from '../graphql/queries';
+import { useNavigate } from 'react-router-dom';
+
 
 const EvolusoftHomePage = () => {
   const { getText, loading: textLoading } = useEditableText();
@@ -16,16 +20,22 @@ const EvolusoftHomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isContentVisible, setIsContentVisible] = useState(true); // Always show content
+  const navigate = useNavigate();
+  const [newsDropdownOpen, setNewsDropdownOpen] = useState(false);
+
+  // Fetch categories for dropdown
+  const { data: categoriesData } = useQuery(GET_CATEGORIES);
+  const categories = categoriesData?.categories || [];
 
   // Contact creation mutation
   const [createContact, { loading: submittingContact }] = useMutation(CREATE_CONTACT, {
     onCompleted: (data) => {
       if (data.createContact.success) {
-        setMessage({ 
-          type: 'success', 
-          text: 'Thank you for reaching out! Your message has been received and our team will contact you shortly.' 
+        setMessage({
+          type: 'success',
+          text: 'Thank you for reaching out! Your message has been received and our team will contact you shortly.'
         });
-        
+
         // Reset form
         setFormData({
           name: '',
@@ -35,17 +45,17 @@ const EvolusoftHomePage = () => {
           request_content: ''
         });
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: data.createContact.errors?.join(', ') || 'We apologize, but there was an issue processing your request. Please try again or contact us directly.' 
+        setMessage({
+          type: 'error',
+          text: data.createContact.errors?.join(', ') || 'We apologize, but there was an issue processing your request. Please try again or contact us directly.'
         });
       }
       setIsLoading(false);
     },
     onError: (error) => {
-      setMessage({ 
-        type: 'error', 
-        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.' 
+      setMessage({
+        type: 'error',
+        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.'
       });
       setIsLoading(false);
     }
@@ -54,7 +64,7 @@ const EvolusoftHomePage = () => {
   useEffect(() => {
     // Add body class for styling
     document.body.classList.add('index-page');
-    
+
     // Load EvoluSoft CSS files
     const loadCSS = (href, id) => {
       if (!document.getElementById(id)) {
@@ -71,7 +81,7 @@ const EvolusoftHomePage = () => {
     loadCSS('/evolusoft/assets/vendor/bootstrap-icons/bootstrap-icons.css', 'bootstrap-icons-css');
     loadCSS('/evolusoft/assets/vendor/aos/aos.css', 'aos-css');
     loadCSS('/evolusoft/assets/css/main.css', 'evolusoft-main-css');
-    
+
     // Load JavaScript files for functionality
     const loadScript = (src, id) => {
       return new Promise((resolve, reject) => {
@@ -79,7 +89,7 @@ const EvolusoftHomePage = () => {
           resolve();
           return;
         }
-        
+
         const script = document.createElement('script');
         script.src = src;
         script.id = id;
@@ -95,7 +105,7 @@ const EvolusoftHomePage = () => {
         await loadScript('/evolusoft/assets/vendor/bootstrap/js/bootstrap.bundle.min.js', 'bootstrap-js');
         await loadScript('/evolusoft/assets/vendor/aos/aos.js', 'aos-js');
         await loadScript('/evolusoft/assets/js/main.js', 'evolusoft-main-js');
-        
+
         // Initialize AOS if available
         if (window.AOS) {
           window.AOS.init();
@@ -106,7 +116,7 @@ const EvolusoftHomePage = () => {
     };
 
     loadScripts();
-    
+
     return () => {
       document.body.classList.remove('index-page');
     };
@@ -128,9 +138,9 @@ const EvolusoftHomePage = () => {
     try {
       // Validate required fields
       if (!formData.name || !formData.email || !formData.request_service || !formData.request_content) {
-        setMessage({ 
-          type: 'error', 
-          text: 'Please complete all required fields to submit your request.' 
+        setMessage({
+          type: 'error',
+          text: 'Please complete all required fields to submit your request.'
         });
         setIsLoading(false);
         return;
@@ -146,12 +156,12 @@ const EvolusoftHomePage = () => {
           requestContent: formData.request_content
         }
       });
-      
+
       // Success handling is done in the mutation's onCompleted callback
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.' 
+      setMessage({
+        type: 'error',
+        text: 'We\'re experiencing technical difficulties. Please try again in a moment or contact us directly for immediate assistance.'
       });
       setIsLoading(false);
     }
@@ -167,7 +177,7 @@ const EvolusoftHomePage = () => {
               <img src="/evolusoft/assets/img/company_name.png" alt="EvoluSoft" />
             </h1>
           </a>
-          
+
           <nav id="navmenu" className="navmenu">
             <ul>
               <li><a href="#hero" className="active">Home</a></li>
@@ -175,7 +185,66 @@ const EvolusoftHomePage = () => {
               <li><a href="#products">Products</a></li>
               <li><a href="#services">Services</a></li>
               <li><a href="#contact">Contact</a></li>
-              <li><a href="/news">All News</a></li>
+              {/* News Dropdown */}
+              <li 
+                className="dropdown"
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setNewsDropdownOpen(true)}
+                onMouseLeave={() => setNewsDropdownOpen(false)}
+              >
+                <a 
+                  href="/news"
+                  onClick={e => { e.preventDefault(); navigate('/news'); }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  All News <span style={{fontSize: '0.8em'}}>▼</span>
+                </a>
+                {newsDropdownOpen && (
+                  <ul 
+                    className="dropdown-menu"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      background: '#fff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                      minWidth: '180px',
+                      zIndex: 1000,
+                      padding: '8px 0',
+                      margin: 0,
+                      listStyle: 'none'
+                    }}
+                  >
+                    <li>
+                      <a
+                        href="/news"
+                        onClick={e => { e.preventDefault(); navigate('/news'); setNewsDropdownOpen(false); }}
+                        style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
+                      >
+                        🗞️ All News
+                      </a>
+                    </li>
+                    {categories.length > 0 && (
+                      <>
+                        <li style={{ fontWeight: 'bold', fontSize: '0.85em', padding: '4px 16px', color: '#888' }}>
+                          All Categories
+                        </li>
+                        {categories.map(category => (
+                          <li key={category.id}>
+                            <a
+                              href={`/news?category=${category.slug}`}
+                              onClick={e => { e.preventDefault(); navigate(`/news?category=${category.slug}`); setNewsDropdownOpen(false); }}
+                              style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
+                            >
+                              {category.name}
+                            </a>
+                          </li>
+                        ))}
+                      </>
+                    )}
+                  </ul>
+                )}
+              </li>
             </ul>
             <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
           </nav>
@@ -196,7 +265,7 @@ const EvolusoftHomePage = () => {
                 </h1>
                 <p className="hero-description mb-4" style={{ textAlign: 'justify' }}>
                   {getText('pageShortDescription', 'EvoluSoft harnesses cutting-edge technology, collaborating globally with clients to deliver transformative solutions, drive success, and celebrate shared achievements.')}
-              {/*Can change(Page short description)*/}  </p>
+                  {/*Can change(Page short description)*/}  </p>
                 <div className="cta-wrapper">
                   <a href="#about" className="btn btn-primary">About us</a>
                 </div>
@@ -226,19 +295,19 @@ const EvolusoftHomePage = () => {
         <section id="about" className="about section">
           <div className="container">
             <div className="row gy-4">              <div className="col-lg-6 content" data-aos="fade-up" data-aos-delay="100">
-                <p className="who-we-are">About us</p>
-                <h3 style={{ fontFamily: 'Canela' }}>{getText('companyName', 'EvoluSoft')}{/*Can change(Company Name)*/}</h3>
-                
-                <p className="fst-italic" style={{ textAlign: 'justify' }}>
-                  {getText('companyShortDescription1', 'EvoluSoft Co.Ltd is a dynamic IT company dedicated to delivering innovative software solutions that empower customers to succeed.')}
-               {/*Can change(Company short description 1)*/} </p>
-                <p className="fst-italic" style={{ textAlign: 'justify' }}>
-                  {getText('companyShortDescription2', 'With a team of highly experienced Leaders and technology team including: senior Project mangers, developers, testers, and QA experts, we craft cutting-edge products, especially specialized software\'s for the government sector.')}
-               {/*Can change(Company short description 2)*/} </p>
-                <p className="fst-italic" style={{ textAlign: 'justify' }}>
-                  {getText('companySloganDescription', 'Guided by our slogan "Collaborate to Celebrate," we partner with customers and global technology vendors to bring world-class solutions to businesses and communities. Our commitment to excellence and innovation drives us to forge strategic alliances with leading international software vendors, ensuring our clients thrive in a transformative digital world.')}
-               {/*Can change(Company slogan description)*/}  </p>
-              </div>
+              <p className="who-we-are">About us</p>
+              <h3 style={{ fontFamily: 'Canela' }}>{getText('companyName', 'EvoluSoft')}{/*Can change(Company Name)*/}</h3>
+
+              <p className="fst-italic" style={{ textAlign: 'justify' }}>
+                {getText('companyShortDescription1', 'EvoluSoft Co.Ltd is a dynamic IT company dedicated to delivering innovative software solutions that empower customers to succeed.')}
+                {/*Can change(Company short description 1)*/} </p>
+              <p className="fst-italic" style={{ textAlign: 'justify' }}>
+                {getText('companyShortDescription2', 'With a team of highly experienced Leaders and technology team including: senior Project mangers, developers, testers, and QA experts, we craft cutting-edge products, especially specialized software\'s for the government sector.')}
+                {/*Can change(Company short description 2)*/} </p>
+              <p className="fst-italic" style={{ textAlign: 'justify' }}>
+                {getText('companySloganDescription', 'Guided by our slogan "Collaborate to Celebrate," we partner with customers and global technology vendors to bring world-class solutions to businesses and communities. Our commitment to excellence and innovation drives us to forge strategic alliances with leading international software vendors, ensuring our clients thrive in a transformative digital world.')}
+                {/*Can change(Company slogan description)*/}  </p>
+            </div>
 
               <div className="col-lg-6 about-images" data-aos="fade-up" data-aos-delay="200" style={{ paddingTop: '30px' }}>
                 <img src="/evolusoft/assets/img/about/about1Paperless.jpg" className="img-fluid" alt="" loading="lazy" style={{ height: '350px', width: '100%' }} />
@@ -597,7 +666,7 @@ const EvolusoftHomePage = () => {
                   </div>
                   <h3>Working time</h3>
                   <p>Monday - Friday: {getText('workingHoursWeekday', '8:00 - 17:00')}{/*Can Change(Working Hours Weekday)*/}<br />
-                     Saturday: {getText('workingHoursWeekend', '8:00 - 12:00')}{/*Can Change(Working Hours Weekend)*/}</p>
+                    Saturday: {getText('workingHoursWeekend', '8:00 - 12:00')}{/*Can Change(Working Hours Weekend)*/}</p>
                 </div>
               </div>
             </div>
@@ -610,28 +679,28 @@ const EvolusoftHomePage = () => {
                       <div className="col-md-6 form-group">
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-person"></i></span>
-                          <input 
-                            type="text" 
-                            name="name" 
-                            className="form-control" 
-                            placeholder="Name*" 
+                          <input
+                            type="text"
+                            name="name"
+                            className="form-control"
+                            placeholder="Name*"
                             value={formData.name}
                             onChange={handleInputChange}
-                            required 
+                            required
                           />
                         </div>
                       </div>
                       <div className="col-md-6 form-group">
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-envelope"></i></span>
-                          <input 
-                            type="email" 
-                            className="form-control" 
-                            name="email" 
+                          <input
+                            type="email"
+                            className="form-control"
+                            name="email"
                             placeholder="Email*"
                             value={formData.email}
                             onChange={handleInputChange}
-                            required 
+                            required
                           />
                         </div>
                       </div>
@@ -640,22 +709,22 @@ const EvolusoftHomePage = () => {
                       <div className="col-md-6 form-group">
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-phone"></i></span>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            name="phone" 
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="phone"
                             placeholder="Phone*"
                             value={formData.phone}
                             onChange={handleInputChange}
-                            required 
+                            required
                           />
                         </div>
                       </div>
                       <div className="col-md-6 form-group">
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-list"></i></span>
-                          <select 
-                            name="request_service" 
+                          <select
+                            name="request_service"
                             className="form-control"
                             value={formData.request_service}
                             onChange={handleInputChange}
@@ -673,10 +742,10 @@ const EvolusoftHomePage = () => {
                       <div className="form-group mt-3">
                         <div className="input-group">
                           <span className="input-group-text"><i className="bi bi-chat-dots"></i></span>
-                          <textarea 
-                            className="form-control" 
-                            name="request_content" 
-                            rows="6" 
+                          <textarea
+                            className="form-control"
+                            name="request_content"
+                            rows="6"
                             placeholder="Nội dung yêu cầu*"
                             value={formData.request_content}
                             onChange={handleInputChange}

@@ -20,8 +20,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'vi', // Default to Vietnamese
-    lng: 'vi', // Start with Vietnamese
+    fallbackLng: 'en', // Default to Vietnamese
+    lng: 'en', // Start with Vietnamese
     debug: process.env.NODE_ENV === 'development',
     
     interpolation: {
