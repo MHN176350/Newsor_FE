@@ -13,7 +13,9 @@ import Categories from './pages/Categories';
 import Tags from './pages/Tags';
 import Users from './pages/Users';
 import Media from './pages/Media';
+import EmailContent from './pages/EmailContent';
 import Settings from './pages/Settings';
+import ContactsPage from './pages/ContactsPage';
 import './i18n';
 import './App.css';
 import './styles/admin-theme.css';
@@ -51,6 +53,9 @@ function App() {
                   <Route path="users" element={<Users />} />
                   <Route path="media" element={<Media />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="contacts" element={<ContactsPage />} />
+                  <Route path ="email-content" element={<EmailContent />} />
+                  {/* Add more routes as needed */}
                 </Route>
               </Routes>
             </div>

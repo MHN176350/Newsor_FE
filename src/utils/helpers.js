@@ -71,3 +71,11 @@ export const truncateText = (text, maxLength = 100) => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 };
+
+// Service choices 
+export const SERVICE_CHOICES = {
+  CONSULTING: 'consulting',
+  DEVELOPMENT: 'development',
+  MARKETING: 'marketing',
+  SUPPORT: 'support'
+};

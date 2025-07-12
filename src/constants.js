@@ -30,8 +30,8 @@ export const ARTICLE_STATUS = {
 };
 
 export const API_ENDPOINTS = {
-  GRAPHQL: process.env.REACT_APP_GRAPHQL_URL || 'http://192.168.1.36:8000/graphql/',
-  MEDIA: process.env.REACT_APP_MEDIA_URL || 'http://192.168.1.36:8000/media/',
+  GRAPHQL: process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:8000/graphql/',
+  MEDIA: process.env.REACT_APP_MEDIA_URL || 'http://localhost:8000/media/',
 };
 
 export const PAGINATION = {

@@ -294,6 +294,8 @@
     "tags": "Tags",
     "users": "Users",
     "media": "Media",
+    "contacts": "Contacts",
+    "emailContent": "Email Content",
     "settings": "Settings",
     "profile": "Profile",
     "logout": "Logout"

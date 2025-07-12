@@ -300,3 +300,74 @@ export const DELETE_NEWS = gql`
     }
   }
 `;
+
+// Subscriptions
+export const NOTIFICATION_SUBSCRIPTION = gql`
+  subscription OnNotificationAdded {
+    notificationAdded {
+      id
+      message
+      notificationType
+      createdAt
+      article {
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_UNREAD_NOTIFICATIONS = gql`
+  query GetUnreadNotifications {
+    unreadNotifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      readAt
+      createdAt
+      sender {
+        id
+        username
+        firstName
+        lastName
+      }
+      article {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_CONTACT_MESSAGES = gql`
+  query GetContactMessages(
+    $fromDate: Date
+    $toDate: Date
+    $search: String
+    $service: String
+  ) {
+    contactMessages(
+      fromDate: $fromDate
+      toDate: $toDate
+      search: $search
+      service: $service
+    ) {
+      name
+      email
+      phone
+      service
+      message
+      createdAt
+    }
+  }
+`;
+export const GET_EMAIL_TEMPLATE = gql`
+  query GetEmailTemplate {
+    firstEmailTemplate {
+      subject
+      htmlContent
+    }
+  }
+`;

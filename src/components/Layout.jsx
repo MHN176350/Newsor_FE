@@ -8,15 +8,18 @@ import {
   FileTextOutlined,
   TagsOutlined,
   TagOutlined,
+  EditOutlined,
   UserOutlined,
   PictureOutlined,
   SettingOutlined,
+  MessageOutlined,
   LogoutOutlined,
   BellOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../store/AuthContext';
 import { useTranslation } from 'react-i18next';
+import NotificationBell from './NotificationBell';
 
 const { Header, Sider, Content } = AntLayout;
 
@@ -63,6 +66,16 @@ const Layout = () => {
       key: '/media',
       icon: <PictureOutlined />,
       label: t('navigation.media'),
+    },
+    {
+      key: '/contacts',
+      icon: <MessageOutlined />,
+      label: t('navigation.contacts'),
+    },
+    {
+      key: '/email-content',
+      icon: <EditOutlined />,
+      label: t('navigation.emailContent'),
     },
     {
       key: '/settings',
@@ -193,11 +206,9 @@ const Layout = () => {
                 </Button>
               </Dropdown>
               
-              <Button 
-                type="text" 
-                icon={<BellOutlined />}
-                style={{ color: 'var(--text-primary)' }}
-              />
+              {user?.profile?.role && ['admin'].includes(user.profile.role.toLowerCase()) && (
+                <NotificationBell />
+              )}
               
               <Dropdown
                 menu={{ 

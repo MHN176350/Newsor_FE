@@ -4,9 +4,9 @@ import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { Notifications as NotificationsIcon, MarkEmailRead } from '@mui/icons-material';
 import { GET_UNREAD_NOTIFICATIONS, NOTIFICATION_SUBSCRIPTION } from '../graphql/queries';
 import { MARK_NOTIFICATION_AS_READ, MARK_ALL_NOTIFICATIONS_AS_READ } from '../graphql/mutations';
-import { formatDate } from '../utils/constants';
+// import { formatDateTime } from '../constants';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../core/presentation/hooks/useAuth';
+import { useAuth } from '../store/AuthContext';
 
 export default function NotificationBell() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -41,6 +41,21 @@ export default function NotificationBell() {
     awaitRefetchQueries: true,
   });
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    try {
+      return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Invalid date in formatDateTime:', dateString, error);
+      return '';
+    }
+  };
   const notifications = notificationsData?.unreadNotifications || [];
   const notificationCount = notifications.length;
 
@@ -58,8 +73,10 @@ export default function NotificationBell() {
     handleClose();
     try {
       markAsRead({
-        variables: { notificationId: parseInt
-          (notification.id) },
+        variables: {
+          notificationId: parseInt
+            (notification.id)
+        },
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -147,15 +164,15 @@ export default function NotificationBell() {
             onClick={() => handleNotificationClick(notification)}
             sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'normal', my: 0.5 }}
           >
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Typography>{getNotificationIcon(notification.notificationType)}</Typography>
-                <Box>
-                  <Typography level="body-sm" sx={{ wordBreak: 'break-word' }}>
-                    {notification.message}
-                  </Typography>
-                  <Typography level="body-xs">{formatDate(notification.createdAt)}</Typography>
-                </Box>
-              </Stack>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Typography>{getNotificationIcon(notification.notificationType)}</Typography>
+              <Box>
+                <Typography level="body-sm" sx={{ wordBreak: 'break-word' }}>
+                  {notification.message}
+                </Typography>
+                <Typography level="body-xs">{formatDateTime(notification.createdAt)}</Typography>
+              </Box>
+            </Stack>
           </MenuItem>
         ))}
       </Menu>
