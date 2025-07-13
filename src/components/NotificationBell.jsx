@@ -54,12 +54,23 @@ export default function NotificationBell() {
 
   const handleNotificationClick = (notification) => {
     // Optimistically navigate and close while mutation runs in the background
-    navigate(`/review/article/${notification.article.slug}`);
+    const role = user?.profile?.role?.toLowerCase();
+
+    const path =
+      role === 'admin' || role === 'manager'
+        ? `/review/article/${notification.article.slug}`
+        : role === 'writer'
+          ? `/news/${notification.article.slug}`
+          : '/';
+
+    navigate(path);
     handleClose();
     try {
       markAsRead({
-        variables: { notificationId: parseInt
-          (notification.id) },
+        variables: {
+          notificationId: parseInt
+            (notification.id)
+        },
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -147,15 +158,15 @@ export default function NotificationBell() {
             onClick={() => handleNotificationClick(notification)}
             sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', whiteSpace: 'normal', my: 0.5 }}
           >
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Typography>{getNotificationIcon(notification.notificationType)}</Typography>
-                <Box>
-                  <Typography level="body-sm" sx={{ wordBreak: 'break-word' }}>
-                    {notification.message}
-                  </Typography>
-                  <Typography level="body-xs">{formatDate(notification.createdAt)}</Typography>
-                </Box>
-              </Stack>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Typography>{getNotificationIcon(notification.notificationType)}</Typography>
+              <Box>
+                <Typography level="body-sm" sx={{ wordBreak: 'break-word' }}>
+                  {notification.message}
+                </Typography>
+                <Typography level="body-xs">{formatDate(notification.createdAt)}</Typography>
+              </Box>
+            </Stack>
           </MenuItem>
         ))}
       </Menu>

@@ -44,6 +44,7 @@ export default function Layout({ children }) {
     }
     return user.username?.charAt(0)?.toUpperCase() || 'U';
   };
+  const FilteredBox = ({ ownerState, ...rest }) => <Box {...rest} />;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.body' }}>
@@ -257,7 +258,7 @@ export default function Layout({ children }) {
               
               <Dropdown>
                 <MenuButton
-                  slots={{ root: Box }}
+                  slots={{ root: FilteredBox }}
                   slotProps={{
                     root: {
                       sx: {
