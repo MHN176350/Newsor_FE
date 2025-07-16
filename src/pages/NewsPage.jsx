@@ -120,8 +120,17 @@ export default function NewsPage() {
   };
 
   return (
-    <Box>
-      {/* SEO Meta Tags */}
+    <Box
+    sx={{
+      background: 'linear-gradient(to bottom, #D9F0ED, #F5F7F6)', // Xanh mint → trắng
+      minHeight: '100vh',
+      padding: { xs: 2, sm: 4 },
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: 'cover',
+      backdropFilter: 'blur(2px)', // tạo chiều sâu nhẹ
+    }}
+  >
+      
       <SEO 
         title={t('news.title')}
         description={t('news.subtitle')}
@@ -219,10 +228,13 @@ export default function NewsPage() {
       {!newsLoading && !newsError && currentNews.length === 0 && (
         <Card variant="outlined" sx={{ textAlign: 'center', py: 6 }}>
           <CardContent>
-            <Typography level="h4" sx={{ mb: 2, color: 'var(--joy-palette-text-secondary)' }}>
+            <Typography level="h4" sx={{mb: 2, 
+                color: 'var(--joy-palette-primary-500) !important', 
+                fontWeight: 600  }}>
               {t('news.noNews')}
             </Typography>
-            <Typography level="body1" sx={{ color: 'var(--joy-palette-text-tertiary)' }}>
+            <Typography level="body1" sx={{ color: 'var(--joy-palette-primary-700) !important', // Xanh nhạt hơn
+                fontWeight: 500  }}>
               {t('news.tryDifferentFilters')}
             </Typography>
             {canCreateArticles && (
@@ -230,7 +242,11 @@ export default function NewsPage() {
                 component={Link}
                 to="/articles/create"
                 variant="solid"
-                sx={{ mt: 2 }}
+                sx={{ mt: 2,
+                  backgroundColor: 'var(--joy-palette-primary-500)',
+                  color: '#fff !important',
+                  fontWeight: 500,
+                  '&:hover': { backgroundColor: 'var(--joy-palette-primary-600)' } }}
               >
                 {t('news.createFirst')}
               </Button>

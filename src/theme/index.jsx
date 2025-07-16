@@ -7,12 +7,12 @@ const theme = extendTheme({
     light: {
       palette: {
         primary: {
-          50: '#ffffff',
+          50: '#9CA3AF',
           100: '#f8f9fa',
           200: '#f1f3f4',
-          300: '#e8eaed',
+          300: '#2E8C7D',
           400: '#dadce0',
-          500: '#9aa0a6',
+          500: '#3a9285',
           600: '#5f6368',
           700: '#3c4043',
           800: '#202124',
@@ -31,7 +31,7 @@ const theme = extendTheme({
           900: '#212121',
         },
         background: {
-          body: '#ffffff',
+          body: '#f3f4f6',
           surface: '#fafafa',
           popup: '#ffffff',
           level1: '#f8f9fa',
@@ -40,7 +40,7 @@ const theme = extendTheme({
         },
         text: {
           primary: '#202124',
-          secondary: '#5f6368',
+          secondary: '#3AAFA9',
           tertiary: '#9aa0a6',
         },
         divider: '#e8eaed',

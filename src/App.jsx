@@ -21,6 +21,7 @@ import CommentHistoryPage from './pages/CommentHistoryPage';
 import ReadingHistoryPage from './pages/ReadingHistoryPage';
 import EvolusoftHomePage from './pages/EvolusoftHomePage';
 import NotFoundPage from './pages/NotFoundPage';
+import CategoryLayout from './components/CategoryLayout';
 
 // Initialize the Clean Architecture container
 initializeContainer(apolloClient);
@@ -41,8 +42,8 @@ function App() {
             <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
             
             {/* News/Articles Public Routes */}
-            <Route path="/news" element={<Layout><NewsPage /></Layout>} />
-            <Route path="/news/:slug" element={<Layout><NewsDetailPage /></Layout>} />
+            <Route path="/news" element={<CategoryLayout><NewsPage /></CategoryLayout>} />
+            <Route path="/news/:slug" element={<CategoryLayout><NewsDetailPage /></CategoryLayout>} />
             
             {/* Writer/Author Routes */}
             <Route path="/my-articles" element={<Layout><MyArticlesPage /></Layout>} />

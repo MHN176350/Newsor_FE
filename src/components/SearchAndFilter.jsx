@@ -80,13 +80,39 @@ export default function SearchAndFilter({
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}
             startDecorator={<Search />}
-            sx={{ flexGrow: 1 }}
+            sx={{ flexGrow: 1, 
+              borderColor: 'var(--joy-palette-primary-300)',
+              color: 'var(--joy-palette-primary-500) !important',
+              fontWeight: 500, // Tăng độ đậm để rõ nét
+              '& input': { color: 'var(--joy-palette-primary-500) !important' },
+              '&::placeholder': { 
+                color: 'var(--joy-palette-primary-500) !important', 
+                opacity: 1, // Bỏ opacity thấp
+                fontWeight: 400,
+              },
+              '&:hover': {
+                backgroundColor: 'var(--joy-palette-primary-100)', // Màu nhạt hơn
+                borderColor: 'var(--joy-palette-primary-500)',
+              },
+              '&:focus-within': {
+                borderColor: 'var(--joy-palette-primary-500)',
+                boxShadow: '0 0 0 2px var(--joy-palette-primary-500)',
+              },
+            }}
             disabled={loading}
           />
           <Button
             variant="outlined"
             onClick={() => setShowFilters(!showFilters)}
             startDecorator={<FilterAlt />}
+            sx={{
+              borderColor: 'var(--joy-palette-primary-300)',
+              color: 'var(--joy-palette-primary-500) !important',
+              '&:hover': {
+                backgroundColor: 'var(--joy-palette-primary-50)',
+                borderColor: 'var(--joy-palette-primary-500)',
+              }
+            }}
           >
             {t('news.filter')}
           </Button>
