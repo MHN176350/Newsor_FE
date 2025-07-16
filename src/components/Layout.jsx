@@ -40,6 +40,7 @@ export default function Layout({ children }) {
       }
     };
 
+<<<<<<< HEAD
     // Load required CSS files for EvoluSoft header
     loadCSS('/evolusoft/assets/vendor/bootstrap/css/bootstrap.min.css', 'bootstrap-css');
     loadCSS('/evolusoft/assets/vendor/bootstrap-icons/bootstrap-icons.css', 'bootstrap-icons-css');
@@ -74,6 +75,18 @@ export default function Layout({ children }) {
 
     loadScripts();
   }, []);
+=======
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return user.username?.charAt(0)?.toUpperCase() || 'U';
+  };
+  const FilteredBox = ({ ownerState, ...rest }) => <Box {...rest} />;
+>>>>>>> e1c724d6bf48ba5b1c9334f8b1ac14a61955f3ea
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.body' }}>
@@ -105,6 +118,7 @@ export default function Layout({ children }) {
                   onClick={e => { e.preventDefault(); navigate('/news'); }}
                   style={{ cursor: 'pointer' }}
                 >
+<<<<<<< HEAD
                   All News <span style={{fontSize: '0.8em'}}>▼</span>
                 </a>
                 {newsDropdownOpen && (
@@ -121,6 +135,123 @@ export default function Layout({ children }) {
                       padding: '8px 0',
                       margin: 0,
                       listStyle: 'none'
+=======
+                  🪶 {t('navigation.myArticles')}
+                </Button>
+              )}
+              
+              {/* Managers can review articles */}
+              {['manager', 'admin'].includes(user?.profile?.role?.toLowerCase()) && (
+                <Button
+                  variant="soft"
+                  component={Link}
+                  to="/review"
+                  sx={{ 
+                    color: 'warning.600',
+                    bgcolor: 'warning.100',
+                    '&:hover': { bgcolor: 'warning.200' }
+                  }}
+                >
+                  🔖 {t('navigation.reviewArticles')}
+                </Button>
+              )}
+              
+              {/* Additional navigation for authenticated users */}
+              {/* <Button
+                variant="plain"
+                component={Link}
+                to="/profile"
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                }}
+              >
+                {t('navigation.profile')}
+              </Button> */}
+              {user?.profile?.role?.toLowerCase() === 'admin' && (
+                <Button
+                  variant="plain"
+                  component={Link}
+                  to="/admin"
+                  sx={{ 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary', bgcolor: 'neutral.100' }
+                  }}
+                >
+                  {t('navigation.adminDashboard')}
+                </Button>
+              )}
+            </>
+          )}
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
+          {/* Theme Toggle */}
+          {/* <IconButton
+            onClick={toggleColorScheme}
+            sx={{ 
+              borderRadius: '50%',
+              bgcolor: 'neutral.100',
+              '&:hover': { bgcolor: 'neutral.200' }
+            }}
+          >
+            {mode === 'dark' ? '☀️' : '🌑'}
+          </IconButton> */}
+
+          {/* Auth Section */}
+          {isAuthenticated ? (
+            /* User Profile Dropdown */
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Notification Bell - only for managers and admins */}
+              {user?.profile?.role && ['manager', 'admin', 'writer'].includes(user.profile.role.toLowerCase()) && (
+                <NotificationBell />
+              )}
+              
+              {/* User Role Badge */}
+              {user?.profile?.role && (
+                <Chip
+                  size="sm"
+                  variant="soft"
+                  color={
+                    user.profile.role.toLowerCase() === 'admin' ? 'danger' :
+                    user.profile.role.toLowerCase() === 'manager' ? 'warning' :
+                    user.profile.role.toLowerCase() === 'writer' ? 'success' : 'neutral'
+                  }
+                >
+                  {user.profile.role.charAt(0).toUpperCase() + user.profile.role.slice(1).toLowerCase()}
+                </Chip>
+              )}
+              
+              <Dropdown>
+                <MenuButton
+                  slots={{ root: FilteredBox }}
+                  slotProps={{
+                    root: {
+                      sx: {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer',
+                        p: 1,
+                        borderRadius: 'sm',
+                        '&:hover': { bgcolor: 'neutral.100' }
+                      }
+                    }
+                  }}
+                >
+                  <Avatar
+                    size="sm"
+                    src={processImageUrlForDisplay(user?.profile?.avatarUrl)}
+                    sx={{ 
+                      bgcolor: 'primary.500',
+                      color: 'white',
+                      fontSize: '0.75rem'
+                    }}
+                    onError={(e) => {
+                      console.log('Avatar load error, falling back to initials:', e.target.src);
+                      e.target.style.display = 'none'; // This will show the initials
+>>>>>>> e1c724d6bf48ba5b1c9334f8b1ac14a61955f3ea
                     }}
                   >
                     <li>
