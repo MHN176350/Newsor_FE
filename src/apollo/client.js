@@ -33,12 +33,10 @@ const refreshToken = async () => {
   console.log('🔄 Attempting token refresh...');
   
   if (!refreshTokenValue) {
-    console.error('❌ No refresh token available');
     throw new Error('No refresh token available');
   }
 
   try {
-    console.log('📡 Sending refresh token request to backend...');
     const response = await fetch(API_ENDPOINTS.GRAPHQL, {
       method: 'POST',
       headers: {
@@ -59,31 +57,27 @@ const refreshToken = async () => {
     });
 
     const result = await response.json();
-    console.log('📥 Refresh token response:', result);
     
     if (result.data?.refreshToken?.token) {
       const newToken = result.data.refreshToken.token;
       const newRefreshToken = result.data.refreshToken.refreshToken;
       
-      console.log('✅ New access token received');
       tokenService.setToken(newToken);
       
       if (newRefreshToken) {
-        console.log('✅ New refresh token received');
         tokenService.setRefreshToken(newRefreshToken);
       }
       
       return newToken;
     } else if (result.errors) {
-      console.error('❌ GraphQL refresh token errors:', result.errors);
+      
       throw new Error(result.errors[0]?.message || 'Failed to refresh token');
     } else {
-      console.error('❌ Unexpected refresh token response format:', result);
+  
       throw new Error('Failed to refresh token');
     }
   } catch (error) {
-    console.error('❌ Refresh token error:', error);
-    // Clear all auth data through the token service
+
     tokenService.clearTokens();
     const storageService = container.storageService;
     storageService.removeItem('currentUser');
@@ -108,11 +102,7 @@ const wsLink = new GraphQLWsLink(createClient({
       Authorization: token ? `Bearer ${token}` : "",
     };
   },
-  on: {
-    connected: () => console.log('🔗 WebSocket connected'),
-    closed: () => console.log('🔌 WebSocket disconnected'),
-    error: (error) => console.error('❌ WebSocket error:', error),
-  },
+ 
 }));
 
 // Authentication link to add JWT token to requests

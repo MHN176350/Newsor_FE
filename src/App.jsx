@@ -5,6 +5,7 @@ import { ThemeProvider } from './theme';
 import apolloClient from './apollo/client';
 import { initializeContainer } from './core/container.js';
 import Layout from './components/Layout';
+import NewsLayout from './components/NewsLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -40,9 +41,9 @@ function App() {
             <Route path="/login" element={<Layout><LoginPage /></Layout>} />
             <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
             
-            {/* News/Articles Public Routes */}
-            <Route path="/news" element={<Layout><NewsPage /></Layout>} />
-            <Route path="/news/:slug" element={<Layout><NewsDetailPage /></Layout>} />
+            {/* News/Articles Public Routes - Use NewsLayout */}
+            <Route path="/news" element={<NewsLayout><NewsPage /></NewsLayout>} />
+            <Route path="/news/:slug" element={<NewsLayout><NewsDetailPage /></NewsLayout>} />
             
             {/* Writer/Author Routes */}
             <Route path="/my-articles" element={<Layout><MyArticlesPage /></Layout>} />

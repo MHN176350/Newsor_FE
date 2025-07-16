@@ -123,7 +123,7 @@
     }
   },
   "news": {
-    "title": "Báo mới nhấtt",
+    "title": "Mới nhất",
     "subtitle": "Cập nhật những câu chuyện và thông tin mới nhất",
     "readMore": "Đọc thêm",
     "by": "Bởi",
@@ -436,6 +436,7 @@
   "newsDetail": {
     "notFound": "Không tìm thấy bài viết",
     "backToNews": "Quay lại tin tức",
+    "by": "Bởi",
     "comments": "Bình luận",
     "reads": "Lượt đọc",
     "commentsTitle": "Bình luận",
@@ -451,7 +452,18 @@
     "postReply": "Đăng trả lời",
     "viewMoreReplies": "Xem thêm trả lời (còn {{count}})",
     "viewReplies": "Xem trả lời ({{count}})",
-    "noComments": "Chưa có bình luận nào. Hãy là người đầu tiên bình luận!"
+    "noComments": "Chưa có bình luận nào. Hãy là người đầu tiên bình luận!",
+    "articleInfo": "Thông tin bài viết",
+    "publishedDate": "Ngày đăng",
+    "author": "Tác giả",
+    "category": "Danh mục",
+    "tags": "Thẻ",
+    "relatedArticles": "Bài viết liên quan",
+    "readMore": "Đọc thêm",
+    "stayUpdated": "Cập nhật tin tức",
+    "stayUpdatedDesc": "Khám phá thêm tin tức và cập nhật những thông tin mới nhất.",
+    "browseAllNews": "Duyệt tất cả tin tức",
+    "moreCategoryNews": "Thêm tin tức {{category}}"
   },
   "reviewArticles": {
     "title": "Duyệt bài viết",

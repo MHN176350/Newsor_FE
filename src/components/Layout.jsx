@@ -77,6 +77,17 @@ export default function Layout({ children }) {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.body' }}>
+      {/* Custom CSS for styling */}
+      <style jsx global>{`
+        .dropdown-menu {
+          border-radius: 8px !important;
+          border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+        .dropdown-menu li a:hover {
+          background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+      `}</style>
+      
       {/* EvoluSoft Header */}
       <header id="header" className="header d-flex align-items-center fixed-top">
         <div className="container position-relative d-flex align-items-center justify-content-between">
