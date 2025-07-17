@@ -34,37 +34,37 @@ function App() {
         <Router>
           <Routes>
             {/* EvoluSoft Homepage - No Layout wrapper */}
-            <Route path="/evolusoft" element={<EvolusoftHomePage />} />
+            {/* <Route path="/evolusoft" element={<EvolusoftHomePage />} /> */}
             <Route path="/" element={<EvolusoftHomePage />} />
             
             {/* All other routes use Layout */}
-            <Route path="/login" element={<Layout><LoginPage /></Layout>} />
-            <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
+            {/* <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+            <Route path="/register" element={<Layout><RegisterPage /></Layout>} /> */}
             
             {/* News/Articles Public Routes - Use NewsLayout */}
-            <Route path="/news" element={<NewsLayout><NewsPage /></NewsLayout>} />
-            <Route path="/news/:slug" element={<NewsLayout><NewsDetailPage /></NewsLayout>} />
+            <Route path="/news" element={<Layout><NewsPage /></Layout>} />
+            <Route path="/news/:slug" element={<Layout><NewsDetailPage /></Layout>} />
             
             {/* Writer/Author Routes */}
-            <Route path="/my-articles" element={<Layout><MyArticlesPage /></Layout>} />
+            {/* <Route path="/my-articles" element={<Layout><MyArticlesPage /></Layout>} />
             <Route path="/articles/create" element={<Layout><CreateArticlePage /></Layout>} />
             <Route path="/articles/edit/:id" element={<Layout><CreateArticlePage /></Layout>} />
             <Route path="/articles/duplicate/:id" element={<Layout><CreateArticlePage /></Layout>} />
             <Route path="/writer/articles/:id" element={<Layout><WriterNewsDetailPage /></Layout>} />
-            
+             */}
             {/* Editor/Manager Routes */}
-            <Route path="/review" element={<Layout><ReviewArticlesPage /></Layout>} />
+            {/* <Route path="/review" element={<Layout><ReviewArticlesPage /></Layout>} />
             <Route path="/review/articles" element={<Layout><ReviewArticlesPage /></Layout>} />
-            <Route path="/review/article/:slug" element={<Layout><ReviewNewsPage /></Layout>} />
+            <Route path="/review/article/:slug" element={<Layout><ReviewNewsPage /></Layout>} /> */}
             
             {/* User Profile */}
-            <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+            {/* <Route path="/profile" element={<Layout><ProfilePage /></Layout>} /> */}
             
             {/* Admin Routes */}
-            <Route path="/admin" element={<Layout><AdminDashboardPage /></Layout>} />
-            <Route path="/comment-history" element={<Layout><CommentHistoryPage /></Layout>} />
+            {/* <Route path="/admin" element={<Layout><AdminDashboardPage /></Layout>} /> */}
+            {/* <Route path="/comment-history" element={<Layout><CommentHistoryPage /></Layout>} />
             <Route path="/reading-history" element={<Layout><ReadingHistoryPage /></Layout>} />
-            <Route path="/admin/dashboard" element={<Layout><AdminDashboardPage /></Layout>} />
+            <Route path="/admin/dashboard" element={<Layout><AdminDashboardPage /></Layout>} /> */}
             
             {/* 404 Not Found */}
             <Route path="*" element={<Layout><NotFoundPage /></Layout>} />

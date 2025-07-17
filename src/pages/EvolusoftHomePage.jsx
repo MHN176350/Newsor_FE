@@ -63,24 +63,7 @@ const EvolusoftHomePage = () => {
 
   useEffect(() => {
     // Add body class for styling
-    document.body.classList.add('index-page');
-
-    // Load EvoluSoft CSS files
-    const loadCSS = (href, id) => {
-      if (!document.getElementById(id)) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        link.id = id;
-        document.head.appendChild(link);
-      }
-    };
-
-    // Load all required CSS files
-    loadCSS('/evolusoft/assets/vendor/bootstrap/css/bootstrap.min.css', 'bootstrap-css');
-    loadCSS('/evolusoft/assets/vendor/bootstrap-icons/bootstrap-icons.css', 'bootstrap-icons-css');
-    loadCSS('/evolusoft/assets/vendor/aos/aos.css', 'aos-css');
-    loadCSS('/evolusoft/assets/css/main.css', 'evolusoft-main-css');
+    document.body.classList.add('index-page');   
 
     // Load JavaScript files for functionality
     const loadScript = (src, id) => {
@@ -221,7 +204,7 @@ const EvolusoftHomePage = () => {
                         onClick={e => { e.preventDefault(); navigate('/news'); setNewsDropdownOpen(false); }}
                         style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
                       >
-                        🗞️ All News
+                       All News
                       </a>
                     </li>
                     {categories.length > 0 && (
@@ -483,7 +466,7 @@ const EvolusoftHomePage = () => {
               <div className="col-lg-8 about-images" data-aos="fade-up" data-aos-delay="200">
                 <div className="row">
                   <div className="col-lg-12 col-md-12 col-sm-12 equal-height">
-                    <div className="item">
+                    <div > {/*className="item"*/}
                       <i><img src="/evolusoft/assets/img/gogreen.png" width="100px" alt="Go Green" /></i>
                       <h4>Paperless Branch e-Form{/*Can Change(Product 1 Description 1)*/}</h4>
                       <p>
@@ -491,8 +474,8 @@ const EvolusoftHomePage = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="col-lg-12 col-md-12 col-sm-12 equal-height">
-                    <div className="item">
+                  <div className="col-md-12 col-sm-12 equal-height">
+                    <div > {/*className="item"*/}
                       <i><img src="/evolusoft/assets/img/tablet3.png" width="100px" alt="Tablet" /></i>
                       <h4>Tablet Branch e-Form{/*Can Change(Product 1 Description 2)*/}</h4>
                       <p>
@@ -506,7 +489,7 @@ const EvolusoftHomePage = () => {
               <div className="col-lg-4 about-images" data-aos="fade-up" data-aos-delay="200">
                 <div className="row">
                   <div className="col-lg-12 col-md-12 col-sm-12 equal-height">
-                    <div className="item">
+                    <div > {/*className="istem"*/}
                       <i><img src="/evolusoft/assets/img/remotetele.png" width="100px" alt="Remote Teller" /></i>
                       <h4>Remote Teller e-Form{/*Can Change(Product 1 Description 3)*/}</h4>
                       <p>
@@ -521,7 +504,7 @@ const EvolusoftHomePage = () => {
         </section>
 
         {/* Our Solutions for Telco Section */}
-        <section className="telco-solutions section">
+<section id="services" className="services section">
           <div className="container section-title" data-aos="fade-up">
             <h2>Our Solutions for Telco{/*Can Change(Product 2)*/}</h2>
           </div>
@@ -545,7 +528,7 @@ const EvolusoftHomePage = () => {
                 </div>
               </div>
 
-              <div className="col-md-6" data-aos="fade-left" data-aos-delay="100">
+              <div className="col-lg-6" data-aos="fade-left" data-aos-delay="100">
                 <div className="service-item">
                   <div className="service-icon">
                     <i className="bi bi-gear-fill"></i>
@@ -579,7 +562,7 @@ const EvolusoftHomePage = () => {
                 </div>
               </div>
 
-              <div className="col-md-6" data-aos="fade-left" data-aos-delay="200">
+              <div className="col-lg-6" data-aos="fade-left" data-aos-delay="200">
                 <div className="service-item">
                   <div className="service-icon">
                     <i className="bi bi-building-fill-gear"></i>
@@ -601,14 +584,14 @@ const EvolusoftHomePage = () => {
         </section>
 
         {/* Our Solutions for Public Sector Section */}
-        <section className="public-sector-solutions section">
+<section id="services" className="services section">
           <div className="container section-title" data-aos="fade-up">
             <h2>Our Solutions for Public Sector{/*Can Change(Product 3)*/}</h2>
           </div>
 
           <div className="container" data-aos="fade-up" data-aos-delay="100">
             <div className="row justify-content-center g-5">
-              <div className="col-md-6" data-aos="fade-right" data-aos-delay="100">
+              <div className="col-md-5" data-aos="fade-right" data-aos-delay="100">
                 <div className="service-item">
                   <div className="service-icon">
                     <i className="bi bi-building-fill"></i>
@@ -636,7 +619,7 @@ const EvolusoftHomePage = () => {
             <p>Please fill in the information below or contact our customer service number. We will contact you directly immediately.</p>
           </div>
 
-          <div className="container" data-aos="fade-up" data-aos-delay="100">
+          <div className="container" data-aos="fade-up" data-aos-delay="50">
             <div className="row gy-4 mb-5">
               <div className="col-lg-4" data-aos="fade-up" data-aos-delay="100">
                 <div className="info-card">

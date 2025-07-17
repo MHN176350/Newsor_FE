@@ -72,7 +72,9 @@ export default function Pagination({
           sx={{ 
             minWidth: 'auto', 
             px: 2,
-            fontWeight: page === currentPage ? 'bold' : 'normal'
+            fontWeight: page === currentPage ? 'bold' : 'normal',
+            backgroundColor: page === currentPage ? '#3a9285' : 'transparent',
+
           }}
         >
           {page}

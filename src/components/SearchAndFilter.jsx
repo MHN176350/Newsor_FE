@@ -87,6 +87,7 @@ export default function SearchAndFilter({
             variant="outlined"
             onClick={() => setShowFilters(!showFilters)}
             startDecorator={<FilterAlt />}
+            sx={{color: '#616161'}}
           >
             {t('news.filter')}
           </Button>
@@ -94,6 +95,7 @@ export default function SearchAndFilter({
             onClick={handleSearch}
             loading={loading}
             startDecorator={<Search />}
+            sx={{ backgroundColor: '#57a297', color: 'white', '&:hover': { backgroundColor: '#4a8f82'} } }
           >
             {t('common.search')}
           </Button>

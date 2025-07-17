@@ -552,6 +552,15 @@ h6 {
   line-height: 1;
 }
 
+.custom-link {
+  color: color-mix(in srgb, var(--default-color), transparent 30%);
+  display: inline-block;
+  line-height: 1;
+
+}
+.custom-link :hover {
+  color: var(--accent-color);
+}
 .footer .footer-links ul a:hover {
   color: var(--accent-color);
 }
