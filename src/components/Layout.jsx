@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, MenuButton, MenuItem, Chip, Select, Option,Divider,Stack } from '@mui/joy';
+import { Box, Typography, Button, Sheet, IconButton, Avatar, Dropdown, Menu, MenuButton, MenuItem, Chip, Select, Option, Divider, Stack } from '@mui/joy';
 import { useColorScheme } from '@mui/joy/styles';
-import { Link as JoyLink, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/presentation/hooks/useAuth';
 import { useQuery } from '@apollo/client';
 import { GET_CATEGORIES } from '../graphql/queries';
@@ -101,75 +101,103 @@ export default function Layout({ children }) {
           </a>
 
           <nav id="navmenu" className="navmenu">
-            <ul>
-              <li><a href="/" className="active">Home</a></li>
-              <li><a href="#about">About us</a></li>
-              <li><a href="#products">Products</a></li>
-              <li><a href="#services">Services</a></li>
-              <li><a href="#contact">Contact</a></li>
-              {/* News Dropdown */}
-              <li
-                className="dropdown"
-                style={{ position: 'relative' }}
-                onMouseEnter={() => setNewsDropdownOpen(true)}
-                onMouseLeave={() => setNewsDropdownOpen(false)}
-              >
-                <a
-                  href="/news"
-                  onClick={e => { e.preventDefault(); navigate('/news'); }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  All News <span style={{ fontSize: '0.8em' }}>▼</span>
-                </a>
-                {newsDropdownOpen && (
-                  <ul
-                    className="dropdown-menu"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      background: '#fff',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                      minWidth: '180px',
-                      zIndex: 1000,
-                      padding: '8px 0',
-                      margin: 0,
-                      listStyle: 'none'
+  <ul>
+    <li><a href="/#hero" className="active">Home</a></li>
+    <li><a href="#about">About us</a></li>
+    <li><a href="#products">Products</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#contact">Contact</a></li>
+    {/* News Dropdown */}
+    <li 
+      className="dropdown"
+      style={{ position: 'relative' }}
+      onMouseEnter={() => setNewsDropdownOpen(true)}
+      onMouseLeave={() => setNewsDropdownOpen(false)}
+    >
+      <a 
+        href="/news"
+        onClick={e => { 
+          e.preventDefault(); 
+          navigate('/news'); 
+          setNewsDropdownOpen(false); // Đóng dropdown sau khi navigate
+        }}
+        style={{ cursor: 'pointer' }}
+      >
+        All News <span style={{fontSize: '0.8em'}}>▼</span>
+      </a>
+      {newsDropdownOpen && (
+        <ul 
+          className="dropdown-menu"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            background: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            minWidth: '180px',
+            zIndex: 9999, // Tăng z-index cao hơn
+            padding: '8px 0',
+            margin: 0,
+            listStyle: 'none'
+          }}
+          onMouseEnter={() => setNewsDropdownOpen(true)} // Giữ dropdown mở khi hover vào
+          onMouseLeave={() => setNewsDropdownOpen(false)} // Đóng khi rời khỏi dropdown
+        >
+          <li>
+            <a
+              href="/news"
+              onClick={e => { 
+                e.preventDefault(); 
+                e.stopPropagation(); // Ngăn event bubbling
+                navigate('/news'); 
+                setNewsDropdownOpen(false); 
+              }}
+              style={{ 
+                display: 'block', 
+                padding: '8px 16px', 
+                color: '#333', 
+                textDecoration: 'none',
+                pointerEvents: 'auto' // Đảm bảo có thể click
+              }}
+            >
+             All News
+            </a>
+          </li>
+          {categories.length > 0 && (
+            <>
+              <li style={{ fontWeight: 'bold', fontSize: '0.85em', padding: '4px 16px', color: '#888' }}>
+                All Categories
+              </li>
+              {categories.map(category => (
+                <li key={category.id}>
+                  <a
+                    href={`/news?category=${category.slug}`}
+                    onClick={e => { 
+                      e.preventDefault(); 
+                      e.stopPropagation(); // Ngăn event bubbling
+                      navigate(`/news?category=${category.slug}`); 
+                      setNewsDropdownOpen(false); 
+                    }}
+                    style={{ 
+                      display: 'block', 
+                      padding: '8px 16px', 
+                      color: '#333', 
+                      textDecoration: 'none',
+                      pointerEvents: 'auto' // Đảm bảo có thể click
                     }}
                   >
-                    <li>
-                      <a
-                        href="/news"
-                        onClick={e => { e.preventDefault(); navigate('/news'); setNewsDropdownOpen(false); }}
-                        style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
-                      >
-                        All News
-                      </a>
-                    </li>
-                    {categories.length > 0 && (
-                      <>
-                        <li style={{ fontWeight: 'bold', fontSize: '0.85em', padding: '4px 16px', color: '#888' }}>
-                          All Categories
-                        </li>
-                        {categories.map(category => (
-                          <li key={category.id}>
-                            <a
-                              href={`/news?category=${category.slug}`}
-                              onClick={e => { e.preventDefault(); navigate(`/news?category=${category.slug}`); setNewsDropdownOpen(false); }}
-                              style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
-                            >
-                              {category.name}
-                            </a>
-                          </li>
-                        ))}
-                      </>
-                    )}
-                  </ul>
-                )}
-              </li>
-            </ul>
-            <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
-          </nav>
+                    {category.name}
+                  </a>
+                </li>
+              ))}
+            </>
+          )}
+        </ul>
+      )}
+    </li>
+  </ul>
+  <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
+</nav>
           <Select
             value={i18n.language}
             onChange={(event, newValue) => handleLanguageChange(event, newValue)}
@@ -212,91 +240,83 @@ export default function Layout({ children }) {
 
       {/* Footer */}
       <Sheet
-      component="footer"
-      sx={{
-        p: 4,
-        borderTop: '1px solid',
-        borderColor: 'neutral.outlinedBorder',
-        bgcolor: '#f4f4f9',
-        mt: 'auto',
-      }}
-    >
-      <Box className="container" sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'space-between' }}>
-        {/* Company Info */}
-        <Box sx={{ flex: 1, minWidth: 250 }}>
-          <Typography level="title-md" fontWeight="lg" sx={{
-            fontSize: '2rem',
-          }}>
-            EvoluSoft Technology Company Limited
-          </Typography>
-          <Stack spacing={1} mt={2} sx={{ fontSize: '1.1rem', color: 'text.secondary' }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <LocationOn fontSize="small" />
-              <Typography level="body-sm" fontSize={'1.1rem'} >
-                16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam
-              </Typography>
+        component="footer"
+        sx={{
+          p: 4,
+          borderTop: '1px solid',
+          borderColor: 'neutral.outlinedBorder',
+          bgcolor: '#f4f4f9',
+          mt: 'auto',
+        }}
+      >
+        <Box className="container" sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'space-between' }}>
+          {/* Company Info */}
+          <Box sx={{ flex: 1, minWidth: 250 }} className="col-lg-8 col-md-6 ">
+            <Typography level="title-md" fontWeight="bold" sx={{
+              color: 'text.primary',
+              fontSize: '26px',
+            }}>
+              EvoluSoft Technology Company Limited
+            </Typography>
+            <Stack spacing={1} mt={2} sx={{ fontSize: '14px' }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography level="body-sm" color='#000000'>
+                  <strong>Address: </strong>16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam
+                </Typography>
+              </Stack>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography level="body-sm" color='text.primary' ><strong>Phone: </strong>(024) 73046618</Typography>
+              </Stack>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography level="body-sm" color='text.primary' ><strong>Email: </strong>support@evolusoft.vn</Typography>
+              </Stack>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Phone fontSize="small" />
-              <Typography level="body-sm" fontSize={'1.1rem'}>(024) 73046618</Typography>
+          </Box>
+
+          {/* Quick Links */}
+          <Box sx={{ minWidth: 180 }}>
+            <Typography level="title-sm" fontWeight="md" gutterBottom fontSize={'16px'}>
+              Quick Access
+            </Typography>
+            <Stack spacing={1} fontSize={'14px'}>
+              <Link to="/#hero" className="custom-link">Home</Link>
+              <Link to="#about" className="custom-link">About Us</Link>
+              <Link to="#contact" className="custom-link">Contact</Link>
+              <Link to="#services" className="custom-link">Services</Link>
+              <Link to="/news" className="custom-link">All News</Link>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Email fontSize="small" />
-              <Typography level="body-sm" fontSize={'1.1rem'}>support@evolusoft.vn</Typography>
+          </Box>
+
+          {/* Core Services */}
+          <Box sx={{ minWidth: 200 }}>
+            <Typography level="title-sm" fontWeight="md" gutterBottom fontSize={'16px'}>
+              Core Services
+            </Typography>
+            <Stack spacing={1} fontSize={'14px'}>
+              <Link to="#services" className="custom-link">
+                {t('serviceName1', { defaultValue: 'Database Services' })}
+              </Link>
+              <Link to="#services" className="custom-link">
+                {t('serviceName2', { defaultValue: 'Application Development' })}
+              </Link>
+              <Link to="#services" className="custom-link">
+                {t('serviceName3', { defaultValue: 'System Integration' })}
+              </Link>
             </Stack>
-          </Stack>
+          </Box>
         </Box>
 
-        {/* Quick Links */}
-        <Box sx={{ minWidth: 180 }}>
-          <Typography level="title-sm" fontWeight="md" gutterBottom fontSize={'1.2rem'}>
-            Quick Access
-          </Typography>
-          <Stack spacing={1}>
-            <JoyLink href="#hero" underline="none" className="custom-link" startDecorator={<Home fontSize="small" />}>
-              Home
-            </JoyLink>
-            <JoyLink href="#about" underline="none" className="custom-link" startDecorator={<Info fontSize="small" />}>
-              About Us
-            </JoyLink>
-            <JoyLink href="#contact" underline="none" className="custom-link" startDecorator={<ContactPage fontSize="small" />}>
-              Contact
-            </JoyLink>
-            <JoyLink href="#services" underline="none" className="custom-link" startDecorator={<Apps fontSize="small" />}>
-              Services
-            </JoyLink>
-            <JoyLink href="/news" underline="none" className="custom-link" startDecorator={<ArrowForward fontSize="small" />}>
-              All News
-            </JoyLink>
-          </Stack>
-        </Box>
+        <Divider sx={{ my: 3, backgroundColor: '#212529' }} />
 
-        {/* Core Services */}
-        <Box sx={{ minWidth: 200 }}>
-          <Typography level="title-sm" fontWeight="md" gutterBottom fontSize={'1.2rem'}>
-            Core Services
-          </Typography>
-          <Stack spacing={1}>
-            <JoyLink href="#services" underline="none" className="custom-link">
-              {t('serviceName1', { defaultValue: 'Database Services' })}
-            </JoyLink>
-            <JoyLink href="#services" underline="none" className="custom-link">
-              {t('serviceName2', { defaultValue: 'Application Development' })}
-            </JoyLink>
-            <JoyLink href="#services" underline="none" className="custom-link">
-              {t('serviceName3', { defaultValue: 'System Integration' })}
-            </JoyLink>
-          </Stack>
-        </Box>
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Bottom copyright */}
-      <Typography level="body-xs" textAlign="center" sx={{ color: 'text.secondary', fontSize: '1rem' }}>
-        © {new Date().getFullYear()} EvoluSoft Technology Company Limited — All Rights Reserved.
-      </Typography>
-    </Sheet>
+        {/* Bottom copyright */}
+        <Typography level="body-xs" textAlign="center" fontWeight={'normal'} sx={{ color: 'text.primary', fontSize: '14px' }}>
+          © {new Date().getFullYear()} <strong>EvoluSoft Technology Company Limited</strong> — All Rights Reserved.
+        </Typography>
+        {/* Scroll Top */}
+        <a href="#" id="scroll-top" className="scroll-top d-flex align-items-center justify-content-center">
+          <i className="bi bi-arrow-up-short"></i>
+        </a>
+      </Sheet>
     </Box>
   );
 }

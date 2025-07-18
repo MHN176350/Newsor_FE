@@ -35,7 +35,7 @@ function App() {
           <Routes>
             {/* EvoluSoft Homepage - No Layout wrapper */}
             {/* <Route path="/evolusoft" element={<EvolusoftHomePage />} /> */}
-            <Route path="/" element={<EvolusoftHomePage />} />
+            <Route path="/" element={<Layout><EvolusoftHomePage /></Layout>} />
             
             {/* All other routes use Layout */}
             {/* <Route path="/login" element={<Layout><LoginPage /></Layout>} />

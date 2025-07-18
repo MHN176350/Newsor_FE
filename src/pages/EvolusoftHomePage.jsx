@@ -152,89 +152,7 @@ const EvolusoftHomePage = () => {
 
   return (
     <div className="evolusoft-page">
-      {/* Header */}
-      <header id="header" className="header d-flex align-items-center fixed-top">
-        <div className="container position-relative d-flex align-items-center justify-content-between">
-          <a href="#hero" className="logo d-flex align-items-center me-auto me-xl-0">
-            <h1 className="sitename">
-              <img src="/evolusoft/assets/img/company_name.png" alt="EvoluSoft" />
-            </h1>
-          </a>
-
-          <nav id="navmenu" className="navmenu">
-            <ul>
-              <li><a href="#hero" className="active">Home</a></li>
-              <li><a href="#about">About us</a></li>
-              <li><a href="#products">Products</a></li>
-              <li><a href="#services">Services</a></li>
-              <li><a href="#contact">Contact</a></li>
-              {/* News Dropdown */}
-              <li 
-                className="dropdown"
-                style={{ position: 'relative' }}
-                onMouseEnter={() => setNewsDropdownOpen(true)}
-                onMouseLeave={() => setNewsDropdownOpen(false)}
-              >
-                <a 
-                  href="/news"
-                  onClick={e => { e.preventDefault(); navigate('/news'); }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  All News <span style={{fontSize: '0.8em'}}>▼</span>
-                </a>
-                {newsDropdownOpen && (
-                  <ul 
-                    className="dropdown-menu"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      background: '#fff',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                      minWidth: '180px',
-                      zIndex: 1000,
-                      padding: '8px 0',
-                      margin: 0,
-                      listStyle: 'none'
-                    }}
-                  >
-                    <li>
-                      <a
-                        href="/news"
-                        onClick={e => { e.preventDefault(); navigate('/news'); setNewsDropdownOpen(false); }}
-                        style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
-                      >
-                       All News
-                      </a>
-                    </li>
-                    {categories.length > 0 && (
-                      <>
-                        <li style={{ fontWeight: 'bold', fontSize: '0.85em', padding: '4px 16px', color: '#888' }}>
-                          All Categories
-                        </li>
-                        {categories.map(category => (
-                          <li key={category.id}>
-                            <a
-                              href={`/news?category=${category.slug}`}
-                              onClick={e => { e.preventDefault(); navigate(`/news?category=${category.slug}`); setNewsDropdownOpen(false); }}
-                              style={{ display: 'block', padding: '8px 16px', color: '#333', textDecoration: 'none' }}
-                            >
-                              {category.name}
-                            </a>
-                          </li>
-                        ))}
-                      </>
-                    )}
-                  </ul>
-                )}
-              </li>
-            </ul>
-            <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
-          </nav>
-
-          <a className="btn-getstarted" href="#about">Get started</a>
-        </div>
-      </header>
+      
 
       {/* Main Content */}
       <main className="main">
@@ -372,7 +290,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-database"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>{getText('serviceName1', 'Database Services')}{/*Can change(Service Name 1)*/}</h3>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>{getText('service1Desc1', 'Installation and Configuration.')}{/*Can Change(Service 1 Description 1)*/}</span></li>
@@ -397,7 +315,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-phone-fill"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>{getText('serviceName2', 'Application Development')}{/*Can Change(Service Name 2)*/}</h3>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>{getText('service2Desc1', 'Custom Application Development.')}{/*Can Change(Service 2 Description 1)*/}</span></li>
@@ -423,7 +341,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-palette2"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>{getText('serviceName3', 'System Integration')}{/*Can Change(Service Name 3)*/}</h3>
                     <div className="row">
                       <div className="col-md-6">
@@ -533,7 +451,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-gear-fill"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>Core Features:{/*Can Change(Product 2 Description 2)*/}</h3>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>Electronic Form Management Process.{/*Can Change(D2 Long Description 1)*/}</span></li>
@@ -550,7 +468,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-newspaper"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>e-Contract System{/*Can Change(Product 2 Description 3)*/}</h3>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>Covered for Mobile phone / Tablet PC communication service, IPTV / Internet service subscription and change.{/*Can Change(D3 Long Description 1)*/}</span></li>
@@ -567,7 +485,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-building-fill-gear"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <h3>Branch Office Digitization{/*Can Change(Product 2 Description 4)*/}</h3>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>Digitalization of paper forms for paid and unpaid leave.{/*Can Change(D4 Long Description 1)*/}</span></li>
@@ -596,7 +514,7 @@ const EvolusoftHomePage = () => {
                   <div className="service-icon">
                     <i className="bi bi-building-fill"></i>
                   </div>
-                  <div className="service-content" style={{ textAlign: 'justify' }}>
+                  <div className="service-content" style={{ textAlign: 'left' }}>
                     <ul style={{ listStyleType: 'none' }}>
                       <li><i className="bi bi-check-circle icheck"></i> <span>GS-CMS Electronic Publishing System.{/*Can Change(Product 3 Description 1)*/}</span></li>
                       <li><i className="bi bi-check-circle icheck"></i> <span>Fixed Asset Management.{/*Can Change(Product 3 Description 2)*/}</span></li>
@@ -753,53 +671,6 @@ const EvolusoftHomePage = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer id="footer" className="footer light-background">
-        <div className="container footer-top">
-          <div className="row gy-4">
-            <div className="col-lg-4 col-md-6 footer-about">
-              <a href="#hero" className="logo d-flex align-items-center">
-                <span className="sitename">EvoluSoft Technology Company Limited</span>
-              </a>
-              <div className="footer-contact pt-3">
-                <p>{getText('contactAddress', '16, BT4-3, Vinaconex 3 - Trung Van').split(',')[0]}</p>
-                <p>{getText('contactAddress', '16, BT4-3, Vinaconex 3 - Trung Van, Nam Tu Liem, Hanoi, Vietnam').split(',').slice(1).join(',').trim()}</p>
-                <p className="mt-3"><strong>Phone (hotline):</strong> <span>{getText('contactPhone', '(024) 73046618')}</span></p>
-                <p><strong>Email:</strong> <span>{getText('contactEmail', 'support@evolusoft.vn')}</span></p>
-              </div>
-            </div>
-
-            <div className="col-lg-2 col-md-3 footer-links">
-              <h4>Quick access</h4>
-              <ul>
-                <li><a href="#hero">Home</a></li>
-                <li><a href="#about">About us</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="#services">Services</a></li>
-                <li><a href="/news">All News</a></li>
-              </ul>
-            </div>
-
-            <div className="col-lg-2 col-md-3 footer-links">
-              <h4>The Core services</h4>
-              <ul>
-                <li><a href="#services">{getText('serviceName1', 'Database Services')}</a></li>
-                <li><a href="#services">{getText('serviceName2', 'Application Development')}</a></li>
-                <li><a href="#services">{getText('serviceName3', 'System Integration')}</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="container copyright text-center mt-4">
-          <p>© <span>Copyright 2025</span> <strong className="px-1 sitename">EvoluSoft Technology Company Limited</strong> <span>All Rights Reserved</span></p>
-        </div>
-      </footer>
-
-      {/* Scroll Top */}
-      <a href="#" id="scroll-top" className="scroll-top d-flex align-items-center justify-content-center">
-        <i className="bi bi-arrow-up-short"></i>
-      </a>
     </div>
   );
 };

@@ -69,7 +69,7 @@ export default function NewsDetailPage() {
       <Grid container spacing={4}>        
 
         {/* Main Article Section - right on desktop, above on mobile */}
-        <Grid item xs={12} md={9} sx={{ order: { xs: 2, md: 1 }, pl: 10}}>   
+        <Grid item xs={12} md={9} sx={{ order: { xs: 1, md: 1 }, pl: 10}}>   
           {/* Article Header */}
           <Box sx={{ mb: 4 }}>
             <Typography level="h1" sx={{ mb: 2, color: '#3a9285' }}>
@@ -235,7 +235,7 @@ export default function NewsDetailPage() {
 
         {/* Related Articles Section - left on desktop, below on mobile */}
         {relatedArticles.length > 0 && (
-          <Grid item xs={12} md={3} sx={{ order: { xs: 1, md: 2 } }}>
+          <Grid item xs={12} md={3} sx={{ order: { xs: 2, md: 2 } }}>
             <Card variant="outlined" sx={{ mb: { xs: 4, md: 5, lg: 5 }, position: 'sticky',width: '100%', mr:2 }}>
               <CardContent>
                 <Typography level="h4" sx={{ mb: 1, color: 'var(--joy-palette-text-primary)' }}>

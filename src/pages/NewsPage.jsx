@@ -289,11 +289,8 @@ export default function NewsPage() {
                       <Typography level="h6" sx={{ color: '#3a9285', fontWeight: 600, mb: 1, fontSize: '1.25rem' }}>
                         {news.title}
                       </Typography>
-                      <Typography level="body2" sx={{ color: '#616161', mb: 1, minHeight: 60 }}>
+                      <Typography level="body2" sx={{ color: '#616161', mb: 2, minHeight: 60 }}>
                         {truncateText(news.excerpt || news.content, 150)}
-                      </Typography>
-                      <Typography level="body3" sx={{ color: '#757575', mb:1 }}>
-                        @{news.author?.firstName && news.author?.lastName ? `${news.author.firstName} ${news.author.lastName}` : 'Author'}
                       </Typography>
                       <Button
                         component={Link}
